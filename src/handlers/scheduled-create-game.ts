@@ -10,18 +10,14 @@ export const scheduledCreateGameHandler = async (event: ScheduledEvent): Promise
   log('Received scheduled event', { event })
 
   const gameId = new Date().toISOString().split('T')[0] // GameId is the date in YYYY-MM-DD
+  const gameExists = await getGameById(gameId)
+    .then(() => true)
+    .catch(() => false)
+  if (!gameExists) {
+    const prompt = await getPromptById(llmPromptId)
+    const connectionsData = (await invokeModel(prompt)) as ConnectionsData
+    log('Connections data', { connectionsData })
 
-  try {
-    await getGameById(gameId)
-    log('Game already exists, skipping creation', { gameId })
-    return
-  } catch {
-    // Game doesn't exist, proceed with creation
+    await setGameById(gameId, connectionsData)
   }
-
-  const prompt = await getPromptById(llmPromptId)
-  const connectionsData = (await invokeModel(prompt)) as ConnectionsData
-  log('Connections data', { connectionsData })
-
-  await setGameById(gameId, connectionsData)
 }
