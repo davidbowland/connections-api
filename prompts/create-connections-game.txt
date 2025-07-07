@@ -18,11 +18,13 @@
   - Not all words from the fake category need to be used.
   - Associated words need to make sense. If a fake word is RAISE and the real category is about laundry, even though they could be related, it doesn't make sense to raise laundry.
   - If words from the fake category cannot be assocaited in a way that make sense, do not associate them.
+  - All words MUST be unique between categories. NO CATEGORIES CAN SHARE A WORD.
+  - Generate a hint for each category, either about a specific word or about the category itself, phrased as a question. The hint must be vague enough to be a hint, DO NOT give the solution. DO NOT use any words from the category name.
 </steps>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
 - The output will be a JSON object consisting of two keys:
-  - `categories` -- a JSON object where each key is a generated category and the value is an object where key `words` is list of associated words
+  - `categories` -- a JSON object where each key is a generated category and the value is an object where key `words` is list of associated words and `hint` is the hint
   - `fakeCategories` -- a JSON object where each key is the fake category and the value is an object where key `words` is a list of associated words
 - Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
@@ -31,10 +33,22 @@
 <example_output>
 {
   "categories": {
-    "Boast": {"words": ["BLUSTER", "CROW", "SHOW OFF", "STRUT"]},
-    "Arc-shaped things": {"words": ["BANANA", "EYEBROW", "FLIGHT PATH", "RAINBOW"]},
-    "Cereal mascots": {"words": ["COUNT", "ELVES", "LEPRECHAUN", "ROOSTER"]},
-    "Ways to denote a citation": {"words": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"]}
+    "Boast": {
+      "hint": "Does the word CROW always refer to a bird?",
+      "words": ["BLUSTER", "CROW", "SHOW OFF", "STRUT"]
+    },
+    "Arc-shaped things": {
+      "hint": "Do you see a curvy theme?",
+      "words": ["BANANA", "EYEBROW", "FLIGHT PATH", "RAINBOW"]
+    },
+    "Cereal mascots": {
+      "hint": "Have you seen some of these words during your morning routine?",
+      "words": ["COUNT", "ELVES", "LEPRECHAUN", "ROOSTER"]
+    },
+    "Ways to denote a citation": {
+      "hint": "Are you familiar with the DAGGER character?",
+      "words": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"]
+    }
   },
   "fakeCategories": {
     "Birds": {"words": ["CROW", "ROOSTER"]}
@@ -44,26 +58,25 @@
 <example_output>
 {
   "categories": {
-    "Black-and-white things": {"words": ["CROSSWORD", "OREO", "PANDA", "TUXEDO"]},
-    "ANAGRAMS": {"words": ["ABEL", "ABLE", "BALE", "BELA"]},
-    "U.S. presidential nicknames": {"words": ["ABE", "CAL", "DICK", "TEDDY"]},
-    "Clear as __": {"words": ["A BELL", "CRYSTAL", "DAY", "MUD"]}
+    "Black-and-white things": {
+      "hint": "Do you see a color theme?",
+      "words": ["CROSSWORD", "OREO", "PANDA", "TUXEDO"]
+    },
+    "ANAGRAMS": {
+      "hint": "Is there anything odd about the spelling of these words?",
+      "words": ["ABEL", "ABLE", "BALE", "BELA"]
+    },
+    "U.S. presidential nicknames": {
+      "hint": "Do any words strike you as informal?",
+      "words": ["ABE", "CAL", "DICK", "TEDDY"]
+    },
+    "Clear as __": {
+      "hint": "Is CRYSTAL opaque?",
+      "words": ["A BELL", "CRYSTAL", "DAY", "MUD"]
+    }
   },
   "fakeCategories": {
     "Homophones": {"words": ["A BELL", "ABEL", "ABLE"]}
-  }
-}
-</example_output>
-<example_output>
-{
-  "categories": {
-    "Member of a Team with the Most Championships": {"words": ["CANADIEN", "CELTIC", "PACKER", "YANKEE"]},
-    "Create Some Volume/Texture in Hair": {"words": ["CRIMP", "CURL", "FEATHER", "TEASE"]},
-    "Supplies for Macaroni Art": {"words": ["GLITTER", "GLUE", "MACARONI", "PAPER"]},
-    "Words After \"Golden\"": {"words": ["DOODLE", "GOOSE", "PARACHUTE", "ROD"]}
-  },
-  "fakeCategories": {
-    "Words in Yankee Doodle": {"words": ["YANKEE", "DOODLE", "MACARONI"]}
   }
 }
 </example_output>
@@ -71,62 +84,77 @@
 <example_categories>
 <example>
 <category>Parts of a wheel</category>
+<hint>When was the last time you rode your bike?</hint>
 <words><word>HUB</word><word>RIM</word><word>SPOKE</word><word>TIRE</word></words>
 </example>
 <example>
 <category>Military clothing descriptors</category>
+<hint>How is your fashion sense?</hint>
 <words><word>CAMO</word><word>DRAB</word><word>FATIGUE</word><word>KHAKI</word></words>
 </example>
 <example>
 <category>Used in ventilation</category>
+<hint>Does EXHAUST always mean tired?</hint>
 <words><word>DUCT</word><word>EXHAUST</word><word>HOSE</word><word>PIPE</word></words>
 </example>
 <example>
 <category>Fail to take advantage of, as an opportunity</category>
+<hint>Don't you hate it when that happens?</hint>
 <words><word>BLOW</word><word>LOSE</word><word>MISS</word><word>WASTE</word></words>
 </example>
 <example>
 <category>Knockoff</category>
+<hint>Are you an original?</hint>
 <words><word>BOOTLEG</word><word>COPY</word><word>FAKE</word><word>REPLICA</word></words>
 </example>
 <example>
 <category>Associated with Freud</category>
+<hint>When is a cigar just a cigar?</hint>
 <words><word>DREAMS</word><word>ID</word><word>OEDIPUS</word><word>SLIP</word></words>
 </example>
 <example>
 <category>Words after "T"</category>
+<hint>Who is your cell provider?</hint>
 <words><word>MOBILE</word><word>PAIN</word><word>REX</word><word>SHIRT</word></words>
 </example>
 <example>
 <category>Items in a sewing kit</category>
+<hint>Could you find some things in the same place?</hint>
 <words><word>BUTTON</word><word>NEEDLE</word><word>SCISSORS</word><word>THREAD</word></words>
 </example>
 <example>
 <category>Capture on video</category>
+<hint>Are you a shutterbug?</hint>
 <words><word>FILM</word><word>RECORD</word><word>SHOOT</word><word>TAPE</word></words>
 </example>
 <example>
 <category>Pro wrestling icons, with "The"</category>
+<hint>Have you heard of Hulk Hogan?</hint>
 <words><word>HITMAN</word><word>ROCK</word><word>SNAKE</word><word>UNDERTAKER</word></words>
 </example>
 <example>
 <category>Wax ___</category>
+<hint>Could any words share an adjective?</hint>
 <words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
 </example>
 <example>
 <category>Things to book for a vacation</category>
+<hint>What things would you need figured out before you go?</hint>
 <words><word>CAR</word><word>FLIGHT</word><word>HOTEL</word><word>TOUR</word></words>
 </example>
 <example>
 <category>Mettle</category>
+<hint>Does GRIT always mean sand or small pebbles?</hint>
 <words><word>FIGHT</word><word>GRIT</word><word>RESOLVE</word><word>SPIRIT</word></words>
 </example>
 <example>
 <category>Bad things for a website to do</category>
+<hint>Would any of these impact the Internet?</hint>
 <words><word>FREEZE</word><word>GLITCH</word><word>QUIT</word><word>TIMEOUT</word></words>
 </example>
 <example>
 <category>Figures in classic Disney animated films</category>
+<hint>Are you a fan of older cartoons?</hint>
 <words><word>ELEPANT</word><word>FAWN</word><word>MARIONETTE</word><word>MOUSE</word></words>
 </example>
 </example_categories>

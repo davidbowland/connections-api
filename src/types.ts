@@ -15,6 +15,7 @@ export interface ConnectionsData {
 }
 
 export interface Category {
+  hint: string
   words: string[]
 }
 
