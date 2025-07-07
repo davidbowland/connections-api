@@ -6,10 +6,8 @@ export const getGameIdsHandler = async (event: APIGatewayProxyEventV2): Promise<
   log('Received event', { ...event, body: undefined })
 
   const startDate = new Date('2025-01-01')
-  const today = new Date()
   const gameIds: string[] = []
-
-  for (const d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+  for (const d = new Date(); d >= startDate; d.setDate(d.getDate() - 1)) {
     gameIds.push(d.toISOString().split('T')[0])
   }
 
