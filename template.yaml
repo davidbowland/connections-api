@@ -94,7 +94,7 @@ Resources:
           Type: HttpApi
           Properties:
             ApiId: !Ref HttpApi
-            Path: /game-ids
+            Path: /games
             Method: get
       Tags:
         'created-by': 'connections-api'

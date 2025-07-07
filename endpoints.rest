@@ -1,6 +1,6 @@
 ### Get game IDs
 
-GET https://{{connections-api-host}}/v1/game-ids HTTP/1.1
+GET https://{{connections-api-host}}/v1/games HTTP/1.1
 
 ### Get specific game
 
