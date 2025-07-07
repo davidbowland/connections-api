@@ -1,0 +1,130 @@
+<instructions>
+<context>
+"Connections" is a word game where the goal is to choose assocaited words.
+
+- There are 4 categories and 1 fake category.
+- Each category has 4 associated words.
+- Some or all of the words have overlap where they could be associated with other words.
+- Categories should not be too similar to each other ("weather" and "storms" are too similar).
+- Categories should not be related to the letters in words or their spelling (but homophones are allowed).
+- Each word in the 4 categories MUST appear only once.
+- The categories should not be easy to guess.
+</context>
+<steps>
+- Generate a category and then 6 words in that category. This will be the fake category.
+- Generate 4 more categories AND their associated words.
+  - All 4 categories combined MUST include at least 3 of the words from the fake category.
+  - Words included from the fake category should be used in a different way or in a different context ("feet" on the body vs "feet" as a measurement).
+  - Not all words from the fake category need to be used.
+</steps>
+<format>
+- Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
+- The output will be a JSON object consisting of two keys:
+  - `categories` -- a JSON object where each key is a generated category and the value is a list of associated words
+  - `fakeCategories` -- a JSON object where each key is the fake category and the value is a list of associated words
+- Including your thinking in <thinking> tags as a preamble
+</format>
+</instructions>
+
+<example_output>
+{
+  "categories": {
+    "Boast": ["BLUSTER", "CROW", "SHOW OFF", "STRUT"],
+    "Arc-shaped things": ["BANANA", "EYEBROW", "FLIGHT PATH", "RAINBOW"],
+    "Cereal mascots": ["COUNT", "ELVES", "LEPRECHAUN", "ROOSTER"],
+    "Ways to denote a citation": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"]
+  },
+  "fakeCategories": {
+    "Birds": ["CROW", "ROOSTER"]
+  }
+}
+</example_output>
+<example_output>
+{
+  "categories": {
+    "Black-and-white things": ["CROSSWORD", "OREO", "PANDA", "TUXEDO"],
+    "ANAGRAMS": ["ABEL", "ABLE", "BALE", "BELA"],
+    "U.S. presidential nicknames": ["ABE", "CAL", "DICK", "TEDDY"],
+    "Clear as __": ["A BELL", "CRYSTAL", "DAY", "MUD"]
+  },
+  "fakeCategories": {
+    "Homophones": ["A BELL", "ABEL", "ABLE"]
+  }
+}
+</example_output>
+<example_output>
+{
+  "categories": {
+    "Member of a Team with the Most Championships": ["CANADIEN", "CELTIC", "PACKER", "YANKEE"],
+    "Create Some Volume/Texture in Hair": ["CRIMP", "CURL", "FEATHER", "TEASE"],
+    "Supplies for Macaroni Art": ["GLITTER", "GLUE", "MACARONI", "PAPER"],
+    "Words After \"Golden\"": ["DOODLE", "GOOSE", "PARACHUTE", "ROD"]
+  },
+  "fakeCategories": {
+    "Words in Yankee Doodle": ["YANKEE", "DOODLE", "MACARONI"]
+  }
+}
+</example_output>
+
+<example_categories>
+<example>
+<category>Parts of a wheel</category>
+<words><word>HUB</word><word>RIM</word><word>SPOKE</word><word>TIRE</word></words>
+</example>
+<example>
+<category>Military clothing descriptors</category>
+<words><word>CAMO</word><word>DRAB</word><word>FATIGUE</word><word>KHAKI</word></words>
+</example>
+<example>
+<category>Used in ventilation</category>
+<words><word>DUCT</word><word>EXHAUST</word><word>HOSE</word><word>PIPE</word></words>
+</example>
+<example>
+<category>Fail to take advantage of, as an opportunity</category>
+<words><word>BLOW</word><word>LOSE</word><word>MISS</word><word>WASTE</word></words>
+</example>
+<example>
+<category>Knockoff</category>
+<words><word>BOOTLEG</word><word>COPY</word><word>FAKE</word><word>REPLICA</word></words>
+</example>
+<example>
+<category>Associated with Freud</category>
+<words><word>DREAMS</word><word>ID</word><word>OEDIPUS</word><word>SLIP</word></words>
+</example>
+<example>
+<category>Words after "T"</category>
+<words><word>MOBILE</word><word>PAIN</word><word>REX</word><word>SHIRT</word></words>
+</example>
+<example>
+<category>Items in a sewing kit</category>
+<words><word>BUTTON</word><word>NEEDLE</word><word>SCISSORS</word><word>THREAD</word></words>
+</example>
+<example>
+<category>Capture on video</category>
+<words><word>FILM</word><word>RECORD</word><word>SHOOT</word><word>TAPE</word></words>
+</example>
+<example>
+<category>Pro wrestling icons, with "The"</category>
+<words><word>HITMAN</word><word>ROCK</word><word>SNAKE</word><word>UNDERTAKER</word></words>
+</example>
+<example>
+<category>Wax ___</category>
+<words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
+</example>
+<example>
+<category>Things to book for a vacation</category>
+<words><word>CAR</word><word>FLIGHT</word><word>HOTEL</word><word>TOUR</word></words>
+</example>
+<example>
+<category>Mettle</category>
+<words><word>FIGHT</word><word>GRIT</word><word>RESOLVE</word><word>SPIRIT</word></words>
+</example>
+<example>
+<category>Bad things for a website to do</category>
+<words><word>FREEZE</word><word>GLITCH</word><word>QUIT</word><word>TIMEOUT</word></words>
+</example>
+<example>
+<category>Figures in classic Disney animated films</category>
+<words><word>ELEPANT</word><word>FAWN</word><word>MARIONETTE</word><word>MOUSE</word></words>
+</example>
+</example_categories>

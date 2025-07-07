@@ -1,0 +1,11 @@
+{
+  "requestContext": {
+    "http": {
+      "method": "GET",
+      "path": "/v1/games/2025-01-01"
+    }
+  },
+  "pathParameters": {
+    "gameId": "2025-01-01"
+  }
+}

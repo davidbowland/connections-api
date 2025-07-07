@@ -1,0 +1,323 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  API for connections project
+
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+      - test
+    Description: Environment for deploy
+
+Mappings:
+  EnvironmentMap:
+    prod:
+      certificate: adce1a21-90b4-4120-8548-111215e582f0
+      corsDomain: https://connections.dbowland.com
+      domain: connections-api.dbowland.com
+      gamesTable: connections-api-games
+      logStreamFunction: log-subscriber
+      project: connections
+      promptsTable: connections-api-prompts
+      zoneId: Z072422417XWM8PIXXSFA
+    test:
+      certificate: 6a48cba7-feb9-4de5-8cbf-d383140fcdef
+      corsDomain: https://connections.bowland.link
+      domain: connections-api.bowland.link
+      gamesTable: connections-api-games-test
+      logStreamFunction: log-subscriber-test
+      project: connections-test
+      promptsTable: connections-api-prompts-test
+      zoneId: Z01312547RGU1BYKIJXY
+
+Resources:
+  # API Gateway
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowCredentials: true
+        AllowHeaders:
+          - Authorization
+          - Content-Type
+          - X-Amz-Date
+          - X-Amz-Security-Token
+          - X-Api-Key
+          - X-Twitch-Token
+        AllowMethods:
+          - DELETE
+          - GET
+          - OPTIONS
+          - PATCH
+          - POST
+          - PUT
+        AllowOrigins:
+          - !FindInMap [EnvironmentMap, !Ref Environment, corsDomain]
+      Domain:
+        BasePath:
+          - /v1
+        CertificateArn: !Sub
+          - 'arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${Certificate}'
+          - Certificate: !FindInMap [EnvironmentMap, !Ref Environment, certificate]
+        DomainName: !FindInMap [EnvironmentMap, !Ref Environment, domain]
+        EndpointConfiguration: REGIONAL
+        Route53:
+          DistributionDomainName: !FindInMap [EnvironmentMap, !Ref Environment, domain]
+          HostedZoneId: !FindInMap [EnvironmentMap, !Ref Environment, zoneId]
+      FailOnWarnings: true
+      StageName: v1
+
+  # Games
+
+  GetGameIdsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/get-game-ids.getGameIdsHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 1536
+      Description: Retrieve all valid game IDs
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          DEBUG_LOGGING: 'false'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /game-ids
+            Method: get
+      Tags:
+        'created-by': 'connections-api'
+        'created-for': 'connections'
+        'environment': !Ref Environment
+      Timeout: 15
+      Tracing: Active
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: 'es2020'
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/get-game-ids.ts
+
+  GetGameIdsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${GetGameIdsFunction}
+      RetentionInDays: 30
+      Tags:
+        - Key: 'created-by'
+          Value: 'connections-api'
+        - Key: 'created-for'
+          Value: 'connections'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  GetGameIdsGroupSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: !Sub
+        - 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Function}'
+        - Function: !FindInMap [EnvironmentMap, !Ref Environment, logStreamFunction]
+      FilterPattern: '[timestamp, uuid, level="ERROR", message]'
+      LogGroupName: !Ref GetGameIdsLogGroup
+
+  GetGameByIdFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/get-game-by-id.getGameByIdHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 1536
+      Description: Retrieve a game by ID, creating it if necessary
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref GamesTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref PromptsTable
+        # Allow invoking a model in Bedrock
+        - Version: 2012-10-17
+          Statement:
+            - Action:
+                - 'bedrock:InvokeModel*'
+              Effect: Allow
+              Resource: '*'
+      Environment:
+        Variables:
+          DEBUG_LOGGING: 'false'
+          DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
+          DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
+          LLM_PROMPT_ID: create-connections-game
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /games/{gameId}
+            Method: get
+      Tags:
+        'created-by': 'connections-api'
+        'created-for': 'connections'
+        'environment': !Ref Environment
+      Timeout: 35
+      Tracing: Active
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: 'es2020'
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/get-game-by-id.ts
+
+  GetGameByIdLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${GetGameByIdFunction}
+      RetentionInDays: 30
+      Tags:
+        - Key: 'created-by'
+          Value: 'connections-api'
+        - Key: 'created-for'
+          Value: 'connections'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  GetGameByIdGroupSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: !Sub
+        - 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Function}'
+        - Function: !FindInMap [EnvironmentMap, !Ref Environment, logStreamFunction]
+      FilterPattern: '[timestamp, uuid, level="ERROR", message]'
+      LogGroupName: !Ref GetGameByIdLogGroup
+
+  # Scheduled Game Creation
+
+  ScheduledCreateGameFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/scheduled-create-game.scheduledCreateGameHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 1536
+      Description: Create daily connections game
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref GamesTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref PromptsTable
+        # Allow invoking a model in Bedrock
+        - Version: 2012-10-17
+          Statement:
+            - Action:
+                - 'bedrock:InvokeModel*'
+              Effect: Allow
+              Resource: '*'
+      Environment:
+        Variables:
+          DEBUG_LOGGING: 'false'
+          DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
+          DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
+          LLM_PROMPT_ID: create-connections-game
+      Events:
+        Schedule:
+          Type: Schedule
+          Properties:
+            Schedule: 'cron(33 3 ? * 2 *)'
+            Description: Create daily game between 3-4am UTC (UTC+14 is max)
+      Tags:
+        'created-by': 'connections-api'
+        'created-for': 'connections'
+        'environment': !Ref Environment
+      Timeout: 90
+      Tracing: Active
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: 'es2020'
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/scheduled-create-game.ts
+
+  ScheduledCreateGameLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ScheduledCreateGameFunction}
+      RetentionInDays: 30
+      Tags:
+        - Key: 'created-by'
+          Value: 'connections-api'
+        - Key: 'created-for'
+          Value: 'connections'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  ScheduledCreateGameGroupSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: !Sub
+        - 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Function}'
+        - Function: !FindInMap [EnvironmentMap, !Ref Environment, logStreamFunction]
+      FilterPattern: '[timestamp, uuid, level="ERROR", message]'
+      LogGroupName: !Ref ScheduledCreateGameLogGroup
+
+  # DynamoDB
+
+  GamesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: GameId
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: GameId
+          KeyType: HASH
+      TableName: !FindInMap [EnvironmentMap, !Ref Environment, gamesTable]
+      Tags:
+        - Key: 'created-by'
+          Value: 'connections-api'
+        - Key: 'created-for'
+          Value: 'connections'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  PromptsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: PromptId
+          AttributeType: S
+        - AttributeName: UpdatedAt
+          AttributeType: N
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: PromptId
+          KeyType: HASH
+        - AttributeName: UpdatedAt
+          KeyType: RANGE
+      TableName: !FindInMap [EnvironmentMap, !Ref Environment, promptsTable]
+      Tags:
+        - Key: 'created-by'
+          Value: 'connections-api'
+        - Key: 'created-for'
+          Value: 'connections'
+        - Key: 'environment'
+          Value: !Ref Environment
