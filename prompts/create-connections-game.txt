@@ -6,19 +6,27 @@
 - Each category has 4 associated words.
 - Some or all of the words have overlap where they could be associated with other words.
 - Categories should not be too similar to each other ("weather" and "storms" are too similar).
-- Categories should not be related to the letters in words or their spelling (but homophones are allowed).
+- Categories should not be solely about mudane spelling (words ending "-ing" is not a good category).
 - Each word in the 4 categories MUST appear only once.
-- The categories should not be easy to guess. Be as random as possible.
+- The categories should be very difficult guess. Be as random as possible.
 </context>
 <steps>
-- Generate 5 random words or subjects, 10 uncommon words, 5 words with multiple meanings or spellings, and 10 famous names or places or phrases or time periods.
-- Using the generated words for inspiration, generate 4 more categories AND their associated words.
+- Generate some ideas inspiration:
+  - 10 random words or subjects
+  - 5 uncommon words
+  - 10 words with multiple meanings or spellings
+  - 10 famous names
+  - 10 famous places
+  - 5 famous phrases
+  - 5 famous time periods
+- Using the generated words for inspiration, generate 4 categories AND their associated words.
   - Associated words need to make sense.
   - All words MUST be unique between categories. NO CATEGORIES CAN SHARE A WORD.
   - Generate a hint for each category, either about a specific word or about the category itself, phrased as a question. The hint must be vague enough to be a hint, DO NOT give the solution. DO NOT use any words from the category name.
   - Try to come up with words that appear to fit in more than one category.
-  - Make categories extremely difficult to guess.
-  - Pay attention to disallowed words and categories. DO NOT use similar categories. Double-check that before returning.
+  - Make at least two categories extremely difficult to guess.
+  - Pay attention to disallowed words and categories. DO NOT use similar categories or a disallowed word. Double-check that before returning.
+  - No categories or words should be offensive or indecent.
 </steps>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
@@ -47,9 +55,6 @@
       "hint": "Are you familiar with the DAGGER character?",
       "words": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"]
     }
-  },
-  "fakeCategories": {
-    "Birds": {"words": ["CROW", "ROOSTER"]}
   }
 }
 </example_output>
@@ -72,9 +77,6 @@
       "hint": "Is CRYSTAL opaque?",
       "words": ["A BELL", "CRYSTAL", "DAY", "MUD"]
     }
-  },
-  "fakeCategories": {
-    "Homophones": {"words": ["A BELL", "ABEL", "ABLE"]}
   }
 }
 </example_output>
