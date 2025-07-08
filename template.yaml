@@ -96,7 +96,7 @@ Resources:
         'created-by': 'connections-api'
         'created-for': 'connections'
         'environment': !Ref Environment
-      Timeout: 45
+      Timeout: 15
       Tracing: Active
     Metadata:
       BuildMethod: esbuild
@@ -168,7 +168,7 @@ Resources:
         'created-by': 'connections-api'
         'created-for': 'connections'
         'environment': !Ref Environment
-      Timeout: 35
+      Timeout: 60
       Tracing: Active
     Metadata:
       BuildMethod: esbuild
@@ -241,7 +241,7 @@ Resources:
         'created-by': 'connections-api'
         'created-for': 'connections'
         'environment': !Ref Environment
-      Timeout: 90
+      Timeout: 180
       Tracing: Active
     Metadata:
       BuildMethod: esbuild

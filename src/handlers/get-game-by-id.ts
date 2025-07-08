@@ -42,11 +42,13 @@ export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise
     }
 
     const connectionsData = await getConnectionsData(gameId)
-    log('result', { result: { ...status.OK, body: JSON.stringify({ categories: connectionsData.categories }) } })
+    log('Returning game data', { connectionsData: JSON.stringify(connectionsData, null, 2) })
     return { ...status.OK, body: JSON.stringify({ categories: connectionsData.categories }) }
   } catch (error: unknown) {
     const isContentError = error instanceof Error && error.message.includes('Generated words')
-    if (!isContentError) {
+    if (isContentError) {
+      log('Content generation error', { error })
+    } else {
       logError('getGameHandler', { error })
     }
     return { ...status.INTERNAL_SERVER_ERROR, body: JSON.stringify({ error: 'Error retrieving game' }) }
