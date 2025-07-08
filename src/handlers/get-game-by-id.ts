@@ -1,6 +1,5 @@
-import { llmPromptId } from '../config'
-import { invokeModel } from '../services/bedrock'
-import { getGameById, getGamesByIds, getPromptById, setGameById } from '../services/dynamodb'
+import { getGameById } from '../services/dynamodb'
+import { createGame } from '../services/games'
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2, ConnectionsData, GameId } from '../types'
 import { log, logError } from '../utils/logging'
 import status from '../utils/status'
@@ -20,41 +19,15 @@ const isValidGameId = (gameId: string): boolean => {
 }
 
 const getConnectionsData = async (gameId: GameId): Promise<ConnectionsData> => {
+  log('Retrieving game', { gameId })
   try {
     return await getGameById(gameId)
   } catch {
     log('Game not found, creating new game', { gameId })
+    const game = await createGame(gameId)
 
-    const gameDate = new Date(gameId)
-    const contextGameIds: GameId[] = []
-    for (let i = -60; i <= 60; i++) {
-      const contextDate = new Date(gameDate)
-      contextDate.setDate(contextDate.getDate() + i)
-      if (contextDate >= new Date('2025-01-01') && contextDate < new Date()) {
-        contextGameIds.push(contextDate.toISOString().split('T')[0])
-      }
-    }
-
-    const contextGames = await getGamesByIds(contextGameIds)
-    const avoidWords = Object.values(contextGames)
-      .flatMap((game) => Object.values(game.categories).flatMap((cat) => cat.words))
-      .join(', ')
-    const avoidCategories = Object.values(contextGames)
-      .flatMap((game) => Object.keys(game.categories))
-      .join(', ')
-
-    const prompt = await getPromptById(llmPromptId)
-    const connectionsData = (await invokeModel(prompt, { avoidCategories, avoidWords })) as ConnectionsData
-    const wordList = Object.values(connectionsData.categories).flatMap((cat) => cat.words)
-
-    if (new Set(wordList).size !== wordList.length) {
-      throw new Error('Generated words are not unique')
-    }
-
-    const dataWithWordList = { ...connectionsData, wordList }
-
-    await setGameById(gameId, dataWithWordList)
-    return dataWithWordList
+    log('New game created', { game, gameId })
+    return game
   }
 }
 

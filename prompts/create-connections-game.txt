@@ -14,10 +14,11 @@
 - Generate 5 random words or subjects, 10 uncommon words, 5 words with multiple meanings or spellings, and 10 famous names or places or phrases or time periods.
 - Using the generated words for inspiration, generate 4 more categories AND their associated words.
   - Associated words need to make sense.
-  - All words MUST be unique between categories. NO CATEGORIES CAN SHARE A WORD. Double-check that before returning.
+  - All words MUST be unique between categories. NO CATEGORIES CAN SHARE A WORD.
   - Generate a hint for each category, either about a specific word or about the category itself, phrased as a question. The hint must be vague enough to be a hint, DO NOT give the solution. DO NOT use any words from the category name.
   - Try to come up with words that appear to fit in more than one category.
   - Make categories extremely difficult to guess.
+  - Pay attention to disallowed words and categories. DO NOT use similar categories. Double-check that before returning.
 </steps>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
