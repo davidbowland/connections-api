@@ -39,10 +39,18 @@ const getConnectionsData = async (gameId: GameId): Promise<ConnectionsData> => {
     const avoidWords = Object.values(contextGames)
       .flatMap((game) => Object.values(game.categories).flatMap((cat) => cat.words))
       .join(', ')
+    const avoidCategories = Object.values(contextGames)
+      .flatMap((game) => Object.keys(game.categories))
+      .join(', ')
 
     const prompt = await getPromptById(llmPromptId)
-    const connectionsData = (await invokeModel(prompt, { avoidWords })) as ConnectionsData
+    const connectionsData = (await invokeModel(prompt, { avoidCategories, avoidWords })) as ConnectionsData
     const wordList = Object.values(connectionsData.categories).flatMap((cat) => cat.words)
+
+    if (new Set(wordList).size !== wordList.length) {
+      throw new Error('Generated words are not unique')
+    }
+
     const dataWithWordList = { ...connectionsData, wordList }
 
     await setGameById(gameId, dataWithWordList)
@@ -50,7 +58,7 @@ const getConnectionsData = async (gameId: GameId): Promise<ConnectionsData> => {
   }
 }
 
-export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2<any>> => {
+export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2<unknown>> => {
   log('Received event', { ...event, body: undefined })
 
   try {

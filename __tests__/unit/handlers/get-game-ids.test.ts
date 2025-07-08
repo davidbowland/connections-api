@@ -22,7 +22,7 @@ describe('get-game-ids', () => {
 
   describe('getGameIdsHandler', () => {
     it('returns game IDs from today to January 1, 2025 (newest to oldest)', async () => {
-      const result = await getGameIdsHandler(event)
+      const result: any = await getGameIdsHandler(event)
       const body = JSON.parse(result.body)
 
       expect(result).toEqual(expect.objectContaining(status.OK))
@@ -32,7 +32,7 @@ describe('get-game-ids', () => {
     it('returns single game ID when today is January 1, 2025', async () => {
       jest.setSystemTime(new Date('2025-01-01'))
 
-      const result = await getGameIdsHandler(event)
+      const result: any = await getGameIdsHandler(event)
       const body = JSON.parse(result.body)
 
       expect(body.gameIds).toEqual(['2025-01-01'])
