@@ -1,4 +1,11 @@
-import { DynamoDB, GetItemCommand, PutItemCommand, PutItemOutput, QueryCommand } from '@aws-sdk/client-dynamodb'
+import {
+  BatchGetItemCommand,
+  DynamoDB,
+  GetItemCommand,
+  PutItemCommand,
+  PutItemOutput,
+  QueryCommand,
+} from '@aws-sdk/client-dynamodb'
 
 import { dynamodbGamesTableName, dynamodbPromptsTableName } from '../config'
 import { ConnectionsData, GameId, Prompt, PromptId } from '../types'
@@ -36,6 +43,28 @@ export const getGameById = async (gameId: GameId): Promise<ConnectionsData> => {
   })
   const response = await dynamodb.send(command)
   return JSON.parse(response.Item.Data.S as string)
+}
+
+export const getGamesByIds = async (gameIds: GameId[]): Promise<Record<GameId, ConnectionsData>> => {
+  if (gameIds.length === 0) return {}
+
+  const command = new BatchGetItemCommand({
+    RequestItems: {
+      [dynamodbGamesTableName]: {
+        Keys: gameIds.map((gameId) => ({ GameId: { S: gameId } })),
+      },
+    },
+  })
+  const response = await dynamodb.send(command)
+  const result: Record<GameId, ConnectionsData> = {}
+
+  response.Responses?.[dynamodbGamesTableName]?.forEach((item: any) => {
+    const gameId = item.GameId?.S as GameId
+    const data = JSON.parse(item.Data?.S as string) as ConnectionsData
+    result[gameId] = data
+  })
+
+  return result
 }
 
 export const setGameById = async (gameId: GameId, data: ConnectionsData): Promise<PutItemOutput> => {

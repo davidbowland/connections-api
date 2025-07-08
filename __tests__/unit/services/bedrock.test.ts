@@ -45,7 +45,7 @@ describe('bedrock', () => {
       }
       const result = await invokeModel(promptWithContext, { data })
 
-      expect(result).toEqual(connectionsData)
+      expect(result).toEqual({ ...connectionsData, wordList: undefined })
       expect(mockSend).toHaveBeenCalledWith({
         body: new TextEncoder().encode(
           JSON.stringify({
@@ -69,7 +69,7 @@ describe('bedrock', () => {
 
     it('should invoke the correct model based on the prompt', async () => {
       const result = await invokeModelMessage(prompt)
-      expect(result).toEqual(connectionsData)
+      expect(result).toEqual({ ...connectionsData, wordList: undefined })
       expect(mockSend).toHaveBeenCalledWith({
         body: new TextEncoder().encode(
           JSON.stringify({

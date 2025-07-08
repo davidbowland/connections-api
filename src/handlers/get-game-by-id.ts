@@ -1,6 +1,6 @@
 import { llmPromptId } from '../config'
 import { invokeModel } from '../services/bedrock'
-import { getGameById, getPromptById, setGameById } from '../services/dynamodb'
+import { getGameById, getGamesByIds, getPromptById, setGameById } from '../services/dynamodb'
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2, ConnectionsData, GameId } from '../types'
 import { log, logError } from '../utils/logging'
 import status from '../utils/status'
@@ -24,11 +24,29 @@ const getConnectionsData = async (gameId: GameId): Promise<ConnectionsData> => {
     return await getGameById(gameId)
   } catch {
     log('Game not found, creating new game', { gameId })
-    const prompt = await getPromptById(llmPromptId)
-    const connectionsData = (await invokeModel(prompt)) as ConnectionsData
 
-    await setGameById(gameId, connectionsData)
-    return connectionsData
+    const gameDate = new Date(gameId)
+    const contextGameIds: GameId[] = []
+    for (let i = -60; i <= 60; i++) {
+      const contextDate = new Date(gameDate)
+      contextDate.setDate(contextDate.getDate() + i)
+      if (contextDate >= new Date('2025-01-01') && contextDate < new Date()) {
+        contextGameIds.push(contextDate.toISOString().split('T')[0])
+      }
+    }
+
+    const contextGames = await getGamesByIds(contextGameIds)
+    const avoidWords = Object.values(contextGames)
+      .flatMap((game) => Object.values(game.categories).flatMap((cat) => cat.words))
+      .join(', ')
+
+    const prompt = await getPromptById(llmPromptId)
+    const connectionsData = (await invokeModel(prompt, { avoidWords })) as ConnectionsData
+    const wordList = Object.values(connectionsData.categories).flatMap((cat) => cat.words)
+    const dataWithWordList = { ...connectionsData, wordList }
+
+    await setGameById(gameId, dataWithWordList)
+    return dataWithWordList
   }
 }
 
@@ -43,8 +61,7 @@ export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise
     }
 
     const connectionsData = await getConnectionsData(gameId)
-    const game = { categories: connectionsData.categories }
-    return { ...status.OK, body: JSON.stringify(game) }
+    return { ...status.OK, body: JSON.stringify({ categories: connectionsData.categories }) }
   } catch (error: unknown) {
     logError('getGameHandler', { error })
     return { ...status.INTERNAL_SERVER_ERROR, body: JSON.stringify({ error: 'Error retrieving game' }) }

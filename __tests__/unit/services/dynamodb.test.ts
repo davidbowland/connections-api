@@ -1,8 +1,9 @@
 import { connectionsData, gameId, prompt, promptConfig, promptId } from '../__mocks__'
-import { getGameById, getPromptById, setGameById } from '@services/dynamodb'
+import { getGameById, getGamesByIds, getPromptById, setGameById } from '@services/dynamodb'
 
 const mockSend = jest.fn()
 jest.mock('@aws-sdk/client-dynamodb', () => ({
+  BatchGetItemCommand: jest.fn().mockImplementation((x) => x),
   DynamoDB: jest.fn(() => ({
     send: (...args) => mockSend(...args),
   })),
@@ -53,6 +54,41 @@ describe('dynamodb', () => {
         TableName: 'games-table',
       })
       expect(result).toEqual(connectionsData)
+    })
+  })
+
+  describe('getGamesByIds', () => {
+    beforeAll(() => {
+      mockSend.mockResolvedValue({
+        Responses: {
+          'games-table': [
+            { Data: { S: JSON.stringify(connectionsData) }, GameId: { S: '2025-01-01' } },
+            { Data: { S: JSON.stringify(connectionsData) }, GameId: { S: '2025-01-02' } },
+          ],
+        },
+      })
+    })
+
+    it('should call DynamoDB with batch request', async () => {
+      const gameIds = ['2025-01-01', '2025-01-02']
+      const result = await getGamesByIds(gameIds)
+
+      expect(mockSend).toHaveBeenCalledWith({
+        RequestItems: {
+          'games-table': {
+            Keys: [{ GameId: { S: '2025-01-01' } }, { GameId: { S: '2025-01-02' } }],
+          },
+        },
+      })
+      expect(result).toEqual({
+        '2025-01-01': connectionsData,
+        '2025-01-02': connectionsData,
+      })
+    })
+
+    it('should return empty object for empty input', async () => {
+      const result = await getGamesByIds([])
+      expect(result).toEqual({})
     })
   })
 

@@ -1,18 +1,56 @@
 /* eslint sort-keys:0 */
 import { CategoryObject, ConnectionsData, ConnectionsGame, GameId, Prompt, PromptConfig, PromptId } from '@types'
 
+// Games
+
+export const gameId: GameId = '2025-01-01'
+
+const categories: CategoryObject = {
+  Boast: { hint: 'Boast hint', words: ['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT'] },
+  'Arc-shaped things': { hint: 'Arc-shaped things hint', words: ['BANANA', 'EYEBROW', 'FLIGHT PATH', 'RAINBOW'] },
+  'Cereal mascots': { hint: 'Cereal mascots hint', words: ['COUNT', 'ELVES', 'LEPRECHAUN', 'ROOSTER'] },
+  'Ways to denote a citation': {
+    hint: 'Ways to denote a citation hint',
+    words: ['ASTERISK', 'DAGGER', 'NUMBER', 'PARENS'],
+  },
+}
+
+const fakeCategories: CategoryObject = {
+  Fake: { hint: 'Fake hint', words: ['MADE', 'UP', 'WORDS', 'HERE'] },
+}
+
+export const connectionsData: ConnectionsData = {
+  categories,
+  fakeCategories,
+  wordList: [
+    'BLUSTER',
+    'CROW',
+    'SHOW OFF',
+    'STRUT',
+    'BANANA',
+    'EYEBROW',
+    'FLIGHT PATH',
+    'RAINBOW',
+    'COUNT',
+    'ELVES',
+    'LEPRECHAUN',
+    'ROOSTER',
+    'ASTERISK',
+    'DAGGER',
+    'NUMBER',
+    'PARENS',
+  ],
+}
+
+export const game: ConnectionsGame = {
+  categories,
+}
+
 // Bedrock
 
 export const invokeModelCategories = {
-  categories: {
-    Boast: { words: ['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT'] },
-    'Arc-shaped things': { words: ['BANANA', 'EYEBROW', 'FLIGHT PATH', 'RAINBOW'] },
-    'Cereal mascots': { words: ['COUNT', 'ELVES', 'LEPRECHAUN', 'ROOSTER'] },
-    'Ways to denote a citation': { words: ['ASTERISK', 'DAGGER', 'NUMBER', 'PARENS'] },
-  },
-  fakeCategories: {
-    Fake: { words: ['MADE', 'UP', 'WORDS', 'HERE'] },
-  },
+  categories,
+  fakeCategories,
 }
 
 export const invokeModelResponseData = {
@@ -92,24 +130,4 @@ export const promptId: PromptId = '5253'
 export const prompt: Prompt = {
   config: promptConfig,
   contents: 'You are a helpful assistant. ${data}',
-}
-
-// Games
-
-export const gameId: GameId = '2025-01-01'
-
-const categories: CategoryObject = {
-  Boast: { words: ['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT'] },
-  'Arc-shaped things': { words: ['BANANA', 'EYEBROW', 'FLIGHT PATH', 'RAINBOW'] },
-  'Cereal mascots': { words: ['COUNT', 'ELVES', 'LEPRECHAUN', 'ROOSTER'] },
-  'Ways to denote a citation': { words: ['ASTERISK', 'DAGGER', 'NUMBER', 'PARENS'] },
-}
-
-export const connectionsData: ConnectionsData = {
-  categories,
-  fakeCategories: { Fake: { words: ['MADE', 'UP', 'WORDS', 'HERE'] } },
-}
-
-export const game: ConnectionsGame = {
-  categories,
 }

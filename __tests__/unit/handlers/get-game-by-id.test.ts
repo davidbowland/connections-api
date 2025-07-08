@@ -36,6 +36,7 @@ describe('get-game-by-id', () => {
 
     it('creates and returns new game when not found', async () => {
       jest.mocked(dynamodb).getGameById.mockRejectedValue(new Error('Not found'))
+      jest.mocked(dynamodb).getGamesByIds.mockResolvedValue({})
       jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
       jest.mocked(bedrock).invokeModel.mockResolvedValue(connectionsData)
 
@@ -43,7 +44,12 @@ describe('get-game-by-id', () => {
 
       expect(result).toEqual(expect.objectContaining({ statusCode: status.OK.statusCode }))
       expect(JSON.parse(result.body)).toEqual(game)
-      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData)
+      expect(dynamodb.getGamesByIds).toHaveBeenCalled()
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, { avoidWords: '' })
+      expect(dynamodb.setGameById).toHaveBeenCalledWith(
+        '2025-01-01',
+        expect.objectContaining({ ...connectionsData, wordList: expect.any(Array) }),
+      )
     })
 
     it('returns bad request for invalid gameId', async () => {
@@ -99,16 +105,19 @@ describe('get-game-by-id', () => {
 
     it('returns internal server error when LLM invocation fails', async () => {
       jest.mocked(dynamodb).getGameById.mockRejectedValue(new Error('Not found'))
+      jest.mocked(dynamodb).getGamesByIds.mockResolvedValue({})
       jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
       jest.mocked(bedrock).invokeModel.mockRejectedValue(new Error('LLM error'))
 
       const result = await getGameByIdHandler(event)
 
       expect(result).toEqual(expect.objectContaining({ statusCode: status.INTERNAL_SERVER_ERROR.statusCode }))
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, { avoidWords: '' })
     })
 
     it('returns internal server error when game save fails', async () => {
       jest.mocked(dynamodb).getGameById.mockRejectedValue(new Error('Not found'))
+      jest.mocked(dynamodb).getGamesByIds.mockResolvedValue({})
       jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
       jest.mocked(bedrock).invokeModel.mockResolvedValue({ categories: game.categories, fakeCategories: {} })
       jest.mocked(dynamodb).setGameById.mockRejectedValue(new Error('Save error'))
