@@ -42,6 +42,7 @@ export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise
     }
 
     const connectionsData = await getConnectionsData(gameId)
+    log('result', { result: { ...status.OK, body: JSON.stringify({ categories: connectionsData.categories }) } })
     return { ...status.OK, body: JSON.stringify({ categories: connectionsData.categories }) }
   } catch (error: unknown) {
     const isContentError = error instanceof Error && error.message.includes('Generated words')
