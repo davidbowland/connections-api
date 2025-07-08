@@ -44,7 +44,10 @@ export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise
     const connectionsData = await getConnectionsData(gameId)
     return { ...status.OK, body: JSON.stringify({ categories: connectionsData.categories }) }
   } catch (error: unknown) {
-    logError('getGameHandler', { error })
+    const isContentError = error instanceof Error && error.message.includes('Generated words')
+    if (!isContentError) {
+      logError('getGameHandler', { error })
+    }
     return { ...status.INTERNAL_SERVER_ERROR, body: JSON.stringify({ error: 'Error retrieving game' }) }
   }
 }
