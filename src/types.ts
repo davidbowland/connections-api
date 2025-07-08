@@ -12,6 +12,7 @@ export interface ConnectionsGame {
 export interface ConnectionsData {
   categories: CategoryObject
   fakeCategories: CategoryObject
+  wordList: string[]
 }
 
 export interface Category {

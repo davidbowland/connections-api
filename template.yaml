@@ -51,12 +51,8 @@ Resources:
           - X-Api-Key
           - X-Twitch-Token
         AllowMethods:
-          - DELETE
           - GET
           - OPTIONS
-          - PATCH
-          - POST
-          - PUT
         AllowOrigins:
           - !FindInMap [EnvironmentMap, !Ref Environment, corsDomain]
       Domain:
@@ -100,7 +96,7 @@ Resources:
         'created-by': 'connections-api'
         'created-for': 'connections'
         'environment': !Ref Environment
-      Timeout: 15
+      Timeout: 45
       Tracing: Active
     Metadata:
       BuildMethod: esbuild

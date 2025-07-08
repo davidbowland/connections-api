@@ -1,6 +1,5 @@
-import { llmPromptId } from '../config'
-import { invokeModel } from '../services/bedrock'
-import { getGameById, getPromptById, setGameById } from '../services/dynamodb'
+import { getGameById } from '../services/dynamodb'
+import { createGame } from '../services/games'
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2, ConnectionsData, GameId } from '../types'
 import { log, logError } from '../utils/logging'
 import status from '../utils/status'
@@ -20,19 +19,19 @@ const isValidGameId = (gameId: string): boolean => {
 }
 
 const getConnectionsData = async (gameId: GameId): Promise<ConnectionsData> => {
+  log('Retrieving game', { gameId })
   try {
     return await getGameById(gameId)
   } catch {
     log('Game not found, creating new game', { gameId })
-    const prompt = await getPromptById(llmPromptId)
-    const connectionsData = (await invokeModel(prompt)) as ConnectionsData
+    const game = await createGame(gameId)
 
-    await setGameById(gameId, connectionsData)
-    return connectionsData
+    log('New game created', { game, gameId })
+    return game
   }
 }
 
-export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2<any>> => {
+export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2<unknown>> => {
   log('Received event', { ...event, body: undefined })
 
   try {
@@ -43,10 +42,13 @@ export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise
     }
 
     const connectionsData = await getConnectionsData(gameId)
-    const game = { categories: connectionsData.categories }
-    return { ...status.OK, body: JSON.stringify(game) }
+    log('result', { result: { ...status.OK, body: JSON.stringify({ categories: connectionsData.categories }) } })
+    return { ...status.OK, body: JSON.stringify({ categories: connectionsData.categories }) }
   } catch (error: unknown) {
-    logError('getGameHandler', { error })
+    const isContentError = error instanceof Error && error.message.includes('Generated words')
+    if (!isContentError) {
+      logError('getGameHandler', { error })
+    }
     return { ...status.INTERNAL_SERVER_ERROR, body: JSON.stringify({ error: 'Error retrieving game' }) }
   }
 }

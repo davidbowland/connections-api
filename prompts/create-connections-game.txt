@@ -1,31 +1,29 @@
 <instructions>
 <context>
-"Connections" is a word game where the goal is to choose assocaited words.
+"Connections" is a word game where the goal is to choose associated words.
 
-- There are 4 categories and 1 fake category.
+- There are 4 categories.
 - Each category has 4 associated words.
 - Some or all of the words have overlap where they could be associated with other words.
 - Categories should not be too similar to each other ("weather" and "storms" are too similar).
 - Categories should not be related to the letters in words or their spelling (but homophones are allowed).
 - Each word in the 4 categories MUST appear only once.
-- The categories should not be easy to guess.
+- The categories should not be easy to guess. Be as random as possible.
 </context>
 <steps>
-- Generate a category and then 6 words in that category. This will be the fake category.
-- Generate 4 more categories AND their associated words.
-  - All 4 categories combined MUST include at least 3 of the words from the fake category.
-  - Words included from the fake category should be used in a different way or in a different context ("feet" on the body vs "feet" as a measurement).
-  - Not all words from the fake category need to be used.
-  - Associated words need to make sense. If a fake word is RAISE and the real category is about laundry, even though they could be related, it doesn't make sense to raise laundry.
-  - If words from the fake category cannot be assocaited in a way that make sense, do not associate them.
+- Generate 5 random words or subjects, 10 uncommon words, 5 words with multiple meanings or spellings, and 10 famous names or places or phrases or time periods.
+- Using the generated words for inspiration, generate 4 more categories AND their associated words.
+  - Associated words need to make sense.
   - All words MUST be unique between categories. NO CATEGORIES CAN SHARE A WORD.
   - Generate a hint for each category, either about a specific word or about the category itself, phrased as a question. The hint must be vague enough to be a hint, DO NOT give the solution. DO NOT use any words from the category name.
+  - Try to come up with words that appear to fit in more than one category.
+  - Make categories extremely difficult to guess.
+  - Pay attention to disallowed words and categories. DO NOT use similar categories. Double-check that before returning.
 </steps>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
 - The output will be a JSON object consisting of two keys:
-  - `categories` -- a JSON object where each key is a generated category and the value is an object where key `words` is list of associated words and `hint` is the hint
-  - `fakeCategories` -- a JSON object where each key is the fake category and the value is an object where key `words` is a list of associated words
+  - `categories` -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words and `hint` is the hint
 - Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
 </instructions>
@@ -158,3 +156,9 @@
 <words><word>ELEPANT</word><word>FAWN</word><word>MARIONETTE</word><word>MOUSE</word></words>
 </example>
 </example_categories>
+
+NEVER use these recently words or categories:
+
+<disallowed>
+${context}
+</disallowed>

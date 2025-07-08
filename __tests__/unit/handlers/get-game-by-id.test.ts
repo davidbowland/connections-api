@@ -1,12 +1,12 @@
-import { connectionsData, game, prompt } from '../__mocks__'
+import { connectionsData, game } from '../__mocks__'
 import { getGameByIdHandler } from '@handlers/get-game-by-id'
-import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
+import * as games from '@services/games'
 import { APIGatewayProxyEventV2 } from '@types'
 import status from '@utils/status'
 
-jest.mock('@services/bedrock')
 jest.mock('@services/dynamodb')
+jest.mock('@services/games')
 jest.mock('@utils/logging')
 
 const event = {
@@ -27,7 +27,7 @@ describe('get-game-by-id', () => {
     it('returns existing game from database', async () => {
       jest.mocked(dynamodb).getGameById.mockResolvedValue(connectionsData)
 
-      const result = await getGameByIdHandler(event)
+      const result: any = await getGameByIdHandler(event)
 
       expect(result).toEqual(expect.objectContaining({ statusCode: status.OK.statusCode }))
       expect(JSON.parse(result.body)).toEqual(game)
@@ -36,14 +36,13 @@ describe('get-game-by-id', () => {
 
     it('creates and returns new game when not found', async () => {
       jest.mocked(dynamodb).getGameById.mockRejectedValue(new Error('Not found'))
-      jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
-      jest.mocked(bedrock).invokeModel.mockResolvedValue(connectionsData)
+      jest.mocked(games).createGame.mockResolvedValue(connectionsData)
 
-      const result = await getGameByIdHandler(event)
+      const result: any = await getGameByIdHandler(event)
 
       expect(result).toEqual(expect.objectContaining({ statusCode: status.OK.statusCode }))
       expect(JSON.parse(result.body)).toEqual(game)
-      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData)
+      expect(games.createGame).toHaveBeenCalledWith('2025-01-01')
     })
 
     it('returns bad request for invalid gameId', async () => {
@@ -51,7 +50,7 @@ describe('get-game-by-id', () => {
         pathParameters: { gameId: 'invalid' },
       } as unknown as APIGatewayProxyEventV2
 
-      const result = await getGameByIdHandler(invalidEvent)
+      const result: any = await getGameByIdHandler(invalidEvent)
 
       expect(result).toEqual(expect.objectContaining({ statusCode: status.BAD_REQUEST.statusCode }))
       expect(JSON.parse(result.body)).toEqual({ error: 'Invalid gameId' })
@@ -87,35 +86,14 @@ describe('get-game-by-id', () => {
       expect(result).toEqual(expect.objectContaining({ statusCode: status.BAD_REQUEST.statusCode }))
     })
 
-    it('returns internal server error when prompt retrieval fails', async () => {
+    it('returns internal server error when game creation fails', async () => {
       jest.mocked(dynamodb).getGameById.mockRejectedValue(new Error('Not found'))
-      jest.mocked(dynamodb).getPromptById.mockRejectedValue(new Error('Prompt error'))
+      jest.mocked(games).createGame.mockRejectedValue(new Error('Creation error'))
 
-      const result = await getGameByIdHandler(event)
+      const result: any = await getGameByIdHandler(event)
 
       expect(result).toEqual(expect.objectContaining({ statusCode: status.INTERNAL_SERVER_ERROR.statusCode }))
       expect(JSON.parse(result.body)).toEqual({ error: 'Error retrieving game' })
-    })
-
-    it('returns internal server error when LLM invocation fails', async () => {
-      jest.mocked(dynamodb).getGameById.mockRejectedValue(new Error('Not found'))
-      jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
-      jest.mocked(bedrock).invokeModel.mockRejectedValue(new Error('LLM error'))
-
-      const result = await getGameByIdHandler(event)
-
-      expect(result).toEqual(expect.objectContaining({ statusCode: status.INTERNAL_SERVER_ERROR.statusCode }))
-    })
-
-    it('returns internal server error when game save fails', async () => {
-      jest.mocked(dynamodb).getGameById.mockRejectedValue(new Error('Not found'))
-      jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
-      jest.mocked(bedrock).invokeModel.mockResolvedValue({ categories: game.categories, fakeCategories: {} })
-      jest.mocked(dynamodb).setGameById.mockRejectedValue(new Error('Save error'))
-
-      const result = await getGameByIdHandler(event)
-
-      expect(result).toEqual(expect.objectContaining({ statusCode: status.INTERNAL_SERVER_ERROR.statusCode }))
     })
   })
 })

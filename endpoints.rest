@@ -4,4 +4,4 @@ GET https://{{connections-api-host}}/v1/games HTTP/1.1
 
 ### Get specific game
 
-GET https://{{connections-api-host}}/v1/games/2025-01-01 HTTP/1.1
+GET https://connections-api.bowland.link/v1/games/2025-06-28 HTTP/1.1
