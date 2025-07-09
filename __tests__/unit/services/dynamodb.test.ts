@@ -1,5 +1,5 @@
 import { connectionsData, gameId, prompt, promptConfig, promptId } from '../__mocks__'
-import { getGameById, getGamesByIds, getPromptById, setGameById } from '@services/dynamodb'
+import { getGameById, getGamesByIds, getPromptById, setGameById, setGameGenerationStarted } from '@services/dynamodb'
 
 const mockSend = jest.fn()
 jest.mock('@aws-sdk/client-dynamodb', () => ({
@@ -38,13 +38,15 @@ describe('dynamodb', () => {
   })
 
   describe('getGameById', () => {
-    beforeAll(() => {
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return game data when game exists', async () => {
       mockSend.mockResolvedValue({
         Item: { Data: { S: JSON.stringify(connectionsData) } },
       })
-    })
 
-    it('should call DynamoDB with the correct arguments', async () => {
       const result = await getGameById(gameId)
 
       expect(mockSend).toHaveBeenCalledWith({
@@ -53,7 +55,37 @@ describe('dynamodb', () => {
         },
         TableName: 'games-table',
       })
-      expect(result).toEqual(connectionsData)
+      expect(result).toEqual({ game: connectionsData, isGenerating: false })
+    })
+
+    it('should return isGenerating true when generation started recently', async () => {
+      const recentTime = Date.now() - 100000 // 100 seconds ago
+      mockSend.mockResolvedValue({
+        Item: { GenerationStarted: { N: recentTime.toString() } },
+      })
+
+      const result = await getGameById(gameId)
+
+      expect(result).toEqual({ isGenerating: true })
+    })
+
+    it('should return isGenerating false when generation started long ago', async () => {
+      const oldTime = Date.now() - 400000 // 400 seconds ago
+      mockSend.mockResolvedValue({
+        Item: { GenerationStarted: { N: oldTime.toString() } },
+      })
+
+      const result = await getGameById(gameId)
+
+      expect(result).toEqual({ isGenerating: false })
+    })
+
+    it('should return isGenerating false when no item exists', async () => {
+      mockSend.mockResolvedValue({})
+
+      const result = await getGameById(gameId)
+
+      expect(result).toEqual({ isGenerating: false })
     })
   })
 
@@ -107,6 +139,29 @@ describe('dynamodb', () => {
         },
         TableName: 'games-table',
       })
+    })
+  })
+
+  describe('setGameGenerationStarted', () => {
+    it('should call DynamoDB with GenerationStarted timestamp', async () => {
+      const mockNow = 1234567890
+      jest.spyOn(Date, 'now').mockReturnValue(mockNow)
+
+      await setGameGenerationStarted(gameId)
+
+      expect(mockSend).toHaveBeenCalledWith({
+        Item: {
+          GameId: {
+            S: gameId,
+          },
+          GenerationStarted: {
+            N: mockNow.toString(),
+          },
+        },
+        TableName: 'games-table',
+      })
+
+      jest.restoreAllMocks()
     })
   })
 })

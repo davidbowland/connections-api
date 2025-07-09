@@ -38,6 +38,7 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.842.0",
     "@aws-sdk/client-dynamodb": "^3.840.0",
+    "@aws-sdk/client-lambda": "^3.840.0",
     "ajv": "^8.17.1",
     "aws-xray-sdk-core": "^3.10.3",
     "axios": "^1.10.0",

@@ -5,6 +5,7 @@ import { createGame } from '@services/games'
 
 jest.mock('@services/bedrock')
 jest.mock('@services/dynamodb')
+jest.mock('@utils/logging')
 
 describe('games', () => {
   beforeAll(() => {

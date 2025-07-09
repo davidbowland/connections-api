@@ -10,6 +10,10 @@ axiosRetry(axios, { retries: 3 })
 export const dynamodbGamesTableName = process.env.DYNAMODB_GAMES_TABLE_NAME as string
 export const dynamodbPromptsTableName = process.env.DYNAMODB_PROMPTS_TABLE_NAME as string
 
+// Lambda
+
+export const createGameFunctionName = process.env.CREATE_GAME_FUNCTION_NAME as string
+
 // LLM
 
 export const llmPromptId = process.env.LLM_PROMPT_ID as string

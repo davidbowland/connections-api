@@ -3,6 +3,7 @@
 export default {
   OK: { statusCode: 200 },
   CREATED: { statusCode: 201 },
+  ACCEPTED: { statusCode: 202 },
   NO_CONTENT: { statusCode: 204, body: '' },
   BAD_REQUEST: { statusCode: 400, body: '{"message":"Bad request"}' },
   FORBIDDEN: { statusCode: 403 },
