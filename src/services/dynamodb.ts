@@ -32,7 +32,12 @@ export const getPromptById = async (promptId: PromptId): Promise<Prompt> => {
 
 // Games
 
-export const getGameById = async (gameId: GameId): Promise<ConnectionsData> => {
+export interface GameResult {
+  isGenerating: boolean
+  game?: ConnectionsData
+}
+
+export const getGameById = async (gameId: GameId): Promise<GameResult> => {
   const command = new GetItemCommand({
     Key: {
       GameId: {
@@ -42,7 +47,16 @@ export const getGameById = async (gameId: GameId): Promise<ConnectionsData> => {
     TableName: dynamodbGamesTableName,
   })
   const response = await dynamodb.send(command)
-  return JSON.parse(response.Item.Data.S as string)
+  if (response.Item?.Data?.S) {
+    return {
+      game: JSON.parse(response.Item.Data.S as string),
+      isGenerating: false,
+    }
+  }
+
+  const generationStarted = response.Item?.GenerationStarted?.N
+  const isGenerating = generationStarted ? parseInt(generationStarted) + 300000 > Date.now() : false
+  return { isGenerating }
 }
 
 export const getGamesByIds = async (gameIds: GameId[]): Promise<Record<GameId, ConnectionsData>> => {
@@ -60,8 +74,10 @@ export const getGamesByIds = async (gameIds: GameId[]): Promise<Record<GameId, C
 
   response.Responses?.[dynamodbGamesTableName]?.forEach((item: any) => {
     const gameId = item.GameId?.S as GameId
-    const data = JSON.parse(item.Data?.S as string) as ConnectionsData
-    result[gameId] = data
+    if (item.Data?.S) {
+      const data = JSON.parse(item.Data.S as string) as ConnectionsData
+      result[gameId] = data
+    }
   })
 
   return result
@@ -75,6 +91,21 @@ export const setGameById = async (gameId: GameId, data: ConnectionsData): Promis
       },
       GameId: {
         S: `${gameId}`,
+      },
+    },
+    TableName: dynamodbGamesTableName,
+  })
+  return await dynamodb.send(command)
+}
+
+export const setGameGenerationStarted = async (gameId: GameId): Promise<PutItemOutput> => {
+  const command = new PutItemCommand({
+    Item: {
+      GameId: {
+        S: `${gameId}`,
+      },
+      GenerationStarted: {
+        N: `${Date.now()}`,
       },
     },
     TableName: dynamodbGamesTableName,

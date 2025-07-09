@@ -19,6 +19,7 @@
   - 10 famous places
   - 5 famous phrases
   - 5 famous time periods
+  - 10 famous cultural items (shows, books, movies, paintings, etc)
 - Using the generated words for inspiration, generate 4 categories AND their associated words.
   - Associated words need to make sense.
   - All words MUST be unique between categories. NO CATEGORIES CAN SHARE A WORD.

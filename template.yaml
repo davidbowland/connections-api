@@ -140,23 +140,19 @@ Resources:
       Description: Retrieve a game by ID, creating it if necessary
       Policies:
         - AWSLambdaBasicExecutionRole
-        - DynamoDBCrudPolicy:
-            TableName: !Ref GamesTable
         - DynamoDBReadPolicy:
-            TableName: !Ref PromptsTable
-        # Allow invoking a model in Bedrock
+            TableName: !Ref GamesTable
         - Version: 2012-10-17
           Statement:
             - Action:
-                - 'bedrock:InvokeModel*'
+                - 'lambda:InvokeFunction'
               Effect: Allow
-              Resource: '*'
+              Resource: !GetAtt CreateGameFunction.Arn
       Environment:
         Variables:
           DEBUG_LOGGING: 'false'
-          DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
+          CREATE_GAME_FUNCTION_NAME: !Ref CreateGameFunction
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
-          LLM_PROMPT_ID: create-connections-game
       Events:
         Api:
           Type: HttpApi
@@ -168,7 +164,7 @@ Resources:
         'created-by': 'connections-api'
         'created-for': 'connections'
         'environment': !Ref Environment
-      Timeout: 60
+      Timeout: 15
       Tracing: Active
     Metadata:
       BuildMethod: esbuild
@@ -203,10 +199,10 @@ Resources:
 
   # Scheduled Game Creation
 
-  ScheduledCreateGameFunction:
+  CreateGameFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/scheduled-create-game.scheduledCreateGameHandler
+      Handler: src/handlers/create-game.createGameHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
@@ -250,12 +246,12 @@ Resources:
         Target: 'es2020'
         Sourcemap: true
         EntryPoints:
-          - src/handlers/scheduled-create-game.ts
+          - src/handlers/create-game.ts
 
-  ScheduledCreateGameLogGroup:
+  CreateGameLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/${ScheduledCreateGameFunction}
+      LogGroupName: !Sub /aws/lambda/${CreateGameFunction}
       RetentionInDays: 30
       Tags:
         - Key: 'created-by'
@@ -265,14 +261,14 @@ Resources:
         - Key: 'environment'
           Value: !Ref Environment
 
-  ScheduledCreateGameGroupSubscription:
+  CreateGameGroupSubscription:
     Type: AWS::Logs::SubscriptionFilter
     Properties:
       DestinationArn: !Sub
         - 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Function}'
         - Function: !FindInMap [EnvironmentMap, !Ref Environment, logStreamFunction]
       FilterPattern: '[timestamp, uuid, level="ERROR", message]'
-      LogGroupName: !Ref ScheduledCreateGameLogGroup
+      LogGroupName: !Ref CreateGameLogGroup
 
   # DynamoDB
 
