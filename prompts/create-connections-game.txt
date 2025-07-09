@@ -8,7 +8,6 @@
 - Categories should not be too similar to each other ("weather" and "storms" are too similar).
 - Categories should not be solely about mudane spelling (words ending "-ing" is not a good category).
 - Each word in the 4 categories MUST appear only once.
-- The categories should be very difficult guess. Be as random as possible.
 </context>
 <steps>
 - Generate some ideas inspiration:
@@ -25,7 +24,7 @@
   - All words MUST be unique between categories. NO CATEGORIES CAN SHARE A WORD.
   - Generate a hint for each category, either about a specific word or about the category itself, phrased as a question. The hint must be vague enough to be a hint, DO NOT give the solution. DO NOT use any words from the category name.
   - Try to come up with words that appear to fit in more than one category.
-  - Make at least two categories extremely difficult to guess.
+  - Make the categories extremely difficult to guess.
   - Pay attention to disallowed words and categories. DO NOT use similar categories or a disallowed word. Double-check that before returning.
   - No categories or words should be offensive or indecent.
 </steps>
@@ -35,6 +34,10 @@
   - `categories` -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words and `hint` is the hint
 - Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
+<disallowed>
+NEVER use these recently used words or categories:
+${context}
+</disallowed>
 </instructions>
 
 <example_output>
@@ -159,9 +162,3 @@
 <words><word>ELEPANT</word><word>FAWN</word><word>MARIONETTE</word><word>MOUSE</word></words>
 </example>
 </example_categories>
-
-NEVER use these recently words or categories:
-
-<disallowed>
-${context}
-</disallowed>

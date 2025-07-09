@@ -7,7 +7,7 @@ import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
 export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const gameDate = new Date(gameId)
   const contextGameIds: GameId[] = []
-  for (let i = -60; i <= 60; i++) {
+  for (let i = -10; i <= 5; i++) {
     const contextDate = new Date(gameDate)
     contextDate.setDate(contextDate.getDate() + i)
     if (contextDate >= new Date('2025-01-01') && contextDate < new Date()) {
