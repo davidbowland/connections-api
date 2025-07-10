@@ -15,13 +15,8 @@ const categories: CategoryObject = {
   },
 }
 
-const fakeCategories: CategoryObject = {
-  Fake: { hint: 'Fake hint', words: ['MADE', 'UP', 'WORDS', 'HERE'] },
-}
-
 export const connectionsData: ConnectionsData = {
   categories,
-  fakeCategories,
   wordList: [
     'BLUSTER',
     'CROW',
@@ -50,7 +45,6 @@ export const game: ConnectionsGame = {
 
 export const invokeModelCategories = {
   categories,
-  fakeCategories,
 }
 
 export const invokeModelResponseData = {

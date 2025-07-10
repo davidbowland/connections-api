@@ -4,29 +4,38 @@
 
 - There are 4 categories.
 - Each category has 4 associated words.
-- Some or all of the words have overlap where they could be associated with other words.
-- Categories should not be too similar to each other ("weather" and "storms" are too similar).
-- Categories should not be solely about mudane spelling (words ending "-ing" is not a good category).
-- Each word in the 4 categories MUST appear only once.
+- No categories or words should be offensive or indecent.
 </context>
 <steps>
-- Generate some ideas inspiration:
-  - 10 random words or subjects
-  - 5 uncommon words
-  - 10 words with multiple meanings or spellings
-  - 10 famous names
-  - 10 famous places
-  - 5 famous phrases
-  - 5 famous time periods
-  - 10 famous cultural items (shows, books, movies, paintings, etc)
-- Using the generated words for inspiration, generate 4 categories AND their associated words.
-  - Associated words need to make sense.
-  - All words MUST be unique between categories. NO CATEGORIES CAN SHARE A WORD.
-  - Generate a hint for each category, either about a specific word or about the category itself, phrased as a question. The hint must be vague enough to be a hint, DO NOT give the solution. DO NOT use any words from the category name.
-  - Try to come up with words that appear to fit in more than one category.
-  - Make the categories extremely difficult to guess.
-  - Pay attention to disallowed words and categories. DO NOT use similar categories or a disallowed word. Double-check that before returning.
-  - No categories or words should be offensive or indecent.
+- The context shows disallowed categories and words for inspiration.
+  - Using the inspiration words, come up with ten more words that are obscure, have multiple meanings, or are otherwise interesting.
+- Use inspiration words, generated words, and words related to them to generate 4 unique categories that would be difficult to guess.
+  - Be as inventive as possible.
+  - Categories should be unique ("weather" and "storms" are too similar). They should not be similar to each other or disallowedCategories.
+  - Categories should be different types (not all "things that do X"). They could be about:
+    - People or their work (modern or historic)
+    - Animals
+    - Countries
+    - Historic events
+    - Places (modern or historic)
+    - Hobbies or Professions
+    - Activities
+    - Sciences
+    - Things found in the same place
+    - Culture (shows, fads, literature, art, etc)
+    - Spelling (homophones, palindromes, words containing other categories like numbers or colors, etc -- but NOT prefixes or suffixes)
+    - Any other similarities you can generate
+- Generate 4 unique words for each category.
+  - Associated words need to make sense or be common.
+  - NO CATEGORIES CAN SHARE A WORD.
+  - Try to generate words that appear to fit in more than one category.
+  - Use words that are extremely difficult to guess but still fit the category.
+  - Do not include inspiration words.
+- Generate a hint for each category, either about a specific word or about the category itself.
+  - Phrase the hint as a question.
+  - The hint must be vague enough to be a hint. DO NOT give the solution but introduce new information.
+  - DO NOT use any words from the category name.
+  - DO NOT ask what things have in common.
 </steps>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
@@ -34,10 +43,10 @@
   - `categories` -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words and `hint` is the hint
 - Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
-<disallowed>
-NEVER use these recently used words or categories:
+<context>
+NEVER use these recently used categories or any similar categories:
 ${context}
-</disallowed>
+</context>
 </instructions>
 
 <example_output>
@@ -85,31 +94,16 @@ ${context}
 }
 </example_output>
 
-<example_categories>
-<example>
-<category>Parts of a wheel</category>
-<hint>When was the last time you rode your bike?</hint>
-<words><word>HUB</word><word>RIM</word><word>SPOKE</word><word>TIRE</word></words>
-</example>
 <example>
 <category>Military clothing descriptors</category>
 <hint>How is your fashion sense?</hint>
 <words><word>CAMO</word><word>DRAB</word><word>FATIGUE</word><word>KHAKI</word></words>
 </example>
 <example>
-<category>Used in ventilation</category>
-<hint>Does EXHAUST always mean tired?</hint>
-<words><word>DUCT</word><word>EXHAUST</word><word>HOSE</word><word>PIPE</word></words>
-</example>
 <example>
 <category>Fail to take advantage of, as an opportunity</category>
 <hint>Don't you hate it when that happens?</hint>
 <words><word>BLOW</word><word>LOSE</word><word>MISS</word><word>WASTE</word></words>
-</example>
-<example>
-<category>Knockoff</category>
-<hint>Are you an original?</hint>
-<words><word>BOOTLEG</word><word>COPY</word><word>FAKE</word><word>REPLICA</word></words>
 </example>
 <example>
 <category>Associated with Freud</category>
@@ -142,19 +136,9 @@ ${context}
 <words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
 </example>
 <example>
-<category>Things to book for a vacation</category>
-<hint>What things would you need figured out before you go?</hint>
-<words><word>CAR</word><word>FLIGHT</word><word>HOTEL</word><word>TOUR</word></words>
-</example>
-<example>
 <category>Mettle</category>
 <hint>Does GRIT always mean sand or small pebbles?</hint>
 <words><word>FIGHT</word><word>GRIT</word><word>RESOLVE</word><word>SPIRIT</word></words>
-</example>
-<example>
-<category>Bad things for a website to do</category>
-<hint>Would any of these impact the Internet?</hint>
-<words><word>FREEZE</word><word>GLITCH</word><word>QUIT</word><word>TIMEOUT</word></words>
 </example>
 <example>
 <category>Figures in classic Disney animated films</category>

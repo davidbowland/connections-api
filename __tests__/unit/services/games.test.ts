@@ -13,6 +13,8 @@ describe('games', () => {
     jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
     jest.mocked(bedrock).invokeModel.mockResolvedValue(connectionsData)
     jest.mocked(dynamodb).setGameById.mockResolvedValue({} as any)
+
+    Math.random = jest.fn().mockReturnValue(0)
   })
 
   describe('createGame', () => {
@@ -20,37 +22,68 @@ describe('games', () => {
       const result = await createGame('2025-01-01')
 
       expect(dynamodb.getGamesByIds).toHaveBeenCalled()
-      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, { disallowedCategories: [], disallowedWords: [] })
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.objectContaining({
+          disallowedCategories: [],
+          inspirationAdjectives: expect.arrayContaining(['good', 'balmy', 'wan']),
+          inspirationNouns: expect.arrayContaining([
+            'time',
+            'execution',
+            'exclusion',
+            'engagement',
+            'dismissal',
+            'disappointment',
+            'diamond',
+            'deck',
+            'counterpart',
+            'contest',
+          ]),
+          inspirationVerbs: expect.arrayContaining(['be', 'shiver', 'scratch', 'scan', 'rip', 'revise']),
+        }),
+      )
       expect(dynamodb.setGameById).toHaveBeenCalledWith(
         '2025-01-01',
-        expect.objectContaining({ wordList: expect.any(Array) }),
+        expect.objectContaining({
+          wordList: expect.arrayContaining([
+            'BLUSTER',
+            'CROW',
+            'SHOW OFF',
+            'STRUT',
+            'BANANA',
+            'EYEBROW',
+            'FLIGHT PATH',
+            'RAINBOW',
+            'COUNT',
+            'ELVES',
+          ]),
+        }),
       )
-      expect(result).toEqual(expect.objectContaining({ wordList: expect.any(Array) }))
+      expect(result).toEqual(
+        expect.objectContaining({
+          wordList: expect.arrayContaining([
+            'BLUSTER',
+            'CROW',
+            'SHOW OFF',
+            'STRUT',
+            'BANANA',
+            'EYEBROW',
+            'FLIGHT PATH',
+            'RAINBOW',
+            'COUNT',
+            'ELVES',
+          ]),
+        }),
+      )
     })
 
     it('should throw error when words are not unique', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValue({
-        categories: { Cat1: { hint: 'Old category hint', words: ['WORD1', 'WORD1', 'WORD2', 'WORD3'] } },
-        fakeCategories: {},
+        categories: { Cat1: { hint: 'Category hint', words: ['WORD1', 'WORD1', 'WORD2', 'WORD3'] } },
+        wordList: [],
       })
 
       await expect(createGame('2025-01-01')).rejects.toThrow('Generated words are not unique')
-    })
-
-    it('should throw error when words overlap with avoid words', async () => {
-      jest.mocked(dynamodb).getGamesByIds.mockResolvedValue({
-        '2024-12-31': {
-          categories: { OldCat: { hint: 'Old category hint', words: ['OVERLAP', 'OLD1', 'OLD2', 'OLD3'] } },
-          fakeCategories: {},
-          wordList: [],
-        },
-      })
-      jest.mocked(bedrock).invokeModel.mockResolvedValue({
-        categories: { Cat1: { hint: 'Old category hint', words: ['OVERLAP', 'NEW1', 'NEW2', 'NEW3'] } },
-        fakeCategories: {},
-      })
-
-      await expect(createGame('2025-01-01')).rejects.toThrow('Generated words overlap with avoid words')
     })
   })
 })

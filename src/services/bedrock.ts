@@ -1,7 +1,7 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime'
 
 import { Prompt } from '../types'
-import { log, logDebug } from '../utils/logging'
+import { logDebug } from '../utils/logging'
 
 const runtimeClient = new BedrockRuntimeClient({ region: 'us-east-1' })
 
@@ -13,7 +13,7 @@ export const invokeModel = async (prompt: Prompt, context?: Record<string, any>)
 }
 
 export const invokeModelMessage = async (prompt: Prompt): Promise<unknown> => {
-  log('Invoking model', { prompt })
+  logDebug('Invoking model', { prompt })
   const messageBody = {
     anthropic_version: prompt.config.anthropicVersion,
     max_tokens: prompt.config.maxTokens,
