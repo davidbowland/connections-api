@@ -20,7 +20,7 @@ describe('games', () => {
       const result = await createGame('2025-01-01')
 
       expect(dynamodb.getGamesByIds).toHaveBeenCalled()
-      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, { disallowedCategories: [], disallowedWords: [] })
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, { disallowedCategories: [] })
       expect(dynamodb.setGameById).toHaveBeenCalledWith(
         '2025-01-01',
         expect.objectContaining({ wordList: expect.any(Array) }),
@@ -30,27 +30,12 @@ describe('games', () => {
 
     it('should throw error when words are not unique', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValue({
-        categories: { Cat1: { hint: 'Old category hint', words: ['WORD1', 'WORD1', 'WORD2', 'WORD3'] } },
+        categories: { Cat1: { hint: 'Category hint', words: ['WORD1', 'WORD1', 'WORD2', 'WORD3'] } },
         fakeCategories: {},
+        wordList: [],
       })
 
       await expect(createGame('2025-01-01')).rejects.toThrow('Generated words are not unique')
-    })
-
-    it('should throw error when words overlap with avoid words', async () => {
-      jest.mocked(dynamodb).getGamesByIds.mockResolvedValue({
-        '2024-12-31': {
-          categories: { OldCat: { hint: 'Old category hint', words: ['OVERLAP', 'OLD1', 'OLD2', 'OLD3'] } },
-          fakeCategories: {},
-          wordList: [],
-        },
-      })
-      jest.mocked(bedrock).invokeModel.mockResolvedValue({
-        categories: { Cat1: { hint: 'Old category hint', words: ['OVERLAP', 'NEW1', 'NEW2', 'NEW3'] } },
-        fakeCategories: {},
-      })
-
-      await expect(createGame('2025-01-01')).rejects.toThrow('Generated words overlap with avoid words')
     })
   })
 })

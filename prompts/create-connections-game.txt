@@ -25,7 +25,7 @@
   - Generate a hint for each category, either about a specific word or about the category itself, phrased as a question. The hint must be vague enough to be a hint, DO NOT give the solution. DO NOT use any words from the category name.
   - Try to come up with words that appear to fit in more than one category.
   - Make the categories extremely difficult to guess.
-  - Pay attention to disallowed words and categories. DO NOT use similar categories or a disallowed word. Double-check that before returning.
+  - Pay attention to disallowed categories. DO NOT use similar categories. Double-check that before returning.
   - No categories or words should be offensive or indecent.
 </steps>
 <format>
@@ -35,7 +35,7 @@
 - Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
 <disallowed>
-NEVER use these recently used words or categories:
+NEVER use these recently used categories or any similar categories:
 ${context}
 </disallowed>
 </instructions>
