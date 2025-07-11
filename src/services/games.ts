@@ -1,7 +1,14 @@
 import { adjectives } from '../assets/adjectives'
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
-import { llmPromptId } from '../config'
+import {
+  avoidNextGamesCount,
+  avoidPastGamesCount,
+  inspirationAdjectivesCount,
+  inspirationNounsCount,
+  inspirationVerbsCount,
+  llmPromptId,
+} from '../config'
 import { ConnectionsData, GameId } from '../types'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
@@ -18,7 +25,7 @@ const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => 
 export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const gameDate = new Date(gameId)
   const contextGameIds: GameId[] = []
-  for (let i = -20; i <= 10; i++) {
+  for (let i = -avoidPastGamesCount; i <= avoidNextGamesCount; i++) {
     const contextDate = new Date(gameDate)
     contextDate.setDate(contextDate.getDate() + i)
     if (contextDate >= new Date('2025-01-01') && contextDate < new Date()) {
@@ -29,9 +36,9 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const contextGames = await getGamesByIds(contextGameIds)
   const disallowedCategories = Object.values(contextGames).flatMap((game) => Object.keys(game.categories))
 
-  const inspirationNouns = getRandomSample(nouns, 20)
-  const inspirationVerbs = getRandomSample(verbs, 10)
-  const inspirationAdjectives = getRandomSample(adjectives, 5)
+  const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
+  const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
+  const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
   const modelContext = {
     disallowedCategories,
     inspirationAdjectives,

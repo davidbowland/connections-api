@@ -227,6 +227,11 @@ Resources:
           DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
           LLM_PROMPT_ID: create-connections-game
+          AVOID_NEXT_GAMES_COUNT: 10
+          AVOID_PAST_GAMES_COUNT: 20
+          INSPIRATION_ADJECTIVES_COUNT: 5
+          INSPIRATION_NOUNS_COUNT: 10
+          INSPIRATION_VERBS_COUNT: 5
       Events:
         Schedule:
           Type: Schedule

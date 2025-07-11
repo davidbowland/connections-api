@@ -18,6 +18,14 @@ export const createGameFunctionName = process.env.CREATE_GAME_FUNCTION_NAME as s
 
 export const llmPromptId = process.env.LLM_PROMPT_ID as string
 
+// Games
+
+export const avoidPastGamesCount = parseInt(process.env.AVOID_PAST_GAMES_COUNT as string, 10)
+export const avoidNextGamesCount = parseInt(process.env.AVOID_NEXT_GAMES_COUNT as string, 10)
+export const inspirationNounsCount = parseInt(process.env.INSPIRATION_NOUNS_COUNT as string, 10)
+export const inspirationVerbsCount = parseInt(process.env.INSPIRATION_VERBS_COUNT as string, 10)
+export const inspirationAdjectivesCount = parseInt(process.env.INSPIRATION_ADJECTIVES_COUNT as string, 10)
+
 // Logging
 
 export const debugLogging = (process.env.DEBUG_LOGGING as string) === 'true'
