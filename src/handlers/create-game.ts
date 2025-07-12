@@ -8,10 +8,16 @@ interface CreateGameEvent {
   gameId?: string
 }
 
+const nextGameId = (): string => {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return tomorrow.toISOString().split('T')[0]
+}
+
 export const createGameHandler = async (event: ScheduledEvent | CreateGameEvent): Promise<void> => {
   log('Received event', { event })
 
-  const gameId = (event as CreateGameEvent).gameId ?? new Date().toISOString().split('T')[0]
+  const gameId = (event as CreateGameEvent).gameId ?? nextGameId()
   log('Creating game', { gameId })
 
   const gameResult = await getGameById(gameId)

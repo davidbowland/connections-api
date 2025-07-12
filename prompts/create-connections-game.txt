@@ -10,7 +10,7 @@
 - The context shows disallowed categories and words for inspiration.
   - Using the inspiration words, come up with ten more words that are obscure, have multiple meanings, or are otherwise interesting.
 - Use inspiration words, generated words, and words related to them to generate 4 unique categories that would be difficult to guess.
-  - Be as inventive as possible.
+  - Be as inventive as possible, but always use inspiration words.
   - Categories should be unique ("weather" and "storms" are too similar). They should not be similar to each other or disallowedCategories.
   - Categories should be different types (not all "things that do X"). They could be about:
     - People or their work (modern or historic)
@@ -31,10 +31,11 @@
   - Try to generate words that appear to fit in more than one category.
   - Use words that are extremely difficult to guess but still fit the category.
   - Do not include inspiration words.
-- Generate a hint for each category, either about a specific word or about the category itself.
+- Generate a hint for each category.
   - Phrase the hint as a question.
   - The hint must be vague enough to be a hint. DO NOT give the solution but introduce new information.
   - DO NOT use any words from the category name.
+  - DO NOT use or reference any of the associated words.
   - DO NOT ask what things have in common.
 </steps>
 <format>

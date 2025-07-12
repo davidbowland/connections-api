@@ -24,6 +24,7 @@ Mappings:
       logStreamFunction: log-subscriber
       project: connections
       promptsTable: connections-api-prompts
+      scheduledGameCreationEnabled: true
       zoneId: Z072422417XWM8PIXXSFA
     test:
       certificate: 6a48cba7-feb9-4de5-8cbf-d383140fcdef
@@ -33,6 +34,7 @@ Mappings:
       logStreamFunction: log-subscriber-test
       project: connections-test
       promptsTable: connections-api-prompts-test
+      scheduledGameCreationEnabled: false
       zoneId: Z01312547RGU1BYKIJXY
 
 Resources:
@@ -236,8 +238,9 @@ Resources:
         Schedule:
           Type: Schedule
           Properties:
-            Schedule: 'cron(33 3 ? * 2 *)'
+            Schedule: 'cron(33 3 ? * * *)'
             Description: Create daily game between 3-4am UTC (UTC+14 is max)
+            Enabled: !FindInMap [EnvironmentMap, !Ref Environment, scheduledGameCreationEnabled]
       Tags:
         'created-by': 'connections-api'
         'created-for': 'connections'

@@ -1,6 +1,7 @@
 import { ScheduledEvent } from 'aws-lambda'
 
-import { connectionsData } from '../__mocks__'
+import { connectionsData, gameId } from '../__mocks__'
+import eventJson from '@events/create-game.json'
 import { createGameHandler } from '@handlers/create-game'
 import * as dynamodb from '@services/dynamodb'
 import * as games from '@services/games'
@@ -14,32 +15,40 @@ const scheduledEvent = {
   source: 'aws.events',
 } as ScheduledEvent
 
-const createGameEvent = {
-  gameId: '2025-01-15',
-}
-
 describe('create-game', () => {
+  const event = eventJson as { gameId?: string }
+
+  const today = '2025-01-05'
+  const tomorrow = '2025-01-06'
+
   beforeAll(() => {
     jest.mocked(dynamodb).getGameById.mockResolvedValue({ isGenerating: false })
     jest.mocked(dynamodb).setGameGenerationStarted.mockResolvedValue({} as any)
     jest.mocked(games).createGame.mockResolvedValue(connectionsData)
+
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date(today))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
   })
 
   describe('createGameHandler', () => {
     it('should create a game for today when game does not exist and no gameId provided', async () => {
       await createGameHandler(scheduledEvent)
 
-      expect(dynamodb.getGameById).toHaveBeenCalledWith(expect.any(String))
-      expect(dynamodb.setGameGenerationStarted).toHaveBeenCalledWith(expect.any(String))
-      expect(games.createGame).toHaveBeenCalledWith(expect.any(String))
+      expect(dynamodb.getGameById).toHaveBeenCalledWith(tomorrow)
+      expect(dynamodb.setGameGenerationStarted).toHaveBeenCalledWith(tomorrow)
+      expect(games.createGame).toHaveBeenCalledWith(tomorrow)
     })
 
     it('should create a game for specified gameId when provided', async () => {
-      await createGameHandler(createGameEvent)
+      await createGameHandler(event)
 
-      expect(dynamodb.getGameById).toHaveBeenCalledWith('2025-01-15')
-      expect(dynamodb.setGameGenerationStarted).toHaveBeenCalledWith('2025-01-15')
-      expect(games.createGame).toHaveBeenCalledWith('2025-01-15')
+      expect(dynamodb.getGameById).toHaveBeenCalledWith(gameId)
+      expect(dynamodb.setGameGenerationStarted).toHaveBeenCalledWith(gameId)
+      expect(games.createGame).toHaveBeenCalledWith(gameId)
     })
 
     it('should not create a game when game already exists', async () => {
