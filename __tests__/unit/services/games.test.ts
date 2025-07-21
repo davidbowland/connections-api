@@ -39,6 +39,7 @@ describe('games', () => {
             'counterpart',
             'contest',
           ]),
+          inspirationTimePeriods: expect.arrayContaining(['2000s', 'age of exploration', 'renaissance']),
           inspirationVerbs: expect.arrayContaining(['be', 'shiver', 'scratch', 'scan', 'rip', 'revise']),
         }),
       )

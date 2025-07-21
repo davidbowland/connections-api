@@ -14,18 +14,20 @@
   - Categories should be unique ("weather" and "storms" are too similar). They should not be similar to each other or disallowedCategories.
   - Categories should be different types (not all "things that do X"). They could be about:
     - People or their work (modern or historic)
-    - Animals
+    - Animals (modern or historic)
     - Countries
     - Historic events
     - Places (modern or historic)
     - Hobbies or Professions
     - Activities
     - Sciences
+    - Philosophy
     - Things found in the same place
     - Culture (shows, fads, literature, art, etc)
     - Spelling (homophones, palindromes, words containing other categories like numbers or colors, etc -- but NOT prefixes or suffixes)
-    - Any other similarities you can generate
-- Generate 4 unique words for each category.
+  - DO NOT generate more than one "things that can" or "things you can" category.
+  - Do not generate more than one category that is obscure or esotertic
+- Generate 10 unique words for each category that could include unique inspiration words, then pick the best 4 based on:
   - Associated words need to make sense or be common.
   - NO CATEGORIES CAN SHARE A WORD.
   - Try to generate words that appear to fit in more than one category.

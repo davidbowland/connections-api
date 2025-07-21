@@ -714,7 +714,6 @@ export const verbs = [
   'float',
   'freeze',
   'hire',
-  'in',
   'object',
   'pop',
   'provoke',

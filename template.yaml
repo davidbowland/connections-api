@@ -225,15 +225,16 @@ Resources:
               Resource: '*'
       Environment:
         Variables:
-          DEBUG_LOGGING: 'false'
-          DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
-          DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
-          LLM_PROMPT_ID: create-connections-game
           AVOID_NEXT_GAMES_COUNT: 10
           AVOID_PAST_GAMES_COUNT: 20
-          INSPIRATION_ADJECTIVES_COUNT: 5
+          DEBUG_LOGGING: 'false'
+          DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
+          DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
+          INSPIRATION_ADJECTIVES_COUNT: 10
           INSPIRATION_NOUNS_COUNT: 10
-          INSPIRATION_VERBS_COUNT: 5
+          INSPIRATION_TIME_PERIODS_COUNT: 3
+          INSPIRATION_VERBS_COUNT: 10
+          LLM_PROMPT_ID: create-connections-game
       Events:
         Schedule:
           Type: Schedule
