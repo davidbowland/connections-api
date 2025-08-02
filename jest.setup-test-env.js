@@ -15,10 +15,10 @@ process.env.LLM_PROMPT_ID = 'create-connections-game'
 
 process.env.AVOID_NEXT_GAMES_COUNT = '10'
 process.env.AVOID_PAST_GAMES_COUNT = '20'
-process.env.INSPIRATION_ADJECTIVES_COUNT = '5'
-process.env.INSPIRATION_NOUNS_COUNT = '20'
-process.env.INSPIRATION_TIME_PERIODS_COUNT = '3'
-process.env.INSPIRATION_VERBS_COUNT = '10'
+process.env.INSPIRATION_ADJECTIVES_COUNT = '2'
+process.env.INSPIRATION_NOUNS_COUNT = '2'
+process.env.INSPIRATION_TIME_PERIODS_COUNT = '2'
+process.env.INSPIRATION_VERBS_COUNT = '2'
 
 // Logging
 
