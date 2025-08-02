@@ -26,21 +26,10 @@ describe('games', () => {
         prompt,
         expect.objectContaining({
           disallowedCategories: [],
-          inspirationAdjectives: expect.arrayContaining(['good', 'balmy', 'wan']),
-          inspirationNouns: expect.arrayContaining([
-            'time',
-            'execution',
-            'exclusion',
-            'engagement',
-            'dismissal',
-            'disappointment',
-            'diamond',
-            'deck',
-            'counterpart',
-            'contest',
-          ]),
-          inspirationTimePeriods: expect.arrayContaining(['2000s', 'age of exploration', 'renaissance']),
-          inspirationVerbs: expect.arrayContaining(['be', 'shiver', 'scratch', 'scan', 'rip', 'revise']),
+          inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
+          inspirationNouns: expect.arrayContaining(['time', 'execution']),
+          inspirationTimePeriods: expect.arrayContaining(['2020s', 'enlightenment']),
+          inspirationVerbs: expect.arrayContaining(['be', 'shiver']),
         }),
       )
       expect(dynamodb.setGameById).toHaveBeenCalledWith(

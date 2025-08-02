@@ -5,15 +5,14 @@
 - There are 4 categories.
 - Each category has 4 associated words.
 - No categories or words should be offensive or indecent.
+- No categories or words should overlap.
 </context>
 <steps>
 - The context shows disallowed categories and words for inspiration.
-  - Using the inspiration words, come up with ten more words that are obscure, have multiple meanings, or are otherwise interesting.
-- Use inspiration words, generated words, and words related to them to generate 4 unique categories that would be difficult to guess.
-  - Be as inventive as possible, but always use inspiration words.
+- Generate 4 unique categories where each category contains at least one UNIQUE inspiration work.
   - Categories should be unique ("weather" and "storms" are too similar). They should not be similar to each other or disallowedCategories.
-  - Categories should be different types (not all "things that do X"). They could be about:
-    - People or their work (modern or historic)
+  - Pick 1 to 4 distinct items from the following category buckets and use them to generate categories:
+    - The works of famous people (modern or historic) -- DO NOT USE THE NAMES OF PEOPLE UNLESS THEY ARE ALSO COMMON WORDS (e.g. WATT)
     - Animals (modern or historic)
     - Countries
     - Historic events
@@ -24,20 +23,21 @@
     - Philosophy
     - Things found in the same place
     - Culture (shows, fads, literature, art, etc)
-    - Spelling (homophones, palindromes, words containing other categories like numbers or colors, etc -- but NOT prefixes or suffixes)
-  - DO NOT generate more than one "things that can" or "things you can" category.
-  - Do not generate more than one category that is obscure or esotertic
-- Generate 10 unique words for each category that could include unique inspiration words, then pick the best 4 based on:
-  - Associated words need to make sense or be common.
+    - Spelling (NOT "words ending in..." or "words beginning with..." or "words containing double letters", etc)
+    - Sharing a word before or after ("Box ____" or "____ floor", etc)
+  - DO NOT generate more than one "things that can", "things you can", etc category.
+  - DO NOT generate categories about words having common usage (NOT "colors that are verbs" or "words that are common objects", etc)
+  - DO NOT generate more than one category that is esotertic.
+- Generate 7 unique words for each category, then pick the best 4 based on:
+  - Words need to make sense with the category.
   - NO CATEGORIES CAN SHARE A WORD.
-  - Try to generate words that appear to fit in more than one category.
-  - Use words that are extremely difficult to guess but still fit the category.
-  - Do not include inspiration words.
+  - If possible, words should appear to fit in more than one category.
+  - If possible, words should have more than one meaning. Avoid words that are obvious like "bailiff" for a courtroom category.
+  - Do not include inspiration words or word from the category.
 - Generate a hint for each category.
   - Phrase the hint as a question.
   - The hint must be vague enough to be a hint. DO NOT give the solution but introduce new information.
   - DO NOT use any words from the category name.
-  - DO NOT use or reference any of the associated words.
   - DO NOT ask what things have in common.
 </steps>
 <format>
@@ -47,7 +47,6 @@
 - Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
 <context>
-NEVER use these recently used categories or any similar categories:
 ${context}
 </context>
 </instructions>
@@ -56,7 +55,7 @@ ${context}
 {
   "categories": {
     "Boast": {
-      "hint": "Does the word CROW always refer to a bird?",
+      "hint": "What might someone do when they're proud?",
       "words": ["BLUSTER", "CROW", "SHOW OFF", "STRUT"]
     },
     "Arc-shaped things": {
@@ -68,7 +67,7 @@ ${context}
       "words": ["COUNT", "ELVES", "LEPRECHAUN", "ROOSTER"]
     },
     "Ways to denote a citation": {
-      "hint": "Are you familiar with the DAGGER character?",
+      "hint": "Would you use any of these while writing an essay?",
       "words": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"]
     }
   }
@@ -81,32 +80,32 @@ ${context}
       "hint": "Do you see a color theme?",
       "words": ["CROSSWORD", "OREO", "PANDA", "TUXEDO"]
     },
-    "ANAGRAMS": {
-      "hint": "Is there anything odd about the spelling of these words?",
-      "words": ["ABEL", "ABLE", "BALE", "BELA"]
+    "Military clothing descriptors": {
+      "hint": "How is your fashion sense?",
+      "words": ["CAMO", "DRAB", "FATIGUE", "KHAKI"]
     },
-    "U.S. presidential nicknames": {
+
+    <example>
+<category>Wax ___</category>
+<hint>Could any words share an adjective?</hint>
+<words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
+</example>
+    "Wax ___": {
       "hint": "Do any words strike you as informal?",
       "words": ["ABE", "CAL", "DICK", "TEDDY"]
     },
-    "Clear as __": {
-      "hint": "Is CRYSTAL opaque?",
-      "words": ["A BELL", "CRYSTAL", "DAY", "MUD"]
+    "Fail to take advantage of, as an opportunity": {
+      "hint": "Don't you hate it when that happens?",
+      "words": ["BLOW", "LOSE", "MISS", "WASTE"]
     }
   }
 }
 </example_output>
 
 <example>
-<category>Military clothing descriptors</category>
-<hint>How is your fashion sense?</hint>
-<words><word>CAMO</word><word>DRAB</word><word>FATIGUE</word><word>KHAKI</word></words>
-</example>
-<example>
-<example>
-<category>Fail to take advantage of, as an opportunity</category>
-<hint>Don't you hate it when that happens?</hint>
-<words><word>BLOW</word><word>LOSE</word><word>MISS</word><word>WASTE</word></words>
+<category>Clear as __</category>
+<hint>What is the opposite of opaque?</hint>
+<words><word>BELL</word><word>CRYSTAL</word><word>DAY</word><word>MUD</word></words>
 </example>
 <example>
 <category>Associated with Freud</category>
@@ -132,11 +131,6 @@ ${context}
 <category>Pro wrestling icons, with "The"</category>
 <hint>Have you heard of Hulk Hogan?</hint>
 <words><word>HITMAN</word><word>ROCK</word><word>SNAKE</word><word>UNDERTAKER</word></words>
-</example>
-<example>
-<category>Wax ___</category>
-<hint>Could any words share an adjective?</hint>
-<words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
 </example>
 <example>
 <category>Mettle</category>
