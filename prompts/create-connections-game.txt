@@ -1,3 +1,5 @@
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":10000,"model":"us.anthropic.claude-3-7-sonnet-20250219-v1:0","temperature":0.8,"topK":25000}
+
 <instructions>
 <context>
 "Connections" is a word game where the goal is to choose associated words.
@@ -16,6 +18,7 @@
     - Animals (modern or historic)
     - Countries
     - Historic events
+    - Time periods (1900s, 1960s, etc)
     - Places (modern or historic)
     - Hobbies or Professions
     - Activities

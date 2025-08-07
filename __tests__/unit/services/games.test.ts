@@ -28,7 +28,6 @@ describe('games', () => {
           disallowedCategories: [],
           inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
           inspirationNouns: expect.arrayContaining(['time', 'execution']),
-          inspirationTimePeriods: expect.arrayContaining(['2020s', 'enlightenment']),
           inspirationVerbs: expect.arrayContaining(['be', 'shiver']),
         }),
       )

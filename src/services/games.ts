@@ -1,13 +1,11 @@
 import { adjectives } from '../assets/adjectives'
 import { nouns } from '../assets/nouns'
-import { timePeriods } from '../assets/time-periods'
 import { verbs } from '../assets/verbs'
 import {
   avoidNextGamesCount,
   avoidPastGamesCount,
   inspirationAdjectivesCount,
   inspirationNounsCount,
-  inspirationTimePeriodsCount,
   inspirationVerbsCount,
   llmPromptId,
 } from '../config'
@@ -41,12 +39,10 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
   const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
   const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
-  const inspirationTimePeriods = getRandomSample(timePeriods, inspirationTimePeriodsCount)
   const modelContext = {
     disallowedCategories,
     inspirationAdjectives,
     inspirationNouns,
-    inspirationTimePeriods,
     inspirationVerbs,
   }
   log('Creating game with context', { modelContext })
