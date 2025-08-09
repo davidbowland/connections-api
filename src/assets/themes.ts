@@ -1,0 +1,16 @@
+export const themes = [
+  'Activities',
+  'Animals (modern or historic)',
+  'Countries',
+  'Culture (shows, fads, literature, art, etc)',
+  'Historic events',
+  'Hobbies',
+  'Places (modern or historic)',
+  'Professions',
+  'Sciences',
+  'Sharing a word before or after ("Box ____" or "____ floor", etc)',
+  'Spelling (NOT "words ending in..." or "words beginning with..." or "words containing double letters", etc)',
+  'The works of famous people (modern or historic) -- DO NOT USE THE NAMES OF PEOPLE',
+  'Things found in the same place',
+  'Time periods (1900s, 1960s, etc)',
+]

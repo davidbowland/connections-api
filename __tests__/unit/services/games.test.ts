@@ -25,6 +25,7 @@ describe('games', () => {
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
         expect.objectContaining({
+          categoryThemes: ['Activities'],
           disallowedCategories: [],
           inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
           inspirationNouns: expect.arrayContaining(['time', 'execution']),

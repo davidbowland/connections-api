@@ -1,5 +1,6 @@
 import { adjectives } from '../assets/adjectives'
 import { nouns } from '../assets/nouns'
+import { themes } from '../assets/themes'
 import { verbs } from '../assets/verbs'
 import {
   avoidNextGamesCount,
@@ -13,6 +14,8 @@ import { ConnectionsData, GameId } from '../types'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
+
+const VALID_THEME_COUNTS = [1, 2, 4]
 
 const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => {
   const max = length ?? array.length - 1
@@ -36,10 +39,15 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const contextGames = await getGamesByIds(contextGameIds)
   const disallowedCategories = Object.values(contextGames).flatMap((game) => Object.keys(game.categories))
 
+  const categoryThemeCount = getRandomSample(VALID_THEME_COUNTS, 1)[0]
+  const categoryThemes = getRandomSample(themes, categoryThemeCount)
+
   const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
   const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
   const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
+
   const modelContext = {
+    categoryThemes,
     disallowedCategories,
     inspirationAdjectives,
     inspirationNouns,

@@ -230,9 +230,9 @@ Resources:
           DEBUG_LOGGING: 'false'
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
           DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
-          INSPIRATION_ADJECTIVES_COUNT: 2
-          INSPIRATION_NOUNS_COUNT: 3
-          INSPIRATION_VERBS_COUNT: 2
+          INSPIRATION_ADJECTIVES_COUNT: 4
+          INSPIRATION_NOUNS_COUNT: 5
+          INSPIRATION_VERBS_COUNT: 3
           LLM_PROMPT_ID: create-connections-game
       Events:
         Schedule:
