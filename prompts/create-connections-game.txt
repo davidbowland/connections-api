@@ -10,38 +10,25 @@
 - No categories or words should overlap.
 </context>
 <steps>
-- The context shows disallowed categories and words for inspiration.
-- Generate 4 unique categories where each category contains at least one UNIQUE inspiration work.
-  - Categories should be unique ("weather" and "storms" are too similar). They should not be similar to each other or disallowedCategories.
-  - Pick 1 to 4 distinct items from the following category buckets and use them to generate categories:
-    - The works of famous people (modern or historic) -- DO NOT USE THE NAMES OF PEOPLE UNLESS THEY ARE ALSO COMMON WORDS (e.g. WATT)
-    - Animals (modern or historic)
-    - Countries
-    - Historic events
-    - Time periods (1900s, 1960s, etc)
-    - Places (modern or historic)
-    - Hobbies or Professions
-    - Activities
-    - Sciences
-    - Philosophy
-    - Things found in the same place
-    - Culture (shows, fads, literature, art, etc)
-    - Spelling (NOT "words ending in..." or "words beginning with..." or "words containing double letters", etc)
-    - Sharing a word before or after ("Box ____" or "____ floor", etc)
-  - DO NOT generate more than one "things that can", "things you can", etc category.
-  - DO NOT generate categories about words having common usage (NOT "colors that are verbs" or "words that are common objects", etc)
-  - DO NOT generate more than one category that is esotertic.
+- The context shows category themes, disallowed categories, and words for inspiration.
+- Generate 4 unique categories.
+  - ALWAYS consider the word constraints (wordConstraints), if provided
+  - ALWAYS use at least one inspiration word in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing.
+  - NEVER generate a category that is similar to disallowed categories another category ("weather" and "storms" are too similar).
+  - NEVER generate categories about words having common usage (NOT "colors that are verbs" or "words that are common objects", etc).
+  - NEVER generate more than one category that is esotertic.
 - Generate 7 unique words for each category, then pick the best 4 based on:
-  - Words need to make sense with the category.
   - NO CATEGORIES CAN SHARE A WORD.
+  - ALWAYS generate words that make sense with the category.
+  - ALWAYS follow the word constraints (wordConstraints), if provided.
   - If possible, words should appear to fit in more than one category.
   - If possible, words should have more than one meaning. Avoid words that are obvious like "bailiff" for a courtroom category.
-  - Do not include inspiration words or word from the category.
+  - NEVER include words from the category.
 - Generate a hint for each category.
   - Phrase the hint as a question.
-  - The hint must be vague enough to be a hint. DO NOT give the solution but introduce new information.
-  - DO NOT use any words from the category name.
-  - DO NOT ask what things have in common.
+  - The hint must be vague enough to be a hint. DO NOT give the solution by rephrasing the category, but introduce new information.
+  - NEVER use any words from the category name.
+  - NEVER ask what things have in common.
 </steps>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n

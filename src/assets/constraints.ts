@@ -1,0 +1,15 @@
+export const constraints = [
+  'all words must be a number',
+  'all words must be a country',
+  'all words must be a city',
+  'all words must be a state, provice, or territory',
+  'all words must have a word embedded in them, spelling-wise, but NOT be compound words',
+  'all words must be an animal',
+  'all words must be food',
+  'all words must be names or nicknames',
+  'all words must be 3 letters',
+  'all words must be 2 letters',
+  'all words must have double letters',
+  'all words must be compound words but NONE can share the same root words',
+  'most words should be part of famous phrases or the title of a famous work (tv show, movie, book, etc)',
+]

@@ -227,12 +227,13 @@ Resources:
         Variables:
           AVOID_NEXT_GAMES_COUNT: 10
           AVOID_PAST_GAMES_COUNT: 20
+          CATEGORY_CONSTRAINT_CHANCE: 0.06
           DEBUG_LOGGING: 'false'
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
           DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
-          INSPIRATION_ADJECTIVES_COUNT: 2
-          INSPIRATION_NOUNS_COUNT: 3
-          INSPIRATION_VERBS_COUNT: 2
+          INSPIRATION_ADJECTIVES_COUNT: 8
+          INSPIRATION_NOUNS_COUNT: 10
+          INSPIRATION_VERBS_COUNT: 6
           LLM_PROMPT_ID: create-connections-game
       Events:
         Schedule:
