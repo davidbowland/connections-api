@@ -15,6 +15,7 @@ process.env.LLM_PROMPT_ID = 'create-connections-game'
 
 process.env.AVOID_NEXT_GAMES_COUNT = '10'
 process.env.AVOID_PAST_GAMES_COUNT = '20'
+process.env.CATEGORY_CONSTRAINT_CHANCE = '0.05'
 process.env.INSPIRATION_ADJECTIVES_COUNT = '2'
 process.env.INSPIRATION_NOUNS_COUNT = '2'
 process.env.INSPIRATION_VERBS_COUNT = '2'

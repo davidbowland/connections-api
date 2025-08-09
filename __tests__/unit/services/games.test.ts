@@ -8,24 +8,73 @@ jest.mock('@services/dynamodb')
 jest.mock('@utils/logging')
 
 describe('games', () => {
+  const mockMathRandom = jest.fn().mockReturnValue(0)
+
   beforeAll(() => {
+    jest.mocked(bedrock).invokeModel.mockResolvedValue(connectionsData)
     jest.mocked(dynamodb).getGamesByIds.mockResolvedValue({})
     jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
-    jest.mocked(bedrock).invokeModel.mockResolvedValue(connectionsData)
     jest.mocked(dynamodb).setGameById.mockResolvedValue({} as any)
 
-    Math.random = jest.fn().mockReturnValue(0)
+    Math.random = mockMathRandom
   })
 
   describe('createGame', () => {
-    it('should create a game with context', async () => {
+    it('should create a game with word constraint context', async () => {
+      mockMathRandom.mockReturnValueOnce(0) // Force word constraint context
       const result = await createGame('2025-01-01')
 
       expect(dynamodb.getGamesByIds).toHaveBeenCalled()
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
         expect.objectContaining({
-          categoryThemes: ['Activities'],
+          disallowedCategories: [],
+          wordConstraints: 'all words must be a number',
+        }),
+      )
+      expect(dynamodb.setGameById).toHaveBeenCalledWith(
+        '2025-01-01',
+        expect.objectContaining({
+          wordList: expect.arrayContaining([
+            'BLUSTER',
+            'CROW',
+            'SHOW OFF',
+            'STRUT',
+            'BANANA',
+            'EYEBROW',
+            'FLIGHT PATH',
+            'RAINBOW',
+            'COUNT',
+            'ELVES',
+          ]),
+        }),
+      )
+      expect(result).toEqual(
+        expect.objectContaining({
+          wordList: expect.arrayContaining([
+            'BLUSTER',
+            'CROW',
+            'SHOW OFF',
+            'STRUT',
+            'BANANA',
+            'EYEBROW',
+            'FLIGHT PATH',
+            'RAINBOW',
+            'COUNT',
+            'ELVES',
+          ]),
+        }),
+      )
+    })
+
+    it('should create a game with inspiration context', async () => {
+      mockMathRandom.mockReturnValueOnce(1) // Force inspiration context
+      const result = await createGame('2025-01-01')
+
+      expect(dynamodb.getGamesByIds).toHaveBeenCalled()
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.objectContaining({
           disallowedCategories: [],
           inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
           inspirationNouns: expect.arrayContaining(['time', 'execution']),

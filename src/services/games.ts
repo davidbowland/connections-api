@@ -1,10 +1,11 @@
 import { adjectives } from '../assets/adjectives'
+import { constraints } from '../assets/constraints'
 import { nouns } from '../assets/nouns'
-import { themes } from '../assets/themes'
 import { verbs } from '../assets/verbs'
 import {
   avoidNextGamesCount,
   avoidPastGamesCount,
+  categoryConstraintChance,
   inspirationAdjectivesCount,
   inspirationNounsCount,
   inspirationVerbsCount,
@@ -15,8 +16,6 @@ import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
 
-const VALID_THEME_COUNTS = [1, 2, 4]
-
 const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => {
   const max = length ?? array.length - 1
   const index = Math.floor(Math.random() * max)
@@ -25,7 +24,22 @@ const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => 
   return count > 1 ? [value, ...getRandomSample(array, count - 1, max - 1)] : [value]
 }
 
-export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
+const getModelContext = (disallowedCategories: string[]): Record<string, any> => {
+  if (Math.random() < categoryConstraintChance) {
+    return { disallowedCategories, wordConstraints: getRandomSample(constraints, 1)[0] }
+  }
+  const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
+  const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
+  const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
+  return {
+    disallowedCategories,
+    inspirationAdjectives,
+    inspirationNouns,
+    inspirationVerbs,
+  }
+}
+
+export const getContextGameIds = (gameId: string): GameId[] => {
   const gameDate = new Date(gameId)
   const contextGameIds: GameId[] = []
   for (let i = -avoidPastGamesCount; i <= avoidNextGamesCount; i++) {
@@ -35,24 +49,14 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
       contextGameIds.push(contextDate.toISOString().split('T')[0])
     }
   }
+  return contextGameIds
+}
 
+export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
+  const contextGameIds = getContextGameIds(gameId)
   const contextGames = await getGamesByIds(contextGameIds)
   const disallowedCategories = Object.values(contextGames).flatMap((game) => Object.keys(game.categories))
-
-  const categoryThemeCount = getRandomSample(VALID_THEME_COUNTS, 1)[0]
-  const categoryThemes = getRandomSample(themes, categoryThemeCount)
-
-  const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
-  const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
-  const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
-
-  const modelContext = {
-    categoryThemes,
-    disallowedCategories,
-    inspirationAdjectives,
-    inspirationNouns,
-    inspirationVerbs,
-  }
+  const modelContext = getModelContext(disallowedCategories)
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)
