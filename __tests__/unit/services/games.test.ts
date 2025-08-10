@@ -118,7 +118,7 @@ describe('games', () => {
 
     it('should throw error when words are not unique', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValue({
-        categories: { Cat1: { hint: 'Category hint', words: ['WORD1', 'WORD1', 'WORD2', 'WORD3'] } },
+        categories: { Cat1: { hint: 'Category hint', words: ['WORD1', 'word1', 'WORD2', 'WORD3'] } },
         wordList: [],
       })
 

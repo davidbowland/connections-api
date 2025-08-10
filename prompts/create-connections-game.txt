@@ -24,6 +24,7 @@
   - If possible, words should appear to fit in more than one category.
   - If possible, words should have more than one meaning. Avoid words that are obvious like "bailiff" for a courtroom category.
   - NEVER include words from the category.
+  - All words must be uppercase.
 - Generate a hint for each category.
   - Phrase the hint as a question.
   - The hint must be vague enough to be a hint. DO NOT give the solution by rephrasing the category, but introduce new information.

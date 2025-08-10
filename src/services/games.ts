@@ -11,7 +11,7 @@ import {
   inspirationVerbsCount,
   llmPromptId,
 } from '../config'
-import { ConnectionsData, GameId } from '../types'
+import { CategoryObject, ConnectionsData, GameId } from '../types'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
@@ -52,6 +52,20 @@ export const getContextGameIds = (gameId: string): GameId[] => {
   return contextGameIds
 }
 
+const transformWordsToUpperCase = (connectionsData: ConnectionsData): ConnectionsData => ({
+  ...connectionsData,
+  categories: Object.entries(connectionsData.categories).reduce(
+    (acc, [key, category]) => ({
+      ...acc,
+      [key]: {
+        ...category,
+        words: category.words.map((word: string) => word.toUpperCase()),
+      },
+    }),
+    {} as CategoryObject,
+  ),
+})
+
 export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const contextGameIds = getContextGameIds(gameId)
   const contextGames = await getGamesByIds(contextGameIds)
@@ -60,8 +74,9 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)
-  const connectionsData = (await invokeModel(prompt, modelContext)) as ConnectionsData
-  const wordList = Object.values(connectionsData.categories).flatMap((cat) => cat.words)
+  const returnedData = (await invokeModel(prompt, modelContext)) as ConnectionsData
+  const connectionsData = transformWordsToUpperCase(returnedData)
+  const wordList = Object.values(connectionsData.categories).flatMap((cat) => cat.words.map((w) => w.toUpperCase()))
 
   if (new Set(wordList).size !== wordList.length) {
     throw new Error('Generated words are not unique')
