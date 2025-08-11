@@ -21,8 +21,12 @@
   - NO CATEGORIES CAN SHARE A WORD.
   - ALWAYS generate words that make sense with the category.
   - ALWAYS follow the word constraints (wordConstraints), if provided.
-  - If possible, words should appear to fit in more than one category.
-  - If possible, words should have more than one meaning. Avoid words that are obvious like "bailiff" for a courtroom category.
+  - Generate works that are EXTREMELY difficult to guess. Difficult to guess words:
+    - Appear to fit in more than one category
+    - Have multiple meanings (for example, a `draft` paper vs `draft` into the army)
+    - Are different from other words in the category
+    - Are similar to words in other categories (for example, `lemon` for `yellow` category when `banana` is a word for another category)
+    - Not be obvious to a category (for example, `bailiff` and `judge` together are obvious for their connection to courtrooms)
   - NEVER include words from the category.
   - All words must be uppercase.
 - Generate a hint for each category.

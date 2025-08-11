@@ -30,5 +30,5 @@ export const invokeModelMessage = async (prompt: Prompt): Promise<unknown> => {
   const response = await runtimeClient.send(command)
   const modelResponse = JSON.parse(new TextDecoder().decode(response.body))
   logDebug('Model response', { modelResponse, text: modelResponse.content[0].text })
-  return JSON.parse(modelResponse.content[0].text.replace(/\s*<thinking>.*?<\/thinking>\s*/s, ''))
+  return JSON.parse(modelResponse.content[0].text.replace(/(^\s*<thinking>.*?<\/thinking>\s*|\s*```(json)?\s*)/gs, ''))
 }
