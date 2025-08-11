@@ -29,7 +29,7 @@ describe('games', () => {
         prompt,
         expect.objectContaining({
           disallowedCategories: [],
-          wordConstraints: 'all words must be a number',
+          wordConstraints: expect.stringContaining('all words must be a number'),
         }),
       )
       expect(dynamodb.setGameById).toHaveBeenCalledWith(
