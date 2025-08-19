@@ -1,5 +1,4 @@
 export const constraints = [
-  'all words must be a number, but categories MUST NOT be "numbers under 5" or "words that are numbers" or similar',
   'all words must be a country, but categories MUST be more specific than "countries" (for example: "mediterranean countries")',
   'all words must be a city, but categories MUST be more specific than "cities" (for example: "US state capitals")',
   'all words must be a state, provice, or territory, but categories MUST be more specific than "state" (for example: "Midwest states")',
@@ -8,7 +7,8 @@ export const constraints = [
   'all words must be food, but categories MUST be more specific than "food" (for example: "vegetables related to broccoli")',
   'all words must be names or nicknames, but categories MUST be more specific than "nicknames" (for example: "presidental nicknames")',
   'all words must be 3 letters, but categories must be MUST specific than "3-letter words"',
-  'all words must be 2 letters, but categories must be MUST specific than "2-letter words"',
+  'all words must be 4 letters, but categories must be MUST specific than "4-letter words"',
+  'all words must be 5 letters, but categories must be MUST specific than "5-letter words"',
   'all words must have double letters, but categories MUST be more specific than "words with double letters" or "words that contain \"look\""',
   'all words must be compound words, but categories MUST be more specific than "words that contain \"look\"" or "compound words" (for example: "words containing animals")',
   'most words should be part of famous phrases or the title of a famous work (tv show, movie, book, etc)',

@@ -37,8 +37,8 @@
 </steps>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
-- The output will be a JSON object consisting of two keys:
-  - `categories` -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words and `hint` is the hint
+- The output will be a JSON object consisting of one key:
+  - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words and `hint` is the hint
 - Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
 <context>
@@ -79,13 +79,7 @@ ${context}
       "hint": "How is your fashion sense?",
       "words": ["CAMO", "DRAB", "FATIGUE", "KHAKI"]
     },
-
-    <example>
-<category>Wax ___</category>
-<hint>Could any words share an adjective?</hint>
-<words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
-</example>
-    "Wax ___": {
+    "Presidental nicknames": {
       "hint": "Do any words strike you as informal?",
       "words": ["ABE", "CAL", "DICK", "TEDDY"]
     },
@@ -97,6 +91,11 @@ ${context}
 }
 </example_output>
 
+<example>
+<category>Wax ___</category>
+<hint>Could any words share an adjective?</hint>
+<words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
+</example>
 <example>
 <category>Clear as __</category>
 <hint>What is the opposite of opaque?</hint>
