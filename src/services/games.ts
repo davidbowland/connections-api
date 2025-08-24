@@ -25,9 +25,7 @@ const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => 
 }
 
 const getModelContext = (disallowedCategories: string[]): Record<string, any> => {
-  if (Math.random() < categoryConstraintChance) {
-    return { disallowedCategories, wordConstraints: getRandomSample(constraints, 1)[0] }
-  }
+  const wordConstraints = Math.random() < categoryConstraintChance ? getRandomSample(constraints, 1)[0] : undefined
   const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
   const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
   const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
@@ -36,6 +34,7 @@ const getModelContext = (disallowedCategories: string[]): Record<string, any> =>
     inspirationAdjectives,
     inspirationNouns,
     inspirationVerbs,
+    wordConstraints,
   }
 }
 
@@ -80,6 +79,10 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
 
   if (new Set(wordList).size !== wordList.length) {
     throw new Error('Generated words are not unique')
+  } else if ([4, 5].indexOf(Object.keys(connectionsData.categories).length) < 0) {
+    throw new Error('Generated wrong number of categories')
+  } else if (Object.values(connectionsData.categories).find((category) => category.words.length !== 4)) {
+    throw new Error('Generated a category with the wrong number of words')
   }
 
   const dataWithWordList = { ...connectionsData, wordList }

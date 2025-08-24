@@ -14,7 +14,8 @@ export const constraints = [
   'most words should be part of famous phrases or the title of a famous work (tv show, movie, book, etc)',
   'most words should have a Z in them, but categories MUST be more specific than "words with a Z"',
   'most words should have a Q in them, but categories MUST be more specific than "words with a Q"',
-  'all words must begin with the same letter, but categories MUST be more specific than "words beginning with L"',
-  'all words must end in the same suffix (-ing, -er, -ly, etc), but categories MUST be more specific than "words ending with the suffix -ing"',
-  'most words should rhyme with each other',
+  'all words must begin with the same letter, but categories MUST be more specific than "words beginning with L". There should be one beginning letter for the game. The beginning letter should not be different in different categories.',
+  'all words must end in the same suffix (-ing, -er, -ly, etc), but categories MUST be more specific than "words ending with the suffix -ing". There should be one suffix for the game. The suffix should not be different in different categories.',
+  'most words should rhyme with each other. There should be one rhyming sound for the game. The rhyming sound should not be different in different categories.',
+  'always generate 5 categories rather than 4',
 ]
