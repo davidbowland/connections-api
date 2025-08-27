@@ -1,7 +1,4 @@
 export const constraints = [
-  'all words must be a country, but categories MUST be more specific than "countries" (for example: "mediterranean countries")',
-  'all words must be a city, but categories MUST be more specific than "cities" (for example: "US state capitals")',
-  'all words must be a state, provice, or territory, but categories MUST be more specific than "state" (for example: "Midwest states")',
   'all words must have a word embedded in them, spelling-wise, but MUST NOT be compound words. Categories MUST not be "words containing ONE" but instead "words containing spelled numbers"',
   'all words must be an animal, but categories MUST be more specific than "animals" (for example: "carnivores")',
   'all words must be food, but categories MUST be more specific than "food" (for example: "vegetables related to broccoli")',
