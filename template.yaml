@@ -104,7 +104,7 @@ Resources:
       BuildMethod: esbuild
       BuildProperties:
         Minify: true
-        Target: 'es2020'
+        Target: 'es2023'
         Sourcemap: true
         EntryPoints:
           - src/handlers/get-game-ids.ts
@@ -172,7 +172,7 @@ Resources:
       BuildMethod: esbuild
       BuildProperties:
         Minify: true
-        Target: 'es2020'
+        Target: 'es2023'
         Sourcemap: true
         EntryPoints:
           - src/handlers/get-game-by-id.ts
@@ -252,7 +252,7 @@ Resources:
       BuildMethod: esbuild
       BuildProperties:
         Minify: true
-        Target: 'es2020'
+        Target: 'es2023'
         Sourcemap: true
         EntryPoints:
           - src/handlers/create-game.ts
