@@ -25,10 +25,13 @@ const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => 
 }
 
 const getModelContext = (disallowedCategories: string[]): Record<string, any> => {
-  const wordConstraints = Math.random() < categoryConstraintChance ? getRandomSample(constraints, 1)[0] : undefined
+  const categoryConstraintValue = Math.random()
+  const wordConstraints =
+    categoryConstraintValue < categoryConstraintChance ? getRandomSample(constraints, 1)[0] : undefined
   const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
   const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
   const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
+  log('Constraint chance', { categoryConstraintChance, categoryConstraintValue })
   return {
     disallowedCategories,
     inspirationAdjectives,

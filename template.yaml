@@ -227,7 +227,7 @@ Resources:
         Variables:
           AVOID_NEXT_GAMES_COUNT: 10
           AVOID_PAST_GAMES_COUNT: 20
-          CATEGORY_CONSTRAINT_CHANCE: 0.08
+          CATEGORY_CONSTRAINT_CHANCE: 0.10
           DEBUG_LOGGING: 'false'
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
           DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
