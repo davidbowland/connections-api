@@ -151,5 +151,46 @@ describe('games', () => {
 
       await expect(createGame('2025-01-01')).rejects.toThrow('Generated a category with the wrong number of words')
     })
+
+    it('should create a game with valid embedded substrings', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        categories: {
+          Cat1: { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+          Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          Cat4: { embeddedSubstrings: ['ONE'], hint: 'Category 4 hint', words: ['MONEY', 'PHONE', 'STONE', 'ALONE'] },
+        },
+        wordList: [],
+      })
+
+      const result = await createGame('2025-01-01')
+
+      expect(dynamodb.setGameById).toHaveBeenCalledWith(
+        '2025-01-01',
+        expect.objectContaining({
+          wordList: expect.arrayContaining(['MONEY', 'PHONE', 'STONE', 'ALONE']),
+        }),
+      )
+      expect(result).toEqual(
+        expect.objectContaining({
+          wordList: expect.arrayContaining(['MONEY', 'PHONE', 'STONE', 'ALONE']),
+        }),
+      )
+    })
+
+    it('should throw error when embedded substrings validation fails', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        categories: {
+          Cat1: { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+          Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          // POINT doesn't contain ONE
+          Cat4: { embeddedSubstrings: ['ONE'], hint: 'Category 4 hint', words: ['MONEY', 'POINT', 'STONE', 'ALONE'] },
+        },
+        wordList: [],
+      })
+
+      await expect(createGame('2025-01-01')).rejects.toThrow('Generated invalid embedded substrings')
+    })
   })
 })

@@ -61,12 +61,20 @@ const transformWordsToUpperCase = (connectionsData: ConnectionsData): Connection
       ...acc,
       [key]: {
         ...category,
+        embeddedSubstrings: category.embeddedSubstrings?.map((word: string) => word.toUpperCase()),
         words: category.words.map((word: string) => word.toUpperCase()),
       },
     }),
     {} as CategoryObject,
   ),
 })
+
+const isEmbeddedSubstringsValid = (words: string[], embeddedSubstrings?: string[]): boolean => {
+  if (!embeddedSubstrings || embeddedSubstrings.length === 0) {
+    return true
+  }
+  return words.every((word) => embeddedSubstrings.some((substring) => word.includes(substring)))
+}
 
 export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const contextGameIds = getContextGameIds(gameId)
@@ -76,7 +84,7 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)
-  const returnedData = (await invokeModel(prompt, modelContext)) as ConnectionsData
+  const returnedData: ConnectionsData = await invokeModel(prompt, modelContext)
   const connectionsData = transformWordsToUpperCase(returnedData)
   const wordList = Object.values(connectionsData.categories).flatMap((cat) => cat.words.map((w) => w.toUpperCase()))
 
@@ -84,8 +92,14 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
     throw new Error('Generated words are not unique')
   } else if ([4, 5].indexOf(Object.keys(connectionsData.categories).length) < 0) {
     throw new Error('Generated wrong number of categories')
-  } else if (Object.values(connectionsData.categories).find((category) => category.words.length !== 4)) {
+  } else if (Object.values(connectionsData.categories).some((category) => category.words.length !== 4)) {
     throw new Error('Generated a category with the wrong number of words')
+  } else if (
+    !Object.values(connectionsData.categories).every((category) =>
+      isEmbeddedSubstringsValid(category.words, category.embeddedSubstrings),
+    )
+  ) {
+    throw new Error('Generated invalid embedded substrings')
   }
 
   const dataWithWordList = { ...connectionsData, wordList }

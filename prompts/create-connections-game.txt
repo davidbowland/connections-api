@@ -1,44 +1,58 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":10000,"model":"us.anthropic.claude-3-7-sonnet-20250219-v1:0","temperature":0.8,"topK":25000}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":10000,"model":"global.anthropic.claude-sonnet-4-5-20250929-v1:0","temperature":0.8,"topK":500}
 
 <instructions>
 <context>
-"Connections" is a word game where the goal is to choose associated words.
+"Connections" is a word game where the goal is to choose associated words
 
-- There are 4 categories.
-- Each category has 4 associated words.
-- No categories or words should be offensive or indecent.
-- No categories or words should overlap.
+- There are 4 categories
+- Each category has 4 associated words
+- No categories or words should be offensive or indecent
+- No categories or words should overlap
 </context>
 <steps>
 - The context shows category themes, disallowed categories, and words for inspiration.
-- Generate 4 unique categories.
+- Generate 4 unique categories
+  - ALWAYS abide by creativity_constraints
   - ALWAYS consider the word constraints (wordConstraints), if provided
-  - ALWAYS use at least one inspiration word in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing.
-  - NEVER generate a category that is similar to disallowed categories another category ("weather" and "storms" are too similar).
-  - NEVER generate categories about words having common usage (NOT "colors that are verbs" or "words that are common objects", etc).
-  - NEVER generate more than one category that is esotertic.
+  - ALWAYS use at least one inspiration word or a similar word following creativity_constraints in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing
+  - NEVER generate a category that is similar to disallowed categories another category ("weather" and "storms" are too similar)
 - Generate 7 unique words for each category, then pick the best 4 based on:
-  - NO CATEGORIES CAN SHARE A WORD.
+  - NO CATEGORIES CAN SHARE A WORD
   - ALWAYS generate words that make sense with the category.
-  - ALWAYS follow the word constraints (wordConstraints), if provided.
+  - ALWAYS abide by creativity_constraints
+  - ALWAYS follow the word constraints (wordConstraints), if provided
   - Generate works that are EXTREMELY difficult to guess. Difficult to guess words:
     - Appear to fit in more than one category
     - Have multiple meanings (for example, a `draft` paper vs `draft` into the army)
     - Are different from other words in the category
     - Are similar to words in other categories (for example, `lemon` for `yellow` category when `banana` is a word for another category)
     - Not be obvious to a category (for example, `bailiff` and `judge` together are obvious for their connection to courtrooms)
-  - NEVER include words from the category.
-  - All words must be uppercase.
-- Generate a hint for each category.
-  - Phrase the hint as a question.
-  - The hint must be vague enough to be a hint. DO NOT give the solution by rephrasing the category, but introduce new information.
-  - NEVER use any words from the category name.
-  - NEVER ask what things have in common.
+  - NEVER include words from the category
+  - All words must be uppercase
+- Generate a hint for each category
+  - Phrase the hint as a question
+  - The hint must be vague enough to be a hint. DO NOT give the solution by rephrasing the category, but introduce new information
+  - NEVER use any words from the category name
+  - NEVER ask what things have in common
 </steps>
+<creativity_constraints>
+KEY INSIGHT: Rely on lateral thinking and wordplay rather than categorical knowledge. DO NOT group things that naturally go together, ALWAYS group things that surprisingly go together.
+
+- Prioritize wordplay and linguistic connections over semantic categories. Focus on how words sound, spell, or transform rather than what they mean
+- Include at least 1 category that uses fill-in-the-blank patterns like "___ prize" or "Happy ___"
+- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (e.g., "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE")
+- Create categories and words where words have multiple meanings or unexpected secondary connections. Avoid obvious groupings
+- Use abstract functional relationships. Include groupings by what things DO rather than what they ARE
+- Include categories requiring specialized knowledge -- pop culture, sports, technical terms, proper nouns
+- Ensure words could plausibly fit in multiple categories. This creates crucial MISDIRECTION
+- Avoid categories where all words obviously belong to the same semantic field -- no "cat behaviors" or "types of drinks"
+- Focus on surprising connections that make solvers think 'I never would have thought of that'
+- If any category relies on word spelling, double-check that the spelling constraints are followed. Then, triple-check
+</creativity_constraints>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
 - The output will be a JSON object consisting of one key:
-  - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words and `hint` is the hint
+  - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings that all words must contain (empty array if not a spelling category)
 - Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
 <context>
@@ -51,19 +65,23 @@ ${context}
   "categories": {
     "Boast": {
       "hint": "What might someone do when they're proud?",
-      "words": ["BLUSTER", "CROW", "SHOW OFF", "STRUT"]
+      "words": ["BLUSTER", "CROW", "SHOW OFF", "STRUT"],
+      "embeddedSubstrings": []
     },
     "Arc-shaped things": {
       "hint": "Do you see a curvy theme?",
-      "words": ["BANANA", "EYEBROW", "FLIGHT PATH", "RAINBOW"]
+      "words": ["BANANA", "EYEBROW", "FLIGHT PATH", "RAINBOW"],
+      "embeddedSubstrings": []
     },
     "Cereal mascots": {
       "hint": "Have you seen some of these words during your morning routine?",
-      "words": ["COUNT", "ELVES", "LEPRECHAUN", "ROOSTER"]
+      "words": ["COUNT", "ELVES", "LEPRECHAUN", "ROOSTER"],
+      "embeddedSubstrings": []
     },
     "Ways to denote a citation": {
       "hint": "Would you use any of these while writing an essay?",
-      "words": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"]
+      "words": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"],
+      "embeddedSubstrings": []
     }
   }
 }
@@ -73,19 +91,23 @@ ${context}
   "categories": {
     "Black-and-white things": {
       "hint": "Do you see a color theme?",
-      "words": ["CROSSWORD", "OREO", "PANDA", "TUXEDO"]
+      "words": ["CROSSWORD", "OREO", "PANDA", "TUXEDO"],
+      "embeddedSubstrings": []
     },
     "Military clothing descriptors": {
       "hint": "How is your fashion sense?",
-      "words": ["CAMO", "DRAB", "FATIGUE", "KHAKI"]
+      "words": ["CAMO", "DRAB", "FATIGUE", "KHAKI"],
+      "embeddedSubstrings": []
     },
     "Presidental nicknames": {
       "hint": "Do any words strike you as informal?",
-      "words": ["ABE", "CAL", "DICK", "TEDDY"]
+      "words": ["ABE", "CAL", "DICK", "TEDDY"],
+      "embeddedSubstrings": []
     },
-    "Fail to take advantage of, as an opportunity": {
-      "hint": "Don't you hate it when that happens?",
-      "words": ["BLOW", "LOSE", "MISS", "WASTE"]
+    "Words containing numbers": {
+      "hint": "Can you count on any of these?",
+      "words": ["HONEST", "NETWORK", "LISTEN", "COMPONENT"],
+      "embeddedSubstrings": ["ONE", "TWO", "TEN"]
     }
   }
 }
@@ -110,6 +132,12 @@ ${context}
 <category>Words after "T"</category>
 <hint>Who is your cell provider?</hint>
 <words><word>MOBILE</word><word>PAIN</word><word>REX</word><word>SHIRT</word></words>
+</example>
+<example>
+<category>Words containing "ONE"</category>
+<hint>Can you find a common thread?</hint>
+<words><word>MONEY</word><word>PHONE</word><word>STONE</word><word>ALONE</word></words>
+<embeddedSubstrings>["ONE"]</embeddedSubstrings>
 </example>
 <example>
 <category>Items in a sewing kit</category>

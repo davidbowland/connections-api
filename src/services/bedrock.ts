@@ -5,14 +5,14 @@ import { logDebug } from '../utils/logging'
 
 const runtimeClient = new BedrockRuntimeClient({ region: 'us-east-1' })
 
-export const invokeModel = async (prompt: Prompt, context?: Record<string, any>): Promise<unknown> => {
+export const invokeModel = async <T>(prompt: Prompt, context?: Record<string, any>): Promise<T> => {
   const promptWithContext = context
     ? { ...prompt, contents: prompt.contents.replace('${context}', JSON.stringify(context)) }
     : prompt
   return invokeModelMessage(promptWithContext)
 }
 
-export const invokeModelMessage = async (prompt: Prompt): Promise<unknown> => {
+export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
   logDebug('Invoking model', { prompt })
   const messageBody = {
     anthropic_version: prompt.config.anthropicVersion,

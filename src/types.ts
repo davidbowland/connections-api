@@ -15,6 +15,7 @@ export interface ConnectionsData {
 }
 
 export interface Category {
+  embeddedSubstrings?: string[]
   hint: string
   words: string[]
 }
@@ -35,6 +36,12 @@ export interface PromptConfig {
   model: string
   temperature: number
   topK: number
+}
+
+export interface LargePromptOptions {
+  chunkSize?: number
+  useSystemMessage?: boolean
+  systemMessage?: string
 }
 
 export interface Prompt {
