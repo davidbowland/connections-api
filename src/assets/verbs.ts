@@ -1,4 +1,4 @@
-export const verbs = [
+export const verbs: string[] = [
   'be',
   'have',
   'do',

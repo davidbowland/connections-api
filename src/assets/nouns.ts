@@ -1,4 +1,4 @@
-export const nouns = [
+export const nouns: string[] = [
   'time',
   'year',
   'people',

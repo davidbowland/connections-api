@@ -1,6 +1,4 @@
-export const constraints = [
-  'all words must have a word embedded in them, spelling-wise, but MUST NOT be compound words. Categories MUST not be "words containing ONE" but instead like "words containing spelled numbers"',
-  'all words must be 3 letters, but categories must be MUST specific than "3-letter words"',
+export const constraints: string[] = [
   'all words must be 4 letters, but categories must be MUST specific than "4-letter words"',
   'all words must be 5 letters, but categories must be MUST specific than "5-letter words"',
   'all words must have double letters, but categories MUST be more specific than "words with double letters" or "words that contain \"look\""',
@@ -13,12 +11,22 @@ export const constraints = [
   'all words must end in the same suffix (-ing, -er, -ly, etc), but categories MUST be more specific than "words ending with the suffix -ing". There should be one suffix for the game. The suffix should not be different in different categories.',
   'most words should rhyme with each other. There should be one rhyming sound for the game. The rhyming sound should not be different in different categories.',
   'all words must have silent letters, but categories MUST be more specific than "words with silent letters" or "words with silent B")',
-  'most should have letters in alphabetical order, but categories MUST be more specific than "words with alphabetical letters"',
-  'most should have letters in reverse-alphabetical order, but categories MUST be more specific than "words with reverse-alphabetical letters"',
   'all words must have 1 syllable, but categories MUST be more specific than "one-syllable words"',
   'all words must have 2 syllables, but categories MUST be more specific than "two-syllable words"',
   'all words must have 3 syllables, but categories MUST be more specific than "three-syllable words"',
   'all words must have 4 syllables, but categories MUST be more specific than "four-syllable words"',
-  'all words must be REAL WORDS formed by removing one letter from longer words, but the letter removed CANNOT be S at the end of a word',
   'always generate 5 categories rather than 4',
 ]
+
+export const fixedDateConstraints: Record<string, string> = {
+  '0101': "all words must be related to New Year's Day, but categories are NOT required to be New Year-related",
+  '0214': "all words must be related to Valentine's Day, but categories are NOT required to be Valentine's Day-related",
+  '0401':
+    "all words must be related to April Fools' Day/pranks/jokes, but categories are NOT required to be prank-related",
+  '0704': 'all words must be related to Independence Day/July 4th, but categories are NOT required to be patriotic',
+  '0920': 'all words must be related to weddings/anniversaries/love, but categories are NOT required to be patriotic',
+  '1031': 'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
+  '1111':
+    'all words must be related to Veterans Day/military/service, but categories are NOT required to be military-related',
+  '1225': 'all words must be related to Christmas, but categories are NOT required to be Christmas-related',
+}
