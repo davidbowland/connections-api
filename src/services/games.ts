@@ -12,6 +12,7 @@ import {
   llmPromptId,
 } from '../config'
 import { CategoryObject, ConnectionsData, GameId } from '../types'
+import { getDateConstraint } from '../utils/constraints'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
@@ -24,20 +25,21 @@ const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => 
   return count > 1 ? [value, ...getRandomSample(array, count - 1, max - 1)] : [value]
 }
 
-const getModelContext = (disallowedCategories: string[]): Record<string, any> => {
+const getModelContext = (date: Date, disallowedCategories: string[]): Record<string, any> => {
   const categoryConstraintValue = Math.random()
   const wordConstraints =
     categoryConstraintValue < categoryConstraintChance ? getRandomSample(constraints, 1)[0] : undefined
+  const holidayConstraints = getDateConstraint(date)
   const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
   const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
   const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
-  log('Constraint chance', { categoryConstraintChance, categoryConstraintValue })
+  log('Constraint chance', { categoryConstraintChance, categoryConstraintValue, holidayConstraints })
   return {
     disallowedCategories,
     inspirationAdjectives,
     inspirationNouns,
     inspirationVerbs,
-    wordConstraints,
+    wordConstraints: holidayConstraints ?? wordConstraints,
   }
 }
 
@@ -80,7 +82,7 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const contextGameIds = getContextGameIds(gameId)
   const contextGames = await getGamesByIds(contextGameIds)
   const disallowedCategories = Object.values(contextGames).flatMap((game) => Object.keys(game.categories))
-  const modelContext = getModelContext(disallowedCategories)
+  const modelContext = getModelContext(new Date(gameId), disallowedCategories)
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)

@@ -2,10 +2,12 @@ import { connectionsData, prompt } from '../__mocks__'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
 import { createGame } from '@services/games'
+import * as constraints from '@utils/constraints'
 
 jest.mock('@services/bedrock')
 jest.mock('@services/dynamodb')
 jest.mock('@utils/logging')
+jest.mock('@utils/constraints')
 
 describe('games', () => {
   const mockMathRandom = jest.fn().mockReturnValue(0)
@@ -15,6 +17,7 @@ describe('games', () => {
     jest.mocked(dynamodb).getGamesByIds.mockResolvedValue({})
     jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
     jest.mocked(dynamodb).setGameById.mockResolvedValue({} as any)
+    jest.mocked(constraints).getDateConstraint.mockReturnValue(undefined)
 
     Math.random = mockMathRandom
   })
@@ -28,7 +31,7 @@ describe('games', () => {
         prompt,
         expect.objectContaining({
           disallowedCategories: [],
-          wordConstraints: expect.stringContaining('all words must have a word embedded in them'),
+          wordConstraints: expect.stringContaining('all words must be 4 letters'),
         }),
       )
       expect(dynamodb.setGameById).toHaveBeenCalledWith(
@@ -191,6 +194,52 @@ describe('games', () => {
       })
 
       await expect(createGame('2025-01-01')).rejects.toThrow('Generated invalid embedded substrings')
+    })
+
+    it('should create a game with holiday constraints when date has holiday', async () => {
+      jest
+        .mocked(constraints)
+        .getDateConstraint.mockReturnValueOnce(
+          'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
+        )
+
+      const result = await createGame('2025-10-31')
+
+      expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-10-31'))
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.objectContaining({
+          disallowedCategories: [],
+          wordConstraints:
+            'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
+        }),
+      )
+      expect(result).toEqual(
+        expect.objectContaining({
+          wordList: expect.arrayContaining(['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT']),
+        }),
+      )
+    })
+
+    it('should fall back to regular constraints when no holiday constraint exists', async () => {
+      jest.mocked(constraints).getDateConstraint.mockReturnValueOnce(undefined)
+      mockMathRandom.mockReturnValueOnce(0) // Ensure we get a word constraint
+
+      const result = await createGame('2025-06-15')
+
+      expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-06-15'))
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.objectContaining({
+          disallowedCategories: [],
+          wordConstraints: expect.stringContaining('always generate 5 categories'),
+        }),
+      )
+      expect(result).toEqual(
+        expect.objectContaining({
+          wordList: expect.arrayContaining(['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT']),
+        }),
+      )
     })
   })
 })

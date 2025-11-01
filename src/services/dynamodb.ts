@@ -55,7 +55,7 @@ export const getGameById = async (gameId: GameId): Promise<GameResult> => {
   }
 
   const generationStarted = response.Item?.GenerationStarted?.N
-  const isGenerating = generationStarted ? parseInt(generationStarted) + 300000 > Date.now() : false
+  const isGenerating = generationStarted ? parseInt(generationStarted) + 300_000 > Date.now() : false
   return { isGenerating }
 }
 
