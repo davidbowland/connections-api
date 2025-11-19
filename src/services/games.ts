@@ -1,5 +1,5 @@
 import { adjectives } from '../assets/adjectives'
-import { constraints } from '../assets/constraints'
+import { normalConstraints, specialConstraints } from '../assets/constraints'
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
 import {
@@ -26,20 +26,46 @@ const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => 
 }
 
 const getModelContext = (date: Date, disallowedCategories: string[]): Record<string, any> => {
-  const categoryConstraintValue = Math.random()
-  const wordConstraints =
-    categoryConstraintValue < categoryConstraintChance ? getRandomSample(constraints, 1)[0] : undefined
+  const constraintValue = Math.random()
+  const useSpecialConstraint = constraintValue < categoryConstraintChance
   const holidayConstraints = getDateConstraint(date)
+
   const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
   const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
   const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
-  log('Constraint chance', { categoryConstraintChance, categoryConstraintValue, holidayConstraints })
-  return {
-    disallowedCategories,
-    inspirationAdjectives,
-    inspirationNouns,
-    inspirationVerbs,
-    wordConstraints: holidayConstraints ?? wordConstraints,
+
+  log('Constraint chance', { categoryConstraintChance, constraintValue, holidayConstraints, useSpecialConstraint })
+
+  // Holiday constraints override everything
+  if (holidayConstraints) {
+    return {
+      disallowedCategories,
+      inspirationAdjectives,
+      inspirationNouns,
+      inspirationVerbs,
+      wordConstraints: holidayConstraints,
+    }
+  }
+
+  // Use either specialConstraints (for all words) or normalConstraints (for categories)
+  if (useSpecialConstraint) {
+    const wordConstraints = getRandomSample(specialConstraints, 1)[0]
+    return {
+      disallowedCategories,
+      inspirationAdjectives,
+      inspirationNouns,
+      inspirationVerbs,
+      wordConstraints,
+    }
+  } else {
+    const categoryConstraints = getRandomSample(normalConstraints, 4)
+    return {
+      categoryConstraints,
+      disallowedCategories,
+      inspirationAdjectives,
+      inspirationNouns,
+      inspirationVerbs,
+    }
   }
 }
 

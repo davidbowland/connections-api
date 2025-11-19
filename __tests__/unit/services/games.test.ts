@@ -23,7 +23,8 @@ describe('games', () => {
   })
 
   describe('createGame', () => {
-    it('should create a game with word constraint context', async () => {
+    it('should create a game with specialConstraints (wordConstraints)', async () => {
+      mockMathRandom.mockReturnValueOnce(0) // Use special constraint
       const result = await createGame('2025-01-01')
 
       expect(dynamodb.getGamesByIds).toHaveBeenCalled()
@@ -32,6 +33,12 @@ describe('games', () => {
         expect.objectContaining({
           disallowedCategories: [],
           wordConstraints: expect.stringContaining('all words must be 4 letters'),
+        }),
+      )
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.not.objectContaining({
+          categoryConstraints: expect.anything(),
         }),
       )
       expect(dynamodb.setGameById).toHaveBeenCalledWith(
@@ -69,19 +76,25 @@ describe('games', () => {
       )
     })
 
-    it('should create a game with inspiration context', async () => {
-      mockMathRandom.mockReturnValueOnce(1)
+    it('should create a game with normalConstraints (categoryConstraints)', async () => {
+      mockMathRandom.mockReturnValueOnce(1) // Use normal constraints
       const result = await createGame('2025-01-01')
 
       expect(dynamodb.getGamesByIds).toHaveBeenCalled()
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
         expect.objectContaining({
+          categoryConstraints: expect.arrayContaining([expect.stringContaining('Fill in the blank pattern')]),
           disallowedCategories: [],
           inspirationAdjectives: expect.arrayContaining(['wan', 'balmy']),
           inspirationNouns: expect.arrayContaining(['execution', 'exclusion']),
           inspirationVerbs: expect.arrayContaining(['scratch', 'shiver']),
-          wordConstraints: undefined,
+        }),
+      )
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.not.objectContaining({
+          wordConstraints: expect.anything(),
         }),
       )
       expect(dynamodb.setGameById).toHaveBeenCalledWith(
@@ -117,6 +130,31 @@ describe('games', () => {
           ]),
         }),
       )
+    })
+
+    it('should select exactly 4 unique categoryConstraints', async () => {
+      mockMathRandom.mockReturnValueOnce(1) // Use normal constraints
+      await createGame('2025-01-01')
+
+      const callArgs = jest.mocked(bedrock.invokeModel).mock.calls[0][1]
+      expect(callArgs.categoryConstraints).toHaveLength(4)
+      // Ensure all 4 are unique
+      expect(new Set(callArgs.categoryConstraints).size).toBe(4)
+    })
+
+    it('should have weighted distribution with tier 1 constraints appearing more frequently', async () => {
+      // This test verifies the weighted distribution by checking the normalConstraints array structure
+      const { normalConstraints } = await import('@assets/constraints')
+
+      // The array should have duplicates due to weighting (10 tier1 * 3 + 9 tier2 * 2 + 5 tier3 * 1 = 53 total)
+      const totalCount = normalConstraints.length
+      const uniqueCount = new Set(normalConstraints).size
+
+      // Should have more total items than unique items due to weighting
+      expect(totalCount).toBeGreaterThan(uniqueCount)
+
+      // Should have at least 50 items (10*3 + 9*2 + 5*1 = 53)
+      expect(totalCount).toBeGreaterThanOrEqual(50)
     })
 
     it('should throw error when words are not unique', async () => {
@@ -221,9 +259,9 @@ describe('games', () => {
       )
     })
 
-    it('should fall back to regular constraints when no holiday constraint exists', async () => {
+    it('should fall back to specialConstraints when no holiday constraint exists', async () => {
       jest.mocked(constraints).getDateConstraint.mockReturnValueOnce(undefined)
-      mockMathRandom.mockReturnValueOnce(0) // Ensure we get a word constraint
+      mockMathRandom.mockReturnValueOnce(0) // Ensure we get a special constraint
 
       const result = await createGame('2025-06-15')
 
@@ -233,6 +271,33 @@ describe('games', () => {
         expect.objectContaining({
           disallowedCategories: [],
           wordConstraints: expect.stringContaining('always generate 5 categories'),
+        }),
+      )
+      expect(result).toEqual(
+        expect.objectContaining({
+          wordList: expect.arrayContaining(['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT']),
+        }),
+      )
+    })
+
+    it('should fall back to normalConstraints when no holiday constraint exists', async () => {
+      jest.mocked(constraints).getDateConstraint.mockReturnValueOnce(undefined)
+      mockMathRandom.mockReturnValueOnce(1) // Ensure we get normal constraints
+
+      const result = await createGame('2025-06-15')
+
+      expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-06-15'))
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.objectContaining({
+          categoryConstraints: expect.any(Array),
+          disallowedCategories: [],
+        }),
+      )
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.not.objectContaining({
+          wordConstraints: expect.anything(),
         }),
       )
       expect(result).toEqual(

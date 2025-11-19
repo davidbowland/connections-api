@@ -13,14 +13,16 @@
 - The context shows category themes, disallowed categories, and words for inspiration.
 - Generate 4 unique categories
   - ALWAYS abide by creativity_constraints
-  - ALWAYS consider the word constraints (wordConstraints), if provided
+  - If categoryConstraints is provided, you MUST use each of the 4 provided category types as the basis for your 4 categories
+  - If wordConstraints is provided instead, ALWAYS follow those constraints for ALL words in the game
   - ALWAYS use at least one inspiration word or a similar word following creativity_constraints in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing
   - NEVER generate a category that is similar to disallowed categories another category ("weather" and "storms" are too similar)
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
   - ALWAYS generate words that make sense with the category.
   - ALWAYS abide by creativity_constraints
-  - ALWAYS follow the word constraints (wordConstraints), if provided
+  - If categoryConstraints is provided, ensure each category follows its assigned constraint type
+  - If wordConstraints is provided, ALWAYS follow those constraints for ALL words in the game
   - Generate works that are EXTREMELY difficult to guess. Difficult to guess words:
     - Appear to fit in more than one category
     - Have multiple meanings (for example, a `draft` paper vs `draft` into the army)
