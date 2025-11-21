@@ -1,5 +1,5 @@
 import { adjectives } from '../assets/adjectives'
-import { normalConstraints, specialConstraints } from '../assets/constraints'
+import { normalConstraintCounts, normalConstraints, specialConstraints } from '../assets/constraints'
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
 import {
@@ -34,7 +34,12 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
   const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
   const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
 
-  log('Constraint chance', { categoryConstraintChance, constraintValue, holidayConstraints, useSpecialConstraint })
+  log('Constraint chance', {
+    categoryConstraintChance,
+    categoryConstraintValue: constraintValue,
+    holidayConstraints,
+    useSpecialConstraint,
+  })
 
   // Holiday constraints override everything
   if (holidayConstraints) {
@@ -58,7 +63,8 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
       wordConstraints,
     }
   } else {
-    const categoryConstraints = getRandomSample(normalConstraints, 4)
+    const categoryConstraintCount = getRandomSample(normalConstraintCounts, 1)[0]
+    const categoryConstraints = getRandomSample(normalConstraints, categoryConstraintCount)
     return {
       categoryConstraints,
       disallowedCategories,

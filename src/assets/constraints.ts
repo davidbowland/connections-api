@@ -54,7 +54,6 @@ const tier3Constraints: string[] = [
   'Words with silent letters in a specific position (e.g., "Words with silent letters that sound like other words")',
 ]
 
-// Combine with weights: tier1 appears 3x, tier2 appears 2x, tier3 appears 1x
 export const normalConstraints: string[] = [
   ...tier1Constraints,
   ...tier1Constraints,
@@ -63,6 +62,8 @@ export const normalConstraints: string[] = [
   ...tier2Constraints,
   ...tier3Constraints,
 ]
+
+export const normalConstraintCounts: number[] = [1, 2, 2, 3, 3, 4]
 
 export const fixedDateConstraints: Record<string, string> = {
   '0101': "all words must be related to New Year's Day, but categories are NOT required to be New Year-related",

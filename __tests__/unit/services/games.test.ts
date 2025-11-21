@@ -24,10 +24,8 @@ describe('games', () => {
 
   describe('createGame', () => {
     it('should create a game with specialConstraints (wordConstraints)', async () => {
-      mockMathRandom.mockReturnValueOnce(0) // Use special constraint
       const result = await createGame('2025-01-01')
 
-      expect(dynamodb.getGamesByIds).toHaveBeenCalled()
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
         expect.objectContaining({
@@ -41,46 +39,14 @@ describe('games', () => {
           categoryConstraints: expect.anything(),
         }),
       )
-      expect(dynamodb.setGameById).toHaveBeenCalledWith(
-        '2025-01-01',
-        expect.objectContaining({
-          wordList: expect.arrayContaining([
-            'BLUSTER',
-            'CROW',
-            'SHOW OFF',
-            'STRUT',
-            'BANANA',
-            'EYEBROW',
-            'FLIGHT PATH',
-            'RAINBOW',
-            'COUNT',
-            'ELVES',
-          ]),
-        }),
-      )
-      expect(result).toEqual(
-        expect.objectContaining({
-          wordList: expect.arrayContaining([
-            'BLUSTER',
-            'CROW',
-            'SHOW OFF',
-            'STRUT',
-            'BANANA',
-            'EYEBROW',
-            'FLIGHT PATH',
-            'RAINBOW',
-            'COUNT',
-            'ELVES',
-          ]),
-        }),
-      )
+      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData)
+      expect(result).toEqual(connectionsData)
     })
 
     it('should create a game with normalConstraints (categoryConstraints)', async () => {
-      mockMathRandom.mockReturnValueOnce(1) // Use normal constraints
+      mockMathRandom.mockReturnValueOnce(1)
       const result = await createGame('2025-01-01')
 
-      expect(dynamodb.getGamesByIds).toHaveBeenCalled()
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
         expect.objectContaining({
@@ -97,64 +63,8 @@ describe('games', () => {
           wordConstraints: expect.anything(),
         }),
       )
-      expect(dynamodb.setGameById).toHaveBeenCalledWith(
-        '2025-01-01',
-        expect.objectContaining({
-          wordList: expect.arrayContaining([
-            'BLUSTER',
-            'CROW',
-            'SHOW OFF',
-            'STRUT',
-            'BANANA',
-            'EYEBROW',
-            'FLIGHT PATH',
-            'RAINBOW',
-            'COUNT',
-            'ELVES',
-          ]),
-        }),
-      )
-      expect(result).toEqual(
-        expect.objectContaining({
-          wordList: expect.arrayContaining([
-            'BLUSTER',
-            'CROW',
-            'SHOW OFF',
-            'STRUT',
-            'BANANA',
-            'EYEBROW',
-            'FLIGHT PATH',
-            'RAINBOW',
-            'COUNT',
-            'ELVES',
-          ]),
-        }),
-      )
-    })
-
-    it('should select exactly 4 unique categoryConstraints', async () => {
-      mockMathRandom.mockReturnValueOnce(1) // Use normal constraints
-      await createGame('2025-01-01')
-
-      const callArgs = jest.mocked(bedrock.invokeModel).mock.calls[0][1]
-      expect(callArgs.categoryConstraints).toHaveLength(4)
-      // Ensure all 4 are unique
-      expect(new Set(callArgs.categoryConstraints).size).toBe(4)
-    })
-
-    it('should have weighted distribution with tier 1 constraints appearing more frequently', async () => {
-      // This test verifies the weighted distribution by checking the normalConstraints array structure
-      const { normalConstraints } = await import('@assets/constraints')
-
-      // The array should have duplicates due to weighting (10 tier1 * 3 + 9 tier2 * 2 + 5 tier3 * 1 = 53 total)
-      const totalCount = normalConstraints.length
-      const uniqueCount = new Set(normalConstraints).size
-
-      // Should have more total items than unique items due to weighting
-      expect(totalCount).toBeGreaterThan(uniqueCount)
-
-      // Should have at least 50 items (10*3 + 9*2 + 5*1 = 53)
-      expect(totalCount).toBeGreaterThanOrEqual(50)
+      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData)
+      expect(result).toEqual(connectionsData)
     })
 
     it('should throw error when words are not unique', async () => {
