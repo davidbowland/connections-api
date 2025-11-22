@@ -52,7 +52,9 @@ describe('create-game', () => {
     })
 
     it('should not create a game when game already exists', async () => {
-      jest.mocked(dynamodb).getGameById.mockResolvedValueOnce({ game: connectionsData, isGenerating: false })
+      jest
+        .mocked(dynamodb)
+        .getGameById.mockResolvedValueOnce({ game: connectionsData, isGenerating: false })
 
       await createGameHandler(scheduledEvent)
 

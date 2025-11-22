@@ -51,7 +51,12 @@ describe('bedrock', () => {
           JSON.stringify({
             anthropic_version: 'bedrock-2023-05-31',
             max_tokens: 256,
-            messages: [{ content: 'My context should go here: {"data":"super-happy-fun-data"}', role: 'user' }],
+            messages: [
+              {
+                content: 'My context should go here: {"data":"super-happy-fun-data"}',
+                role: 'user',
+              },
+            ],
             temperature: 0.5,
             top_k: 250,
           }),

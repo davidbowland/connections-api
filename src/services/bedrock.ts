@@ -21,7 +21,10 @@ export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
     temperature: prompt.config.temperature,
     top_k: prompt.config.topK,
   }
-  logDebug('Received from model', { messageBody, messages: JSON.stringify(messageBody.messages, null, 2) })
+  logDebug('Received from model', {
+    messageBody,
+    messages: JSON.stringify(messageBody.messages, null, 2),
+  })
   const command = new InvokeModelCommand({
     body: new TextEncoder().encode(JSON.stringify(messageBody)), // new Uint8Array(), // e.g. Buffer.from("") or new TextEncoder().encode("")
     contentType: 'application/json',
@@ -31,6 +34,9 @@ export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
   const modelResponse = JSON.parse(new TextDecoder().decode(response.body))
   logDebug('Model response', { modelResponse, text: modelResponse.content[0].text })
   return JSON.parse(
-    modelResponse.content[0].text.replace(/(^\s*<thinking>.*?<\/thinking>\s*|^\s*|\s*`(json)?\s*|\s*$)/gs, ''),
+    modelResponse.content[0].text.replace(
+      /(^\s*<thinking>.*?<\/thinking>\s*|^\s*|\s*`(json)?\s*|\s*$)/gs,
+      '',
+    ),
   )
 }

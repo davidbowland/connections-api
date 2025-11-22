@@ -31,7 +31,9 @@ const getConnectionsData = async (gameId: GameId): Promise<GameResult> => {
   }
 }
 
-export const getGameByIdHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2<unknown>> => {
+export const getGameByIdHandler = async (
+  event: APIGatewayProxyEventV2,
+): Promise<APIGatewayProxyResultV2<unknown>> => {
   log('Received event', { ...event, body: undefined })
 
   // We don't need try / catch here because all errors are caught

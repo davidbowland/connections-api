@@ -55,11 +55,15 @@ export const getGameById = async (gameId: GameId): Promise<GameResult> => {
   }
 
   const generationStarted = response.Item?.GenerationStarted?.N
-  const isGenerating = generationStarted ? parseInt(generationStarted) + 300_000 > Date.now() : false
+  const isGenerating = generationStarted
+    ? parseInt(generationStarted) + 300_000 > Date.now()
+    : false
   return { isGenerating }
 }
 
-export const getGamesByIds = async (gameIds: GameId[]): Promise<Record<GameId, ConnectionsData>> => {
+export const getGamesByIds = async (
+  gameIds: GameId[],
+): Promise<Record<GameId, ConnectionsData>> => {
   if (gameIds.length === 0) return {}
 
   const command = new BatchGetItemCommand({
@@ -83,7 +87,10 @@ export const getGamesByIds = async (gameIds: GameId[]): Promise<Record<GameId, C
   return result
 }
 
-export const setGameById = async (gameId: GameId, data: ConnectionsData): Promise<PutItemOutput> => {
+export const setGameById = async (
+  gameId: GameId,
+  data: ConnectionsData,
+): Promise<PutItemOutput> => {
   const command = new PutItemCommand({
     Item: {
       Data: {

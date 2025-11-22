@@ -66,14 +66,20 @@ export const normalConstraints: string[] = [
 export const normalConstraintCounts: number[] = [1, 2, 2, 3, 3, 4]
 
 export const fixedDateConstraints: Record<string, string> = {
-  '0101': "all words must be related to New Year's Day, but categories are NOT required to be New Year-related",
-  '0214': "all words must be related to Valentine's Day, but categories are NOT required to be Valentine's Day-related",
+  '0101':
+    "all words must be related to New Year's Day, but categories are NOT required to be New Year-related",
+  '0214':
+    "all words must be related to Valentine's Day, but categories are NOT required to be Valentine's Day-related",
   '0401':
     "all words must be related to April Fools' Day/pranks/jokes, but categories are NOT required to be prank-related",
-  '0704': 'all words must be related to Independence Day/July 4th, but categories are NOT required to be patriotic',
-  '0920': 'all words must be related to weddings/anniversaries/love, but categories are NOT required to be patriotic',
-  '1031': 'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
+  '0704':
+    'all words must be related to Independence Day/July 4th, but categories are NOT required to be patriotic',
+  '0920':
+    'all words must be related to weddings/anniversaries/love, but categories are NOT required to be patriotic',
+  '1031':
+    'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
   '1111':
     'all words must be related to Veterans Day/military/service, but categories are NOT required to be military-related',
-  '1225': 'all words must be related to Christmas, but categories are NOT required to be Christmas-related',
+  '1225':
+    'all words must be related to Christmas, but categories are NOT required to be Christmas-related',
 }

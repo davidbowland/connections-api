@@ -1,5 +1,13 @@
 /* eslint sort-keys:0 */
-import { CategoryObject, ConnectionsData, ConnectionsGame, GameId, Prompt, PromptConfig, PromptId } from '@types'
+import {
+  CategoryObject,
+  ConnectionsData,
+  ConnectionsGame,
+  GameId,
+  Prompt,
+  PromptConfig,
+  PromptId,
+} from '@types'
 
 // Games
 
@@ -7,8 +15,14 @@ export const gameId: GameId = '2025-01-01'
 
 const categories: CategoryObject = {
   Boast: { hint: 'Boast hint', words: ['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT'] },
-  'Arc-shaped things': { hint: 'Arc-shaped things hint', words: ['BANANA', 'EYEBROW', 'FLIGHT PATH', 'RAINBOW'] },
-  'Cereal mascots': { hint: 'Cereal mascots hint', words: ['COUNT', 'ELVES', 'LEPRECHAUN', 'ROOSTER'] },
+  'Arc-shaped things': {
+    hint: 'Arc-shaped things hint',
+    words: ['BANANA', 'EYEBROW', 'FLIGHT PATH', 'RAINBOW'],
+  },
+  'Cereal mascots': {
+    hint: 'Cereal mascots hint',
+    words: ['COUNT', 'ELVES', 'LEPRECHAUN', 'ROOSTER'],
+  },
   'Ways to denote a citation': {
     hint: 'Ways to denote a citation hint',
     words: ['ASTERISK', 'DAGGER', 'NUMBER', 'PARENS'],

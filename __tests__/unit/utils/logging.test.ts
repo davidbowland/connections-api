@@ -2,7 +2,14 @@ import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import * as AWSXRay from 'aws-xray-sdk-core'
 import https from 'https'
 
-import { extractRequestError, log, logDebug, logError, xrayCapture, xrayCaptureHttps } from '@utils/logging'
+import {
+  extractRequestError,
+  log,
+  logDebug,
+  logError,
+  xrayCapture,
+  xrayCaptureHttps,
+} from '@utils/logging'
 
 jest.mock('aws-xray-sdk-core')
 
@@ -29,31 +36,40 @@ describe('logging', () => {
   })
 
   describe('log', () => {
-    it.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])('should invoke logFunc with message', async (value) => {
-      const message = `Log message for value ${JSON.stringify(value)}`
-      await log(message)
+    it.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])(
+      'should invoke logFunc with message',
+      async (value) => {
+        const message = `Log message for value ${JSON.stringify(value)}`
+        await log(message)
 
-      expect(console.log).toHaveBeenCalledWith(message)
-    })
+        expect(console.log).toHaveBeenCalledWith(message)
+      },
+    )
   })
 
   describe('logDebug', () => {
-    it.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])('should invoke logFunc with message', async (value) => {
-      const message = `Debug message for value ${JSON.stringify(value)}`
-      await logDebug(message)
+    it.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])(
+      'should invoke logFunc with message',
+      async (value) => {
+        const message = `Debug message for value ${JSON.stringify(value)}`
+        await logDebug(message)
 
-      expect(console.log).toHaveBeenCalledWith(message)
-    })
+        expect(console.log).toHaveBeenCalledWith(message)
+      },
+    )
   })
 
   describe('logError', () => {
-    it.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])('should invoke logFunc with message', async (value) => {
-      const message = `Error message for value ${JSON.stringify(value)}`
-      const error = new Error(message)
-      await logError(error)
+    it.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])(
+      'should invoke logFunc with message',
+      async (value) => {
+        const message = `Error message for value ${JSON.stringify(value)}`
+        const error = new Error(message)
+        await logError(error)
 
-      expect(console.error).toHaveBeenCalledWith(error)
-    })
+        expect(console.error).toHaveBeenCalledWith(error)
+      },
+    )
   })
 
   describe('xrayCapture', () => {

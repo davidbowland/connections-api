@@ -26,7 +26,13 @@ describe('get-game-ids', () => {
       const body = JSON.parse(result.body)
 
       expect(result).toEqual(expect.objectContaining(status.OK))
-      expect(body.gameIds).toEqual(['2025-01-05', '2025-01-04', '2025-01-03', '2025-01-02', '2025-01-01'])
+      expect(body.gameIds).toEqual([
+        '2025-01-05',
+        '2025-01-04',
+        '2025-01-03',
+        '2025-01-02',
+        '2025-01-01',
+      ])
     })
 
     it('returns single game ID when today is January 1, 2025', async () => {

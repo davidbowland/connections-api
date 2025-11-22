@@ -1,5 +1,11 @@
 import { connectionsData, gameId, prompt, promptConfig, promptId } from '../__mocks__'
-import { getGameById, getGamesByIds, getPromptById, setGameById, setGameGenerationStarted } from '@services/dynamodb'
+import {
+  getGameById,
+  getGamesByIds,
+  getPromptById,
+  setGameById,
+  setGameGenerationStarted,
+} from '@services/dynamodb'
 
 const mockSend = jest.fn()
 jest.mock('@aws-sdk/client-dynamodb', () => ({
@@ -19,7 +25,9 @@ describe('dynamodb', () => {
   describe('getPromptById', () => {
     beforeAll(() => {
       mockSend.mockResolvedValue({
-        Items: [{ Config: { S: JSON.stringify(promptConfig) }, SystemPrompt: { S: prompt.contents } }],
+        Items: [
+          { Config: { S: JSON.stringify(promptConfig) }, SystemPrompt: { S: prompt.contents } },
+        ],
       })
     })
 
