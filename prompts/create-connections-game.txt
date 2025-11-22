@@ -13,16 +13,14 @@
 - The context shows category themes, disallowed categories, and words for inspiration.
 - Generate 4 unique categories
   - ALWAYS abide by creativity_constraints
-  - If categoryConstraints is provided, you MUST use each of the 4 provided category types as the basis for your 4 categories
-  - If wordConstraints is provided instead, ALWAYS follow those constraints for ALL words in the game
+  - ALWAYS consider the word constraints (wordConstraints), if provided
   - ALWAYS use at least one inspiration word or a similar word following creativity_constraints in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing
   - NEVER generate a category that is similar to disallowed categories another category ("weather" and "storms" are too similar)
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
   - ALWAYS generate words that make sense with the category.
-  - ALWAYS abide by creativity_constraints
-  - If categoryConstraints is provided, ensure each category follows its assigned constraint type
-  - If wordConstraints is provided, ALWAYS follow those constraints for ALL words in the game
+  - ALWAYS create categories that abide by creativity_constraints, if provided
+  - ALWAYS follow the word constraints (wordConstraints), if provided
   - Generate works that are EXTREMELY difficult to guess. Difficult to guess words:
     - Appear to fit in more than one category
     - Have multiple meanings (for example, a `draft` paper vs `draft` into the army)
@@ -40,8 +38,8 @@
 <creativity_constraints>
 KEY INSIGHT: Rely on lateral thinking and wordplay rather than categorical knowledge. DO NOT group things that naturally go together, ALWAYS group things that surprisingly go together.
 
-- Prioritize wordplay and linguistic connections over semantic categories. Focus on how words sound, spell, or transform rather than what they mean
-- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (e.g., "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE"). Ensure the embedded pattern is itself a word.
+- Prioritize wordplay and linguistic connections over semantic categories. Focus on how words sound, spell, or transform rather than what they mean. ALWAYS follow cetegory constraints.
+- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (e.g., "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE") and don't all appear in the same place ("DAY" always at the end of "EVERDAY" and "SOMEDAY"). Ensure the embedded pattern is itself a word of at least 4, preferably 5 or more letters.
 - Create categories and words where words have multiple meanings or unexpected secondary connections. Avoid obvious groupings
 - Use abstract functional relationships. Include groupings by what things DO rather than what they ARE
 - Include categories requiring specialized knowledge -- pop culture, sports, technical terms, proper nouns

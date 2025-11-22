@@ -47,10 +47,11 @@ describe('games', () => {
       mockMathRandom.mockReturnValueOnce(1)
       const result = await createGame('2025-01-01')
 
+      const categoryExpect = expect.stringContaining('Fill in the blank pattern')
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
         expect.objectContaining({
-          categoryConstraints: expect.arrayContaining([expect.stringContaining('Fill in the blank pattern')]),
+          categoryConstraints: expect.arrayContaining([categoryExpect, categoryExpect, categoryExpect, categoryExpect]),
           disallowedCategories: [],
           inspirationAdjectives: expect.arrayContaining(['wan', 'balmy']),
           inspirationNouns: expect.arrayContaining(['execution', 'exclusion']),

@@ -25,6 +25,8 @@ const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => 
   return count > 1 ? [value, ...getRandomSample(array, count - 1, max - 1)] : [value]
 }
 
+const padList = <T>(array: T[], padValue: T, length = 4) => array.concat(Array(length).fill(padValue)).slice(0, length)
+
 const getModelContext = (date: Date, disallowedCategories: string[]): Record<string, any> => {
   const constraintValue = Math.random()
   const useSpecialConstraint = constraintValue < categoryConstraintChance
@@ -66,7 +68,7 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
     const categoryConstraintCount = getRandomSample(normalConstraintCounts, 1)[0]
     const categoryConstraints = getRandomSample(normalConstraints, categoryConstraintCount)
     return {
-      categoryConstraints,
+      categoryConstraints: padList(categoryConstraints, categoryConstraints[0], 4),
       disallowedCategories,
       inspirationAdjectives,
       inspirationNouns,
