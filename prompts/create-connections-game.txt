@@ -19,7 +19,7 @@
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
   - ALWAYS generate words that make sense with the category.
-  - ALWAYS abide by creativity_constraints
+  - ALWAYS create categories that abide by creativity_constraints, if provided
   - ALWAYS follow the word constraints (wordConstraints), if provided
   - Generate works that are EXTREMELY difficult to guess. Difficult to guess words:
     - Appear to fit in more than one category
@@ -38,8 +38,8 @@
 <creativity_constraints>
 KEY INSIGHT: Rely on lateral thinking and wordplay rather than categorical knowledge. DO NOT group things that naturally go together, ALWAYS group things that surprisingly go together.
 
-- Prioritize wordplay and linguistic connections over semantic categories. Focus on how words sound, spell, or transform rather than what they mean
-- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (e.g., "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE"). Ensure the embedded pattern is itself a word.
+- Prioritize wordplay and linguistic connections over semantic categories. Focus on how words sound, spell, or transform rather than what they mean. ALWAYS follow cetegory constraints.
+- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (e.g., "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE") and don't all appear in the same place ("DAY" always at the end of "EVERDAY" and "SOMEDAY"). Ensure the embedded pattern is itself a word of at least 4, preferably 5 or more letters.
 - Create categories and words where words have multiple meanings or unexpected secondary connections. Avoid obvious groupings
 - Use abstract functional relationships. Include groupings by what things DO rather than what they ARE
 - Include categories requiring specialized knowledge -- pop culture, sports, technical terms, proper nouns
