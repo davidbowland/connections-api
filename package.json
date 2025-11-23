@@ -1,6 +1,6 @@
 {
   "name": "connections-api",
-  "version": "1.22.0",
+  "version": "1.23.0",
   "description": "Lambda for Connections API",
   "author": "David Bowland",
   "engines": {
