@@ -1,9 +1,5 @@
 import { adjectives } from '../assets/adjectives'
-import {
-  normalConstraintCounts,
-  normalConstraints,
-  specialConstraints,
-} from '../assets/constraints'
+import { normalConstraints, specialConstraints } from '../assets/constraints'
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
 import {
@@ -21,25 +17,33 @@ import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
 
-const getRandomSample = <T>(array: T[], count: number, length?: number): T[] => {
+const getRandomSample = <T>(
+  array: T[],
+  count: number,
+  withDuplicates = false,
+  length?: number,
+): T[] => {
   const max = length ?? array.length - 1
   const index = Math.floor(Math.random() * max)
   const value = array[index]
-  array[index] = array[max]
-  return count > 1 ? [value, ...getRandomSample(array, count - 1, max - 1)] : [value]
+  if (count === 1) {
+    return [value]
+  } else if (withDuplicates) {
+    return [value, ...getRandomSample(array, count - 1, true, max)]
+  } else {
+    array[index] = array[max]
+    return [value, ...getRandomSample(array, count - 1, false, max - 1)]
+  }
 }
-
-const padList = <T>(array: T[], padValue: T, length = 4) =>
-  array.concat(Array(length).fill(padValue)).slice(0, length)
 
 const getModelContext = (date: Date, disallowedCategories: string[]): Record<string, any> => {
   const constraintValue = Math.random()
   const useSpecialConstraint = constraintValue < categoryConstraintChance
   const holidayConstraints = getDateConstraint(date)
 
-  const inspirationNouns = getRandomSample(nouns, inspirationNounsCount)
-  const inspirationVerbs = getRandomSample(verbs, inspirationVerbsCount)
-  const inspirationAdjectives = getRandomSample(adjectives, inspirationAdjectivesCount)
+  const inspirationNouns = getRandomSample([...nouns], inspirationNounsCount)
+  const inspirationVerbs = getRandomSample([...verbs], inspirationVerbsCount)
+  const inspirationAdjectives = getRandomSample([...adjectives], inspirationAdjectivesCount)
 
   log('Constraint chance', {
     categoryConstraintChance,
@@ -61,7 +65,7 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
 
   // Use either specialConstraints (for all words) or normalConstraints (for categories)
   if (useSpecialConstraint) {
-    const wordConstraints = getRandomSample(specialConstraints, 1)[0]
+    const wordConstraints = getRandomSample([...specialConstraints], 1)[0]
     return {
       disallowedCategories,
       inspirationAdjectives,
@@ -70,10 +74,10 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
       wordConstraints,
     }
   } else {
-    const categoryConstraintCount = getRandomSample(normalConstraintCounts, 1)[0]
-    const categoryConstraints = getRandomSample(normalConstraints, categoryConstraintCount)
+    // Allow duplicate normalConstraints
+    const categoryConstraints = getRandomSample([...normalConstraints], 4, true)
     return {
-      categoryConstraints: padList(categoryConstraints, categoryConstraints[0], 4),
+      categoryConstraints,
       disallowedCategories,
       inspirationAdjectives,
       inspirationNouns,

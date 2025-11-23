@@ -58,9 +58,9 @@ describe('games', () => {
             categoryExpect,
           ]),
           disallowedCategories: [],
-          inspirationAdjectives: expect.arrayContaining(['wan', 'balmy']),
-          inspirationNouns: expect.arrayContaining(['execution', 'exclusion']),
-          inspirationVerbs: expect.arrayContaining(['scratch', 'shiver']),
+          inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
+          inspirationNouns: expect.arrayContaining(['time', 'execution']),
+          inspirationVerbs: expect.arrayContaining(['be', 'shiver']),
         }),
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
@@ -71,6 +71,27 @@ describe('games', () => {
       )
       expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData)
       expect(result).toEqual(connectionsData)
+    })
+
+    it('should pass disallowed categories from context games', async () => {
+      jest.mocked(dynamodb).getGamesByIds.mockResolvedValueOnce({
+        '2024-12-31': {
+          categories: {
+            'Previous Category 1': { hint: 'hint', words: ['A', 'B', 'C', 'D'] },
+            'Previous Category 2': { hint: 'hint', words: ['E', 'F', 'G', 'H'] },
+          },
+          wordList: [],
+        },
+      })
+
+      await createGame('2025-01-01')
+
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        expect.objectContaining({
+          disallowedCategories: ['Previous Category 1', 'Previous Category 2'],
+        }),
+      )
     })
 
     it('should throw error when words are not unique', async () => {
@@ -200,7 +221,7 @@ describe('games', () => {
         prompt,
         expect.objectContaining({
           disallowedCategories: [],
-          wordConstraints: expect.stringContaining('always generate 5 categories'),
+          wordConstraints: expect.stringContaining('all words must be 4 letters'),
         }),
       )
       expect(result).toEqual(

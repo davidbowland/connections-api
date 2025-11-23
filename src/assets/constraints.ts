@@ -63,8 +63,6 @@ export const normalConstraints: string[] = [
   ...tier3Constraints,
 ]
 
-export const normalConstraintCounts: number[] = [1, 2, 2, 3, 3, 4]
-
 export const fixedDateConstraints: Record<string, string> = {
   '0101':
     "all words must be related to New Year's Day, but categories are NOT required to be New Year-related",
