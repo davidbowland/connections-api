@@ -1,15 +1,18 @@
 import { adjectives } from '../assets/adjectives'
-import { normalConstraints, specialConstraints } from '../assets/constraints'
+import {
+  categoryConstraints as categoryConstraintChoices,
+  wordConstraints as wordConstraintsChoices,
+} from '../assets/constraints'
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
 import {
   avoidNextGamesCount,
   avoidPastGamesCount,
-  categoryConstraintChance,
   inspirationAdjectivesCount,
   inspirationNounsCount,
   inspirationVerbsCount,
   llmPromptId,
+  wordConstraintChance,
 } from '../config'
 import { CategoryObject, ConnectionsData, GameId } from '../types'
 import { getDateConstraint } from '../utils/constraints'
@@ -37,8 +40,8 @@ const getRandomSample = <T>(
 }
 
 const getModelContext = (date: Date, disallowedCategories: string[]): Record<string, any> => {
-  const constraintValue = Math.random()
-  const useSpecialConstraint = constraintValue < categoryConstraintChance
+  const wordConstraintValue = Math.random()
+  const useWordConstraint = wordConstraintValue < wordConstraintChance
   const holidayConstraints = getDateConstraint(date)
 
   const inspirationNouns = getRandomSample([...nouns], inspirationNounsCount)
@@ -46,10 +49,10 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
   const inspirationAdjectives = getRandomSample([...adjectives], inspirationAdjectivesCount)
 
   log('Constraint chance', {
-    categoryConstraintChance,
-    categoryConstraintValue: constraintValue,
     holidayConstraints,
-    useSpecialConstraint,
+    useWordConstraint,
+    wordConstraintChance,
+    wordConstraintValue,
   })
 
   // Holiday constraints override everything
@@ -63,9 +66,8 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
     }
   }
 
-  // Use either specialConstraints (for all words) or normalConstraints (for categories)
-  if (useSpecialConstraint) {
-    const wordConstraints = getRandomSample([...specialConstraints], 1)[0]
+  if (useWordConstraint) {
+    const wordConstraints = getRandomSample([...wordConstraintsChoices], 1)[0]
     return {
       disallowedCategories,
       inspirationAdjectives,
@@ -74,8 +76,8 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
       wordConstraints,
     }
   } else {
-    // Allow duplicate normalConstraints
-    const categoryConstraints = getRandomSample([...normalConstraints], 4, true)
+    const allowDuplicates = true
+    const categoryConstraints = getRandomSample([...categoryConstraintChoices], 4, allowDuplicates)
     return {
       categoryConstraints,
       disallowedCategories,

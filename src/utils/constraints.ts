@@ -1,4 +1,4 @@
-import { fixedDateConstraints } from '../assets/constraints'
+import { fixedDateCategoryConstraints } from '../assets/constraints'
 
 const getMonthWeekFromBeginning = (date: Date): number => {
   return Math.floor((date.getDate() - 1) / 7) + 1
@@ -15,7 +15,7 @@ export const getDateConstraint = (date: Date): string | undefined => {
   const dayOfMonth = date.getDate()
 
   const dateStr = `0${month + 1}`.slice(-2) + `0${dayOfMonth}`.slice(-2)
-  const fixedConstraint = fixedDateConstraints[dateStr]
+  const fixedConstraint = fixedDateCategoryConstraints[dateStr]
   if (fixedConstraint) {
     return fixedConstraint
   }

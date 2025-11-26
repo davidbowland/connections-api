@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":10000,"model":"us.anthropic.claude-sonnet-4-5-20250929-v1:0","temperature":0.8,"topK":500}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":15000,"model":"us.anthropic.claude-sonnet-4-5-20250929-v1:0","temperature":0.8,"topK":500}
 
 <instructions>
 <context>
@@ -12,22 +12,23 @@
 <steps>
 - The context shows category themes, disallowed categories, and words for inspiration.
 - Generate 4 unique categories
-  - ALWAYS abide by creativity_constraints
+  - ALWAYS abide by categoryConstraints, if provided
   - ALWAYS consider the word constraints (wordConstraints), if provided
-  - ALWAYS use at least one inspiration word or a similar word following creativity_constraints in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing
+  - ALWAYS use at least one inspiration word or a similar word following categoryConstraints in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing
   - NEVER generate a category that is similar to disallowed categories another category ("weather" and "storms" are too similar)
+  - Categories should highly specific and surprising (e.g., "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER") or have clever framing
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
+  - Words can contain spaces or hyphens, as long as they're one concept (e.g. "FIRE EXTINGUISHER", "CUP HOLDER", "RINKY-DINK")
+    - Use surprising twists like "GRUMPY OLD MAN" instead of "Carl from Up"
   - ALWAYS generate words that make sense with the category.
-  - ALWAYS create categories that abide by creativity_constraints, if provided
   - ALWAYS follow the word constraints (wordConstraints), if provided
-  - Generate works that are EXTREMELY difficult to guess. Difficult to guess words:
+  - Generate words that are EXTREMELY difficult to guess. Difficult to guess words:
     - Appear to fit in more than one category
     - Have multiple meanings (for example, a `draft` paper vs `draft` into the army)
     - Are different from other words in the category
-    - Not be obvious to a category (for example, `bailiff` and `judge` together are obvious for their connection to courtrooms)
+    - Are not obvious to a category (for example, `bailiff` and `judge` together are too obvious)
   - NEVER include words from the category
-  - NEVER include multiple categories of the same type -- fill in the blank, spelling/rhyming, etc
   - All words must be uppercase
 - Generate a hint for each category
   - Phrase the hint as a question
@@ -35,19 +36,20 @@
   - NEVER use any words from the category name
   - NEVER ask what things have in common
 </steps>
-<creativity_constraints>
-KEY INSIGHT: Rely on lateral thinking and wordplay rather than categorical knowledge. DO NOT group things that naturally go together, ALWAYS group things that surprisingly go together.
+<categoryConstraints>
+KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather than categorical knowledge. ONLY group words that have SURPRISING or CLEVER connections
 
-- Prioritize wordplay and linguistic connections over semantic categories. Focus on how words sound, spell, or transform rather than what they mean. ALWAYS follow cetegory constraints.
-- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (e.g., "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE") and don't all appear in the same place ("DAY" always at the end of "EVERDAY" and "SOMEDAY"). Ensure the embedded pattern is itself a word of at least 4, preferably 5 or more letters.
-- Create categories and words where words have multiple meanings or unexpected secondary connections. Avoid obvious groupings
+- Create categories and prioritize words that have multiple meanings or unexpected secondary connections. Avoid obvious groupings
 - Use abstract functional relationships. Include groupings by what things DO rather than what they ARE
 - Include categories requiring specialized knowledge -- pop culture, sports, technical terms, proper nouns
-- Ensure words could plausibly fit in multiple categories. This creates crucial MISDIRECTION
+- ALWAYS ensure words could plausibly fit in multiple categories. This creates crucial MISDIRECTION
 - Avoid categories where all words obviously belong to the same semantic field -- no "cat behaviors" or "types of drinks"
 - Focus on surprising connections that make solvers think 'I never would have thought of that'
-- If any category relies on word spelling, double-check that the spelling constraints are followed. Then, triple-check
-</creativity_constraints>
+- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (e.g., "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE") and don't all appear in the same place ("DAY" always at the end of "EVERDAY" and "SOMEDAY")
+  - Ensure the embedded pattern is itself a word of at least 4, preferably 5 or more letters, OR the embedded letters change each time (e.g. "PEAR" in "SPEAR" and "PLUM" in "PLUMBER" are both fruits, or categories "ENDING IN COLORS" or "STARTING WITH SYNONYMS FOR 'EAT'")
+  - If any category relies on word spelling, double-check that the spelling constraints are followed. Then, triple-check
+  - ONLY create spelling categories if instructed by constraints. NEVER create spelling categories unless told to do so
+</categoryConstraints>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
 - The output will be a JSON object consisting of one key:
@@ -133,11 +135,6 @@ ${context}
 <words><word>MOBILE</word><word>PAIN</word><word>REX</word><word>SHIRT</word></words>
 </example>
 <example>
-<category>Words containing "ONE"</category>
-<hint>Can you find a common thread?</hint>
-<words><word>MONEY</word><word>PHONE</word><word>STONE</word><word>ALONE</word></words>
-<embeddedSubstrings>["ONE"]</embeddedSubstrings>
-</example>
 <example>
 <category>Items in a sewing kit</category>
 <hint>Could you find some things in the same place?</hint>
