@@ -34,19 +34,18 @@ const tier1CategoryConstraints: string[] = [
 // Tier 2: Uncommon patterns - interesting but could become predictable (weight: 2x)
 const tier2CategoryConstraints: string[] = [
   'Homophones of a category (e.g., "Homophones of body parts", "Homophones of tools")',
-  'Words that sound like letter combinations (e.g., "Words that sound like two letters: NE, SA")',
   'Slang or colloquial terms (e.g., "Slang for money", "Nicknames for women", "Slang for sailor")',
   'Euphemisms for something (e.g., "Euphemisms for death", "Ways to say yes")',
   'Compound word components (e.g., "First words in compounds with BALL", "Second words in compounds with FIRE")',
   'Pop culture: First/second/middle/last word in titles (e.g., "Second words in ABBA songs", "Last words in Poe stories")',
   'Parts/components of something (e.g., "Parts of a tooth", "Features of a car console")',
+  'Starting with synonyms for [word] (e.g., "Starting with synonyms for EAT: BOLT, CHOW, SCARF, WOLF" where each synonym appears ONLY ONCE)',
+  'Ending with synonyms for [word] (e.g., "Ending with synonyms for LOCATION: PLACE, POINT, SITE, SPOT" where each synonym appears ONLY ONCE)',
+  'Ending/starting with [category] (e.g., "Ending in colors: INFRARED, MARIGOLD" where each color appears ONLY ONCE)',
 ]
 
 // Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
 const tier3CategoryConstraints: string[] = [
-  'Starting with synonyms for [word] (e.g., "Starting with synonyms for EAT: BOLT, CHOW, SCARF, WOLF" where each synonym appears ONLY ONCE)',
-  'Ending with synonyms for [word] (e.g., "Ending with synonyms for LOCATION: PLACE, POINT, SITE, SPOT" where each synonym appears ONLY ONCE)',
-  'Ending/starting with [category] (e.g., "Ending in colors: INFRARED, MARIGOLD" where each color appears ONLY ONCE)',
   'Words spelled backwards are [category] (e.g., "Backwards animals: FLOW, GOD, TAB")',
   '[Category] plus a letter (e.g., "Organ plus letter: COLONY, HEARTH, LUNGE")',
   '[Category] minus a letter (e.g., "Metal minus a letter")',
