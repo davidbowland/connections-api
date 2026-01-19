@@ -16,10 +16,10 @@
   - ALWAYS consider the word constraints (wordConstraints), if provided
   - ALWAYS use at least one inspiration word or a similar word following categoryConstraints in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing
   - NEVER generate a category that is similar to disallowed categories another category ("weather" and "storms" are too similar)
-  - Categories should highly specific and surprising (e.g., "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER") or have clever framing
+  - Categories should highly specific and surprising (eg "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER") or have clever framing
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
-  - Words can contain spaces or hyphens, as long as they're one concept (e.g. "FIRE EXTINGUISHER", "CUP HOLDER", "RINKY-DINK")
+  - Words can contain spaces or hyphens, as long as they're one concept (eg "FIRE EXTINGUISHER", "CUP HOLDER", "RINKY-DINK")
     - Use surprising twists like "GRUMPY OLD MAN" instead of "Carl from Up"
   - ALWAYS generate words that make sense with the category.
   - ALWAYS follow the word constraints (wordConstraints), if provided
@@ -45,10 +45,11 @@ KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather 
 - ALWAYS ensure words could plausibly fit in multiple categories. This creates crucial MISDIRECTION
 - Avoid categories where all words obviously belong to the same semantic field -- no "cat behaviors" or "types of drinks"
 - Focus on surprising connections that make solvers think 'I never would have thought of that'
-- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (e.g., "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE") and don't all appear in the same place ("DAY" always at the end of "EVERDAY" and "SOMEDAY")
-  - Ensure the embedded pattern is itself a word of at least 4, preferably 5 or more letters, OR the embedded letters change each time (e.g. "PEAR" in "SPEAR" and "PLUM" in "PLUMBER" are both fruits, or categories "ENDING IN COLORS" or "STARTING WITH SYNONYMS FOR 'EAT'")
+- For spelling categories with embedded patterns, ensure ALL words contain the identical substring (eg "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE") and don't all appear in the same place ("DAY" always at the end of "EVERDAY" and "SOMEDAY")
+  - Ensure the embedded pattern is itself a word of at least 4, preferably 5 or more letters, OR the embedded letters change each time (eg "PEAR" in "SPEAR" and "PLUM" in "PLUMBER" are both fruits, or categories "ENDING IN COLORS" or "STARTING WITH SYNONYMS FOR 'EAT'")
   - If any category relies on word spelling, double-check that the spelling constraints are followed. Then, triple-check
   - ONLY create spelling categories if instructed by constraints. NEVER create spelling categories unless told to do so
+- If the category is a word either before or after, think about whether each word actually BEGINS or ENDS with correct word (eg "____ DRAW" matches "QUICKDRAW" but NOT "DRAWSTRING")
 </categoryConstraints>
 <format>
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
