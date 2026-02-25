@@ -19,7 +19,7 @@ export const wordConstraints: string[] = [
 
 // Tier 1: Common patterns - good misdirection, appear frequently (weight: 3x)
 const tier1CategoryConstraints: string[] = [
-  'Fill in the blank: "___ [word]" or "[word] ___" (e.g., "___-DOKE", "BIG ___")',
+  'Fill in the blank: (e.g., "BAKE A ___", "WET & ___")',
   'Words that can follow a common word (e.g., "Words after SWEET", "Words that can follow FIRE")',
   'Words that can precede a common word (e.g., "Words before HOUSE", "Words that can precede BALL")',
   'Synonyms for a specific concept (e.g., "Synonyms for evaluate", "Ways to adhere", "Types of sailors")',
@@ -33,9 +33,7 @@ const tier1CategoryConstraints: string[] = [
 
 // Tier 2: Uncommon patterns - interesting but could become predictable (weight: 2x)
 const tier2CategoryConstraints: string[] = [
-  'Homophones of a category (e.g., "Homophones of body parts", "Homophones of tools")',
-  'Slang or colloquial terms (e.g., "Slang for money", "Nicknames for women", "Slang for sailor")',
-  'Euphemisms for something (e.g., "Euphemisms for death", "Ways to say yes")',
+  'Synonyms for something (e.g., "Euphemisms for death", "Ways to say yes", "Slang for money")',
   'Compound word components (e.g., "First words in compounds with BALL", "Second words in compounds with FIRE")',
   'Pop culture: First/second/middle/last word in titles (e.g., "Second words in ABBA songs", "Last words in Poe stories")',
   'Parts/components of something (e.g., "Parts of a tooth", "Features of a car console")',
@@ -46,13 +44,13 @@ const tier2CategoryConstraints: string[] = [
 
 // Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
 const tier3CategoryConstraints: string[] = [
+  'Homophones of a category (e.g., "Homophones of body parts", "Homophones of tools")',
   'Words spelled backwards are [category] (e.g., "Backwards animals: FLOW, GOD, TAB")',
   '[Category] plus a letter (e.g., "Organ plus letter: COLONY, HEARTH, LUNGE")',
   '[Category] minus a letter (e.g., "Metal minus a letter")',
   'Anagrams of [category] (e.g., "Anagrams of animals", "Anagrams of states")',
   `Words containing an embedded word of at least 4 characters but aren't compound words (e.g., "Words containing RISK", "Words containing body parts" where each body part apepars ONLY ONCE)`,
   'Words that sound like [specific pattern] (e.g., "Sound like letter + word combination")',
-  'Portmanteaus or blended words related to [topic]',
   'Words with specific letter patterns (e.g., "Words where middle letters spell X")',
 ]
 
