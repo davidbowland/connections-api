@@ -25,7 +25,6 @@
     "no-negated-condition": ["error"],
     "quotes": ["error", "single", { "avoidEscape": true }],
     "semi": ["error", "never"],
-    "sort-keys": ["error", "asc", { "caseSensitive": false, "natural": false }],
     "sort-vars": ["error"]
   },
   "globals": {
