@@ -1,6 +1,6 @@
 export const wordConstraints: string[] = [
-  'all words must be 4 letters, but categories must be MUST specific than "4-letter words"',
-  'all words must be 5 letters, but categories must be MUST specific than "5-letter words"',
+  'all words must be 4 letters, but categories MUST be more specific than "4-letter words"',
+  'all words must be 5 letters, but categories MUST be more specific than "5-letter words"',
   'all words must have double letters, but categories MUST be more specific than "words with double letters" or "words that contain \"look\""',
   'all words must be compound words, but categories MUST be more specific than "words that contain \"look\"" or "compound words" (for example: "words containing animals")',
   'most words should appear in titles or famous phrases, but categories should reference the SOURCE, not just "words from titles"',
@@ -14,6 +14,9 @@ export const wordConstraints: string[] = [
   'all words must have 2 syllables, but categories MUST be more specific than "two-syllable words"',
   'all words must have 3 syllables, but categories MUST be more specific than "three-syllable words"',
   'all words must have 4 syllables, but categories MUST be more specific than "four-syllable words"',
+  'all words must contain exactly one vowel, but categories MUST be more specific than "words with one vowel"',
+  'all words must be borrowed from another language (e.g., FIESTA, KINDERGARTEN, SUSHI), but categories MUST be more specific than "loanwords"',
+  'all words must also be common first names (e.g., MARK, GRACE, BILL), but categories MUST be more specific than "words that are names"',
   'always generate 5 categories rather than 4',
 ]
 
@@ -29,6 +32,8 @@ const tier1CategoryConstraints: string[] = [
   'Pop culture with modifier (e.g., "Oscar winners", "90s action films", "Rappers without Lil")',
   'Specific types within a category (e.g., "Types of tomatoes", "Basketball shots", "Action film subgenres")',
   'Parts/components of something (e.g., "Parts of a tooth", "Features of a car console")',
+  'Words that become new words with a common prefix (e.g., "Words that become new words with UN___", "Add RE___ to make new words", "OUT___ words")',
+  'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH", "Verbs that are also nouns: RUN, PLAY, BREAK")',
 ]
 
 // Tier 2: Uncommon patterns - interesting but could become predictable (weight: 2x)
@@ -39,6 +44,9 @@ const tier2CategoryConstraints: string[] = [
   'Ending/starting with [category] (e.g., "Ending in colors: INFRARED, MARIGOLD" where each color appears ONLY ONCE)',
   'Literature references, but not more than one name unless they are also common words (e.g. "The four horsemen of the apocalypse: CONQUEST, WAR, FAMINE, DEATH" or "Characters in The Canterbury Tales: MILLER, PARDONER, KNIGHT, WIFE OF BATH")',
   'History references, but not more than one name unless they are also common words (e.g. "Originated in ancient Greece: GEOMETRY, THEATRE, ATOMIC THEORY, MEDICINE")',
+  'Idiom/phrase components (e.g., "First word in common idioms: BREAK, BURN, BITE, BURY", "Last word in common phrases")',
+  'Words associated with a specific sense — taste, texture, sound (e.g., "Things that are crunchy", "Words that sound soft", "Things that taste bitter")',
+  'Words that plausibly fit into multiple common categories, creating maximum misdirection (e.g., words that could be colors, animals, OR verbs)',
 ]
 
 // Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
@@ -51,9 +59,10 @@ const tier3CategoryConstraints: string[] = [
   'Starting with synonyms for [word] (e.g., "Starting with synonyms for EAT: BOLT, CHOW, SCARF, WOLF" where each synonym appears ONLY ONCE)',
   'Ending with synonyms for [word] (e.g., "Ending with synonyms for LOCATION: PLACE, POINT, SITE, SPOT" where each synonym appears ONLY ONCE)',
   'Anagrams of [category] (e.g., "Anagrams of animals", "Anagrams of states")',
-  `Words containing an embedded word of at least 4 characters but aren't compound words (e.g., "Words containing RISK", "Words containing body parts" where each body part apepars ONLY ONCE)`,
+  `Words containing an embedded word of at least 4 characters but aren't compound words (e.g., "Words containing RISK", "Words containing body parts" where each body part appears ONLY ONCE)`,
   'Words that sound like [specific pattern] (e.g., "Sound like letter + word combination")',
   'Words with specific letter patterns in the middle, not beginning or end (e.g., "Words containing PATH")',
+  'Portmanteau components (e.g., "First halves of portmanteaus: BREAK in BREAKFAST, MOTOR in MOTEL")',
 ]
 
 export const categoryConstraints: string[] = [
@@ -69,14 +78,24 @@ export const categoryConstraints: string[] = [
 export const fixedDateCategoryConstraints: Record<string, string> = {
   '0101':
     "all words must be related to New Year's Day, but categories are NOT required to be New Year-related",
+  '0202':
+    'all words must be related to Groundhog Day/weather predictions/repetition, but categories are NOT required to be weather-related',
   '0214':
     "all words must be related to Valentine's Day, but categories are NOT required to be Valentine's Day-related",
+  '0314':
+    'all words must be related to Pi Day/math/circles/pies, but categories are NOT required to be math-related',
+  '0317':
+    "all words must be related to St. Patrick's Day/Ireland/luck/green, but categories are NOT required to be Irish-related",
   '0401':
     "all words must be related to April Fools' Day/pranks/jokes, but categories are NOT required to be prank-related",
+  '0415':
+    'all words must be related to Tax Day/money/forms/deadlines/numbers, but categories are NOT required to be tax-related',
+  '0422':
+    'all words must be related to Earth Day/nature/environment/conservation, but categories are NOT required to be environment-related',
   '0704':
     'all words must be related to Independence Day/July 4th, but categories are NOT required to be patriotic',
   '0920':
-    'all words must be related to weddings/anniversaries/love, but categories are NOT required to be patriotic',
+    'all words must be related to weddings/anniversaries/love, but categories are NOT required to be wedding-related',
   '1031':
     'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
   '1111':
