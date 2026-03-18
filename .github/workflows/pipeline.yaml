@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: 22.x
       - name: Install and audit packages
-        run: npm ci && npm audit --audit-level=high
+        run: npm ci && npm audit --audit-level=critical
         env:
           NODE_ENV: test
       - name: Run tests

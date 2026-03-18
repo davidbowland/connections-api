@@ -17,29 +17,28 @@ export const wordConstraints: string[] = [
   'always generate 5 categories rather than 4',
 ]
 
-// Tier 1: Common patterns - good misdirection, appear frequently (weight: 3x)
+// Tier 1: Common patterns - good misdirection, appear frequently (weight: 4x)
 const tier1CategoryConstraints: string[] = [
   'Fill in the blank: (e.g., "BAKE A ___", "WET & ___")',
   'Words that can follow a common word (e.g., "Words after SWEET", "Words that can follow FIRE")',
   'Words that can precede a common word (e.g., "Words before HOUSE", "Words that can precede BALL")',
-  'Synonyms for a specific concept (e.g., "Synonyms for evaluate", "Ways to adhere", "Types of sailors")',
   'Specific category of things/items (e.g., "Punctuation marks", "Kitchen appliances", "Cocktails")',
   'Things with a shared property (e.g., "Things that are stripy", "Things that are pink", "Foamy things")',
   'Things found in/seen in a specific context (e.g., "Seen at airport security", "Words on Monopoly squares")',
   'Associated with a person/character (e.g., "Associated with Poe", "PIXAR protagonists described indirectly")',
   'Pop culture with modifier (e.g., "Oscar winners", "90s action films", "Rappers without Lil")',
   'Specific types within a category (e.g., "Types of tomatoes", "Basketball shots", "Action film subgenres")',
+  'Parts/components of something (e.g., "Parts of a tooth", "Features of a car console")',
 ]
 
 // Tier 2: Uncommon patterns - interesting but could become predictable (weight: 2x)
 const tier2CategoryConstraints: string[] = [
   'Synonyms for something (e.g., "Euphemisms for death", "Ways to say yes", "Slang for money")',
   'Compound word components (e.g., "First words in compounds with BALL", "Second words in compounds with FIRE")',
-  'Pop culture: First/second/middle/last word in titles (e.g., "Second words in ABBA songs", "Last words in Poe stories")',
-  'Parts/components of something (e.g., "Parts of a tooth", "Features of a car console")',
-  'Starting with synonyms for [word] (e.g., "Starting with synonyms for EAT: BOLT, CHOW, SCARF, WOLF" where each synonym appears ONLY ONCE)',
-  'Ending with synonyms for [word] (e.g., "Ending with synonyms for LOCATION: PLACE, POINT, SITE, SPOT" where each synonym appears ONLY ONCE)',
+  'Pop culture concepts, but not more than one name unless they are also common words (e.g. "Rocky Horror Picture Show: ROCKY, HORROR, PICTURE, SHOW" or "Members of The Breakfast Club: BRAIN, ATHLETE, BASKET CASE, PRINCESS")',
   'Ending/starting with [category] (e.g., "Ending in colors: INFRARED, MARIGOLD" where each color appears ONLY ONCE)',
+  'Literature references, but not more than one name unless they are also common words (e.g. "The four horsemen of the apocalypse: CONQUEST, WAR, FAMINE, DEATH" or "Characters in The Canterbury Tales: MILLER, PARDONER, KNIGHT, WIFE OF BATH")',
+  'History references, but not more than one name unless they are also common words (e.g. "Originated in ancient Greece: GEOMETRY, THEATRE, ATOMIC THEORY, MEDICINE")',
 ]
 
 // Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
@@ -48,13 +47,17 @@ const tier3CategoryConstraints: string[] = [
   'Words spelled backwards are [category] (e.g., "Backwards animals: FLOW, GOD, TAB")',
   '[Category] plus a letter (e.g., "Organ plus letter: COLONY, HEARTH, LUNGE")',
   '[Category] minus a letter (e.g., "Metal minus a letter")',
+  'Pop culture: First/second/middle/last/only word in titles (e.g., "Second words in ABBA songs", "Last words in Poe stories")',
+  'Starting with synonyms for [word] (e.g., "Starting with synonyms for EAT: BOLT, CHOW, SCARF, WOLF" where each synonym appears ONLY ONCE)',
+  'Ending with synonyms for [word] (e.g., "Ending with synonyms for LOCATION: PLACE, POINT, SITE, SPOT" where each synonym appears ONLY ONCE)',
   'Anagrams of [category] (e.g., "Anagrams of animals", "Anagrams of states")',
   `Words containing an embedded word of at least 4 characters but aren't compound words (e.g., "Words containing RISK", "Words containing body parts" where each body part apepars ONLY ONCE)`,
   'Words that sound like [specific pattern] (e.g., "Sound like letter + word combination")',
-  'Words with specific letter patterns (e.g., "Words where middle letters spell X")',
+  'Words with specific letter patterns in the middle, not beginning or end (e.g., "Words containing PATH")',
 ]
 
 export const categoryConstraints: string[] = [
+  ...tier1CategoryConstraints,
   ...tier1CategoryConstraints,
   ...tier1CategoryConstraints,
   ...tier1CategoryConstraints,

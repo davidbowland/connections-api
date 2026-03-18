@@ -20,7 +20,7 @@
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
   - Words can contain spaces or hyphens, as long as they're one concept (eg "FIRE EXTINGUISHER", "CUP HOLDER", "RINKY-DINK")
-    - Use surprising twists like "GRUMPY OLD MAN" instead of "Carl from Up"
+  - Use surprising twists like "OLD MAN" instead of "Carl from Up"
   - ALWAYS generate words that make sense with the category.
   - ALWAYS follow the word constraints (wordConstraints), if provided
   - Generate words that are EXTREMELY difficult to guess. Difficult to guess words:

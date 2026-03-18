@@ -236,7 +236,7 @@ Resources:
           INSPIRATION_NOUNS_COUNT: 10
           INSPIRATION_VERBS_COUNT: 8
           LLM_PROMPT_ID: create-connections-game
-          WORD_CONSTRAINT_CHANCE: 0.08
+          WORD_CONSTRAINT_CHANCE: 0.12
       Events:
         Schedule:
           Type: Schedule
