@@ -236,6 +236,7 @@ Resources:
           INSPIRATION_NOUNS_COUNT: 10
           INSPIRATION_VERBS_COUNT: 8
           LLM_PROMPT_ID: create-connections-game
+          LLM_VERIFY_PROMPT_ID: verify-connections-game
           WORD_CONSTRAINT_CHANCE: 0.12
       Events:
         Schedule:
@@ -248,7 +249,7 @@ Resources:
         'created-by': 'connections-api'
         'created-for': 'connections'
         'environment': !Ref Environment
-      Timeout: 295
+      Timeout: 595
       Tracing: Active
     Metadata:
       BuildMethod: esbuild

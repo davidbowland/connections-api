@@ -2,12 +2,14 @@ import { connectionsData, prompt } from '../__mocks__'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
 import { createGame } from '@services/games'
+import * as verification from '@services/verification'
 import * as constraints from '@utils/constraints'
 
 jest.mock('@services/bedrock')
 jest.mock('@services/dynamodb')
 jest.mock('@utils/logging')
 jest.mock('@utils/constraints')
+jest.mock('@services/verification')
 
 describe('games', () => {
   const mockMathRandom = jest.fn().mockReturnValue(0)
@@ -18,6 +20,7 @@ describe('games', () => {
     jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
     jest.mocked(dynamodb).setGameById.mockResolvedValue({} as any)
     jest.mocked(constraints).getDateConstraint.mockReturnValue(undefined)
+    jest.mocked(verification).verifyAndFixGame.mockImplementation(async (g) => g)
 
     Math.random = mockMathRandom
   })
@@ -255,6 +258,19 @@ describe('games', () => {
           wordList: expect.arrayContaining(['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT']),
         }),
       )
+    })
+
+    it('should throw when post-fix validateGame fails', async () => {
+      jest.mocked(verification).verifyAndFixGame.mockResolvedValueOnce({
+        categories: {
+          Cat1: { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+          Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          Cat4: { hint: 'Category 4 hint', words: ['WORD1', 'WORD13', 'WORD14', 'WORD15'] },
+        },
+      })
+
+      await expect(createGame('2025-01-01')).rejects.toThrow('Generated words are not unique')
     })
   })
 })

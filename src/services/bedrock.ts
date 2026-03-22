@@ -21,7 +21,7 @@ export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
     temperature: prompt.config.temperature,
     top_k: prompt.config.topK,
   }
-  logDebug('Received from model', {
+  logDebug('Passing to model', {
     messageBody,
     messages: JSON.stringify(messageBody.messages, null, 2),
   })

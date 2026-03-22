@@ -19,6 +19,7 @@ import { getDateConstraint } from '../utils/constraints'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
+import { verifyAndFixGame } from './verification'
 
 const getRandomSample = <T>(
   array: T[],
@@ -123,6 +124,32 @@ const isEmbeddedSubstringsValid = (words: string[], embeddedSubstrings?: string[
   return words.every((word) => embeddedSubstrings.some((substring) => word.includes(substring)))
 }
 
+export const validateGame = (categories: CategoryObject): string[] => {
+  const wordList = Object.values(categories).flatMap((cat) => cat.words.map((w) => w.toUpperCase()))
+  if (new Set(wordList).size !== wordList.length) {
+    log('Generated words are not unique', { wordList })
+    throw new Error('Generated words are not unique')
+  } else if ([4, 5].indexOf(Object.keys(categories).length) < 0) {
+    log('Generated wrong number of categories', { categories })
+    throw new Error('Generated wrong number of categories')
+  } else if (Object.values(categories).some((category) => category.words.length !== 4)) {
+    log('Generated a category with the wrong number of words', {
+      categories: JSON.stringify(categories, undefined, 2),
+    })
+    throw new Error('Generated a category with the wrong number of words')
+  } else if (
+    !Object.values(categories).every((category) =>
+      isEmbeddedSubstringsValid(category.words, category.embeddedSubstrings),
+    )
+  ) {
+    log('Generated invalid embedded substrings', {
+      categories: JSON.stringify(categories, undefined, 2),
+    })
+    throw new Error('Generated invalid embedded substrings')
+  }
+  return wordList
+}
+
 export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const contextGameIds = getContextGameIds(gameId)
   const contextGames = await getGamesByIds(contextGameIds)
@@ -135,35 +162,12 @@ export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
   const prompt = await getPromptById(llmPromptId)
   const returnedData: ConnectionsData = await invokeModel(prompt, modelContext)
   const connectionsData = transformWordsToUpperCase(returnedData)
-  const wordList = Object.values(connectionsData.categories).flatMap((cat) =>
-    cat.words.map((w) => w.toUpperCase()),
-  )
+  validateGame(connectionsData.categories)
 
-  if (new Set(wordList).size !== wordList.length) {
-    log('Generated words are not unique', { wordList })
-    throw new Error('Generated words are not unique')
-  } else if ([4, 5].indexOf(Object.keys(connectionsData.categories).length) < 0) {
-    log('Generated wrong number of categories', { categories: connectionsData.categories })
-    throw new Error('Generated wrong number of categories')
-  } else if (
-    Object.values(connectionsData.categories).some((category) => category.words.length !== 4)
-  ) {
-    log('Generated a category with the wrong number of words', {
-      categories: JSON.stringify(connectionsData.categories, undefined, 2),
-    })
-    throw new Error('Generated a category with the wrong number of words')
-  } else if (
-    !Object.values(connectionsData.categories).every((category) =>
-      isEmbeddedSubstringsValid(category.words, category.embeddedSubstrings),
-    )
-  ) {
-    log('Generated invalid embedded substrings', {
-      categories: JSON.stringify(connectionsData.categories, undefined, 2),
-    })
-    throw new Error('Generated invalid embedded substrings')
-  }
+  const verifiedGame = await verifyAndFixGame(connectionsData, modelContext)
+  const finalWordList = validateGame(verifiedGame.categories)
 
-  const dataWithWordList = { ...connectionsData, wordList }
+  const dataWithWordList = { ...verifiedGame, wordList: finalWordList }
   await setGameById(gameId, dataWithWordList)
   return dataWithWordList
 }

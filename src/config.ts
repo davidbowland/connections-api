@@ -17,6 +17,7 @@ export const createGameFunctionName = process.env.CREATE_GAME_FUNCTION_NAME as s
 // LLM
 
 export const llmPromptId = process.env.LLM_PROMPT_ID as string
+export const llmVerifyPromptId = process.env.LLM_VERIFY_PROMPT_ID as string
 
 // Games
 

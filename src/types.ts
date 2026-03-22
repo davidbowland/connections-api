@@ -24,6 +24,24 @@ export interface CategoryObject {
   [key: string]: Category
 }
 
+// Verification
+
+export interface VerificationResult {
+  verdict: 'pass' | 'fix' | 'fail'
+  reason: string
+  fixes?: {
+    [categoryName: string]: {
+      words?: string[]
+      category?: {
+        name: string
+        words: string[]
+        hint: string
+        embeddedSubstrings?: string[]
+      }
+    }
+  }
+}
+
 // LLM
 
 // Prompts
