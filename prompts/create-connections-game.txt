@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":15000,"model":"us.anthropic.claude-sonnet-4-5-20250929-v1:0","temperature":0.8,"topK":500}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":15000,"model":"us.anthropic.claude-sonnet-4-6","temperature":0.8,"topK":500}
 
 <instructions>
 <context>
@@ -14,8 +14,8 @@
 - Generate 4 unique categories
   - ALWAYS abide by categoryConstraints, if provided
   - ALWAYS consider the word constraints (wordConstraints), if provided
-  - ALWAYS use at least one inspiration word or a similar word following categoryConstraints in the category (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use normal casing
-  - NEVER generate a category that is similar to disallowed categories another category ("weather" and "storms" are too similar)
+  - ALWAYS use at least one inspiration word in the category or as one of the words (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use appropriate casing
+  - NEVER generate a category that is similar to disallowed categories, another category, or example categories ("weather" and "storms" are too similar)
   - Categories should highly specific and surprising (eg "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER") or have clever framing
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
