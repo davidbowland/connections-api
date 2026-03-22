@@ -20,15 +20,16 @@ The existing post-generation checks are purely mechanical (word count, uniquenes
 
 ```
 createGame()
-  ├─ [existing] invoke Sonnet → raw game
-  ├─ [existing] mechanical validation (throws on failure)
-  ├─ [NEW] verifyAndFixGame(connectionsData, modelContext) → ConnectionsData
+  ├─ [existing] invoke Sonnet → connectionsData
+  ├─ [existing] build wordList
+  ├─ [REFACTORED] validateGame(connectionsData.categories, wordList) — throws on failure
+  ├─ [NEW] const verifiedGame = await verifyAndFixGame(connectionsData, modelContext)
   │     ├─ pass  → return game unchanged
-  │     ├─ fix   → apply replacements → mechanical validation (once)
-  │     │             ├─ passes → return fixed game
-  │     │             └─ fails  → throw
+  │     ├─ fix   → validate fix bounds, apply replacements, return fixed game
   │     └─ fail  → throw
-  └─ [existing] save to DynamoDB
+  ├─ [NEW] build finalWordList from verifiedGame.categories
+  ├─ [NEW] validateGame(verifiedGame.categories, finalWordList) — throws on failure
+  └─ [existing] setGameById({ ...verifiedGame, wordList: finalWordList })
 ```
 
 All throws bubble to the `while(true)` loop in `create-game.ts` and trigger a fresh Sonnet generation. No special error types are needed.
@@ -39,20 +40,26 @@ Exports one function:
 
 ```ts
 export const verifyAndFixGame = async (
-  game: ConnectionsData,
+  game: ConnectionsGame,
   modelContext: Record<string, any>,
-): Promise<ConnectionsData>
+): Promise<ConnectionsGame>
 ```
+
+`ConnectionsGame` (not `ConnectionsData`) is used because at runtime `connectionsData` never contains a `wordList` field — the LLM only returns `{ categories }`, and the existing type annotation `ConnectionsData` on the return value is a pre-existing inaccuracy in `games.ts`. Using `ConnectionsGame` accurately reflects the runtime structure.
+
+TypeScript accepts `connectionsData` (typed `ConnectionsData`) as input since `ConnectionsData` is structurally assignable to `ConnectionsGame` (it has all required properties plus more). However, the return value `ConnectionsGame` is **not** assignable back to `connectionsData: ConnectionsData` (missing `wordList`). Therefore `createGame()` must store the result in a separate `const verifiedGame: ConnectionsGame` variable and use it in subsequent steps rather than reassigning `connectionsData`.
+
+`verifyAndFixGame` does **not** run mechanical validation internally. It applies fixes and returns the modified game. All validation runs in `createGame()` (see Changes to `src/services/games.ts`).
 
 Steps:
 
 1. Fetch Haiku prompt via `llmVerifyPromptId` (same DynamoDB pattern as `llmPromptId`)
-2. Call `invokeModel(prompt, { game, modelContext })`
+2. Call `invokeModel(prompt, { game, modelContext })` — both are serialised as a single JSON blob under the `${context}` substitution; the prompt receives `{ "game": {...}, "modelContext": {...} }` as one object
 3. Parse `VerificationResult` from response
 4. Handle verdict:
    - `pass` → return `game` unchanged
    - `fail` → throw
-   - `fix` → validate fix bounds, apply fixes, run mechanical validation, return or throw
+   - `fix` → validate fix bounds, apply fixes, return fixed game
 
 ## New Type: `VerificationResult`
 
@@ -64,18 +71,20 @@ export interface VerificationResult {
   reason: string
   fixes?: {
     [categoryName: string]: {
-      words?: string[] // full 4-word replacement list
+      words?: string[] // full 4-word replacement list (word-only fix)
       category?: {
-        // full category replacement (name + content)
-        name: string
+        // full category replacement (concept-level fix)
+        name: string // new category name (may differ from outer key)
         words: string[]
         hint: string
-        embeddedSubstrings: string[]
+        embeddedSubstrings?: string[]
       }
     }
   }
 }
 ```
+
+The outer key in `fixes` is the **old** category name (used to identify which entry to replace in the `CategoryObject`). When `category.name` differs from the outer key, the implementation removes the old key and inserts the new one. The service enforces that at most one such rename occurs.
 
 Haiku always returns the **full corrected list**, not a diff. The service diffs in code to enforce limits.
 
@@ -86,14 +95,23 @@ Haiku always returns the **full corrected list**, not a diff. The service diffs 
 | Word changes per category           | ≤ 2   | throw                 |
 | Word changes total (all categories) | ≤ 4   | throw                 |
 | Category replacements               | ≤ 1   | throw                 |
-| Unrecognised verdict                | —     | throw                 |
+| Unrecognised verdict string         | —     | throw                 |
 
-After applying fixes, mechanical validation runs **once**. Failure → throw. No second Haiku call.
+Mechanical validation after fixes runs once in `createGame()`. Failure → throw. No second Haiku call. `verifyAndFixGame` itself does not run validation — it returns the modified game and lets `createGame()` validate.
 
 ## Changes to `src/services/games.ts`
 
-- `getModelContext()` currently returns `Record<string, any>` but the value is only used locally. It needs to return `modelContext` so `createGame()` can pass it to `verifyAndFixGame()`.
-- `createGame()` calls `verifyAndFixGame(connectionsData, modelContext)` after existing mechanical validation and before `setGameById`.
+- No changes to `getModelContext()`. Its return value is already assigned to `const modelContext` in `createGame()` and is available to pass to `verifyAndFixGame()`.
+- Extract `isEmbeddedSubstringsValid` and the inline mechanical validation block into an exported `validateGame(categories: CategoryObject, wordList: string[]): void` helper. It includes all existing checks: word uniqueness, category count (`[4, 5]`), words-per-category count, and embedded substrings. `verification.ts` does not need to import it.
+- Updated `createGame()` flow:
+  1. Invoke Sonnet → `connectionsData`
+  2. Build `const wordList` from `connectionsData` (existing)
+  3. `validateGame(connectionsData.categories, wordList)` — throws on structural failure
+  4. `const verifiedGame = await verifyAndFixGame(connectionsData, modelContext)`
+  5. Build `const finalWordList` from `verifiedGame.categories`
+  6. `validateGame(verifiedGame.categories, finalWordList)` — re-run once; throws on failure
+  7. `const dataWithWordList = { ...verifiedGame, wordList: finalWordList }`
+  8. `await setGameById(...)` — existing line
 
 ## New Prompt: `prompts/verify-connections-game.txt`
 
@@ -137,20 +155,22 @@ export const llmVerifyPromptId = process.env.LLM_VERIFY_PROMPT_ID as string
 | `fix` exceeding per-category limit (> 2 word changes) | throws                                   |
 | `fix` exceeding total limit (> 4 word changes)        | throws                                   |
 | `fix` with > 1 category replaced                      | throws                                   |
-| `fix` where mechanical re-validation fails            | throws                                   |
 | `fail` verdict                                        | throws                                   |
-| Malformed Haiku response                              | throws                                   |
+| Unrecognised verdict string (e.g. `"retry"`)          | throws                                   |
+| Malformed Haiku response (JSON parse failure)         | throws                                   |
 
 Bedrock calls mocked the same way existing tests mock them.
 
+Post-fix mechanical re-validation is tested in `src/services/games.test.ts` (not here), since it runs in `createGame()` not `verifyAndFixGame()`.
+
 ## Files Changed
 
-| File                                  | Change                                                                      |
-| ------------------------------------- | --------------------------------------------------------------------------- |
-| `src/services/verification.ts`        | **new** — verification service                                              |
-| `src/services/games.ts`               | thread `modelContext` out of `getModelContext()`, call `verifyAndFixGame()` |
-| `src/types.ts`                        | add `VerificationResult`                                                    |
-| `src/config.ts`                       | add `llmVerifyPromptId`                                                     |
-| `prompts/verify-connections-game.txt` | **new** — Haiku verification prompt                                         |
-| `prompts/create-connections-game.txt` | update Sonnet model to `us.anthropic.claude-sonnet-4-6`                     |
-| `src/services/verification.test.ts`   | **new** — unit tests                                                        |
+| File                                  | Change                                                                  |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| `src/services/verification.ts`        | **new** — verification service                                          |
+| `src/services/games.ts`               | extract `validateGame()`, call `verifyAndFixGame()`, rebuild `wordList` |
+| `src/types.ts`                        | add `VerificationResult`                                                |
+| `src/config.ts`                       | add `llmVerifyPromptId`                                                 |
+| `prompts/verify-connections-game.txt` | **new** — Haiku verification prompt                                     |
+| `src/services/verification.test.ts`   | **new** — unit tests for `verifyAndFixGame`                             |
+| `src/services/games.test.ts`          | add test: post-fix `validateGame` failure triggers retry                |
