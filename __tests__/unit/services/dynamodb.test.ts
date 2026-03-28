@@ -1,3 +1,5 @@
+import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb'
+
 import { connectionsData, gameId, prompt, promptConfig, promptId } from '../__mocks__'
 import {
   getGameById,
@@ -8,15 +10,19 @@ import {
 } from '@services/dynamodb'
 
 const mockSend = jest.fn()
-jest.mock('@aws-sdk/client-dynamodb', () => ({
-  BatchGetItemCommand: jest.fn().mockImplementation((x) => x),
-  DynamoDB: jest.fn(() => ({
-    send: (...args) => mockSend(...args),
-  })),
-  GetItemCommand: jest.fn().mockImplementation((x) => x),
-  PutItemCommand: jest.fn().mockImplementation((x) => x),
-  QueryCommand: jest.fn().mockImplementation((x) => x),
-}))
+jest.mock('@aws-sdk/client-dynamodb', () => {
+  const actual = jest.requireActual('@aws-sdk/client-dynamodb')
+  return {
+    BatchGetItemCommand: jest.fn().mockImplementation((x) => x),
+    ConditionalCheckFailedException: actual.ConditionalCheckFailedException,
+    DynamoDB: jest.fn(() => ({
+      send: (...args) => mockSend(...args),
+    })),
+    GetItemCommand: jest.fn().mockImplementation((x) => x),
+    PutItemCommand: jest.fn().mockImplementation((x) => x),
+    QueryCommand: jest.fn().mockImplementation((x) => x),
+  }
+})
 jest.mock('@utils/logging', () => ({
   xrayCapture: jest.fn().mockImplementation((x) => x),
 }))
@@ -78,7 +84,7 @@ describe('dynamodb', () => {
     })
 
     it('should return isGenerating false when generation started long ago', async () => {
-      const oldTime = Date.now() - 400000 // 400 seconds ago
+      const oldTime = Date.now() - 1_000_000 // 1000 seconds ago, beyond 900s timeout
       mockSend.mockResolvedValue({
         Item: { GenerationStarted: { N: oldTime.toString() } },
       })
@@ -151,13 +157,22 @@ describe('dynamodb', () => {
   })
 
   describe('setGameGenerationStarted', () => {
-    it('should call DynamoDB with GenerationStarted timestamp', async () => {
+    it('should call DynamoDB with GenerationStarted timestamp and condition expression', async () => {
       const mockNow = 1234567890
       jest.spyOn(Date, 'now').mockReturnValue(mockNow)
 
-      await setGameGenerationStarted(gameId)
+      const result = await setGameGenerationStarted(gameId)
 
+      expect(result).toBe(true)
       expect(mockSend).toHaveBeenCalledWith({
+        ConditionExpression:
+          'attribute_not_exists(GameId) OR (attribute_not_exists(#data) AND (attribute_not_exists(GenerationStarted) OR GenerationStarted < :expiry))',
+        ExpressionAttributeNames: {
+          '#data': 'Data',
+        },
+        ExpressionAttributeValues: {
+          ':expiry': { N: `${mockNow - 900_000}` },
+        },
         Item: {
           GameId: {
             S: gameId,
@@ -170,6 +185,22 @@ describe('dynamodb', () => {
       })
 
       jest.restoreAllMocks()
+    })
+
+    it('should return false when conditional check fails', async () => {
+      mockSend.mockRejectedValueOnce(
+        new ConditionalCheckFailedException({ $metadata: {}, message: 'Condition not met' }),
+      )
+
+      const result = await setGameGenerationStarted(gameId)
+
+      expect(result).toBe(false)
+    })
+
+    it('should rethrow non-conditional-check errors', async () => {
+      mockSend.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
+
+      await expect(setGameGenerationStarted(gameId)).rejects.toThrow('DynamoDB unavailable')
     })
   })
 })

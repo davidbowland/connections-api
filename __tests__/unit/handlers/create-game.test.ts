@@ -22,8 +22,7 @@ describe('create-game', () => {
   const tomorrow = '2025-01-06'
 
   beforeAll(() => {
-    jest.mocked(dynamodb).getGameById.mockResolvedValue({ isGenerating: false })
-    jest.mocked(dynamodb).setGameGenerationStarted.mockResolvedValue({} as any)
+    jest.mocked(dynamodb).setGameGenerationStarted.mockResolvedValue(true)
     jest.mocked(games).createGame.mockResolvedValue(connectionsData)
 
     jest.useFakeTimers()
@@ -35,10 +34,9 @@ describe('create-game', () => {
   })
 
   describe('createGameHandler', () => {
-    it('should create a game for today when game does not exist and no gameId provided', async () => {
+    it('should create a game for tomorrow when no gameId provided', async () => {
       await createGameHandler(scheduledEvent)
 
-      expect(dynamodb.getGameById).toHaveBeenCalledWith(tomorrow)
       expect(dynamodb.setGameGenerationStarted).toHaveBeenCalledWith(tomorrow)
       expect(games.createGame).toHaveBeenCalledWith(tomorrow)
     })
@@ -46,35 +44,29 @@ describe('create-game', () => {
     it('should create a game for specified gameId when provided', async () => {
       await createGameHandler(event)
 
-      expect(dynamodb.getGameById).toHaveBeenCalledWith(gameId)
       expect(dynamodb.setGameGenerationStarted).toHaveBeenCalledWith(gameId)
       expect(games.createGame).toHaveBeenCalledWith(gameId)
     })
 
-    it('should not create a game when game already exists', async () => {
-      jest
-        .mocked(dynamodb)
-        .getGameById.mockResolvedValueOnce({ game: connectionsData, isGenerating: false })
+    it('should not create a game when generation lock is not acquired', async () => {
+      jest.mocked(dynamodb).setGameGenerationStarted.mockResolvedValueOnce(false)
 
       await createGameHandler(scheduledEvent)
 
-      expect(dynamodb.getGameById).toHaveBeenCalledWith(expect.any(String))
-      expect(dynamodb.setGameGenerationStarted).not.toHaveBeenCalled()
+      expect(dynamodb.setGameGenerationStarted).toHaveBeenCalledWith(tomorrow)
       expect(games.createGame).not.toHaveBeenCalled()
     })
 
-    it('should not create a game when game is already being generated', async () => {
-      jest.mocked(dynamodb).getGameById.mockResolvedValueOnce({ isGenerating: true })
+    it('should rethrow errors from setGameGenerationStarted', async () => {
+      jest
+        .mocked(dynamodb)
+        .setGameGenerationStarted.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
 
-      await createGameHandler(scheduledEvent)
-
-      expect(dynamodb.getGameById).toHaveBeenCalledWith(expect.any(String))
-      expect(dynamodb.setGameGenerationStarted).not.toHaveBeenCalled()
+      await expect(createGameHandler(scheduledEvent)).rejects.toThrow('DynamoDB unavailable')
       expect(games.createGame).not.toHaveBeenCalled()
     })
 
     it('should retry on game creation failure', async () => {
-      jest.mocked(dynamodb).getGameById.mockResolvedValueOnce({ isGenerating: false })
       jest.mocked(games).createGame.mockRejectedValueOnce(new Error('Creation failed'))
 
       await createGameHandler(scheduledEvent)

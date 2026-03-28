@@ -30,6 +30,8 @@ export const inspirationAdjectivesCount = parseInt(
 export const inspirationNounsCount = parseInt(process.env.INSPIRATION_NOUNS_COUNT as string, 10)
 export const inspirationVerbsCount = parseInt(process.env.INSPIRATION_VERBS_COUNT as string, 10)
 export const wordConstraintChance = Number(process.env.WORD_CONSTRAINT_CHANCE as string)
+export const gameGenerationTimeoutMs =
+  parseInt(process.env.GAME_GENERATION_TIMEOUT as string, 10) * 1000
 
 // Logging
 

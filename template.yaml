@@ -19,6 +19,7 @@ Mappings:
     prod:
       certificate: adce1a21-90b4-4120-8548-111215e582f0
       corsDomain: https://connections.dbowland.com
+      createGameTimeout: 900
       domain: connections-api.dbowland.com
       gamesTable: connections-api-games
       logStreamFunction: log-subscriber
@@ -29,6 +30,7 @@ Mappings:
     test:
       certificate: 6a48cba7-feb9-4de5-8cbf-d383140fcdef
       corsDomain: https://connections.bowland.link
+      createGameTimeout: 900
       domain: connections-api.bowland.link
       gamesTable: connections-api-games-test
       logStreamFunction: log-subscriber-test
@@ -232,6 +234,7 @@ Resources:
           DEBUG_LOGGING: 'false'
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
           DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
+          GAME_GENERATION_TIMEOUT: !FindInMap [EnvironmentMap, !Ref Environment, createGameTimeout]
           INSPIRATION_ADJECTIVES_COUNT: 5
           INSPIRATION_NOUNS_COUNT: 10
           INSPIRATION_VERBS_COUNT: 8
@@ -249,7 +252,7 @@ Resources:
         'created-by': 'connections-api'
         'created-for': 'connections'
         'environment': !Ref Environment
-      Timeout: 595
+      Timeout: !FindInMap [EnvironmentMap, !Ref Environment, createGameTimeout]
       Tracing: Active
     Metadata:
       BuildMethod: esbuild

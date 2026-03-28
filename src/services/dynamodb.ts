@@ -1,5 +1,6 @@
 import {
   BatchGetItemCommand,
+  ConditionalCheckFailedException,
   DynamoDB,
   GetItemCommand,
   PutItemCommand,
@@ -7,7 +8,11 @@ import {
   QueryCommand,
 } from '@aws-sdk/client-dynamodb'
 
-import { dynamodbGamesTableName, dynamodbPromptsTableName } from '../config'
+import {
+  dynamodbGamesTableName,
+  dynamodbPromptsTableName,
+  gameGenerationTimeoutMs,
+} from '../config'
 import { ConnectionsData, GameId, Prompt, PromptId } from '../types'
 import { xrayCapture } from '../utils/logging'
 
@@ -56,7 +61,7 @@ export const getGameById = async (gameId: GameId): Promise<GameResult> => {
 
   const generationStarted = response.Item?.GenerationStarted?.N
   const isGenerating = generationStarted
-    ? parseInt(generationStarted) + 300_000 > Date.now()
+    ? parseInt(generationStarted) + gameGenerationTimeoutMs > Date.now()
     : false
   return { isGenerating }
 }
@@ -105,17 +110,34 @@ export const setGameById = async (
   return await dynamodb.send(command)
 }
 
-export const setGameGenerationStarted = async (gameId: GameId): Promise<PutItemOutput> => {
+export const setGameGenerationStarted = async (gameId: GameId): Promise<boolean> => {
+  const now = Date.now()
   const command = new PutItemCommand({
+    ConditionExpression:
+      'attribute_not_exists(GameId) OR (attribute_not_exists(#data) AND (attribute_not_exists(GenerationStarted) OR GenerationStarted < :expiry))',
+    ExpressionAttributeNames: {
+      '#data': 'Data',
+    },
+    ExpressionAttributeValues: {
+      ':expiry': { N: `${now - gameGenerationTimeoutMs}` },
+    },
     Item: {
       GameId: {
         S: `${gameId}`,
       },
       GenerationStarted: {
-        N: `${Date.now()}`,
+        N: `${now}`,
       },
     },
     TableName: dynamodbGamesTableName,
   })
-  return await dynamodb.send(command)
+  try {
+    await dynamodb.send(command)
+    return true
+  } catch (error: unknown) {
+    if (error instanceof ConditionalCheckFailedException) {
+      return false
+    }
+    throw error
+  }
 }

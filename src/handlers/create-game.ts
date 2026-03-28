@@ -1,6 +1,6 @@
 import { ScheduledEvent } from 'aws-lambda'
 
-import { getGameById, setGameGenerationStarted } from '../services/dynamodb'
+import { setGameGenerationStarted } from '../services/dynamodb'
 import { createGame } from '../services/games'
 import { log } from '../utils/logging'
 
@@ -20,15 +20,11 @@ export const createGameHandler = async (event: ScheduledEvent | CreateGameEvent)
   const gameId = (event as CreateGameEvent).gameId ?? nextGameId()
   log('Creating game', { gameId })
 
-  const gameResult = await getGameById(gameId)
-  if (gameResult.game) {
-    log('Game already exists, skipping creation', { gameId })
-    return
-  } else if (gameResult.isGenerating) {
-    log('Game is already being generated, skipping creation', { gameId })
+  const acquired = await setGameGenerationStarted(gameId)
+  if (!acquired) {
+    log('Game already exists or is being generated, skipping creation', { gameId })
     return
   }
-  await setGameGenerationStarted(gameId)
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
