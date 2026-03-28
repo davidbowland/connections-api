@@ -16,12 +16,19 @@ Examine each category in the game and check for the following issues:
 3. **Obviousness** — Flag if 2 or more words together would immediately betray the category to a casual solver without any lateral thinking required (e.g. "BAILIFF" and "JUDGE" in the same category).
 
 4. **Category uniqueness** — Flag if two categories are semantically too similar to each other (e.g. one category for "dog breeds" and another for "types of dogs").
+
+5. **Hint quality** — Each category's `hint` must be a vague question about the category theme. Flag if a hint:
+  - References, describes, paraphrases, or alludes to ANY of the 4 words in the category (e.g. mentioning "dancer" when FLAMENCO is a word, or "photographer" when PHOTOGRAPHER is a word)
+  - Contains any word from the category name
+  - Asks what things "have in common"
+  - Gives away the answer rather than nudging toward the abstract theme
+  A good hint points at the category concept without revealing the words (e.g. "Do you see a color theme?" for "Black-and-white things").
 </checks>
 <verdict-rules>
 Return one of three verdicts:
 
 - **pass** — No issues found. Return the game unchanged.
-- **fix** — Issues exist but are fixable by replacing at most 2 words per category (word-only fix) and/or replacing at most 1 full category (concept-level fix). Return the full corrected word lists and/or category objects for affected categories only.
+- **fix** — Issues exist but are fixable by replacing at most 2 words per category (word-only fix) and/or replacing at most 1 full category (concept-level fix) and/or rewriting hints that leak words. Return the full corrected word lists, category objects, and/or corrected hints for affected categories only.
 - **fail** — The concept is fundamentally broken or would require more changes than the fix limits allow.
 
 When returning a `fix` verdict, always return the **full corrected list** for each affected entry, not a diff.
@@ -52,6 +59,18 @@ Or for a full category replacement:
         "hint": "hint question",
         "embeddedSubstrings": []
       }
+    }
+  }
+}
+
+Or for a hint-only fix (when the hint leaks words but the category/words are fine):
+
+{
+  "verdict": "fix",
+  "reason": "brief explanation",
+  "fixes": {
+    "<category name>": {
+      "hint": "corrected hint question that does not reference any words"
     }
   }
 }

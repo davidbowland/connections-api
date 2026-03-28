@@ -200,5 +200,67 @@ describe('verification', () => {
 
       expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, { game, modelContext })
     })
+
+    it('should apply a hint-only fix without changing words', async () => {
+      const result: VerificationResult = {
+        verdict: 'fix',
+        reason: 'Hint leaks category words',
+        fixes: {
+          Boast: {
+            hint: 'Are you feeling proud?',
+          },
+        },
+      }
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
+
+      const returned = await verifyAndFixGame(game, {})
+
+      expect(returned.categories['Boast'].hint).toBe('Are you feeling proud?')
+      expect(returned.categories['Boast'].words).toEqual(game.categories['Boast'].words)
+    })
+
+    it('should apply both word and hint fixes for the same category', async () => {
+      const result: VerificationResult = {
+        verdict: 'fix',
+        reason: 'Words too obvious and hint leaks words',
+        fixes: {
+          Boast: {
+            words: ['BLUSTER', 'CROW', 'BRAG', 'SWAGGER'],
+            hint: 'Are you feeling proud?',
+          },
+        },
+      }
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
+
+      const returned = await verifyAndFixGame(game, {})
+
+      expect(returned.categories['Boast'].words).toEqual(['BLUSTER', 'CROW', 'BRAG', 'SWAGGER'])
+      expect(returned.categories['Boast'].hint).toBe('Are you feeling proud?')
+    })
+
+    it('should apply hint fixes across multiple categories', async () => {
+      const result: VerificationResult = {
+        verdict: 'fix',
+        reason: 'Multiple hints leak words',
+        fixes: {
+          Boast: {
+            hint: 'Are you feeling proud?',
+          },
+          'Arc-shaped things': {
+            hint: 'Do you see a curvy theme?',
+          },
+        },
+      }
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
+
+      const returned = await verifyAndFixGame(game, {})
+
+      expect(returned.categories['Boast'].hint).toBe('Are you feeling proud?')
+      expect(returned.categories['Boast'].words).toEqual(game.categories['Boast'].words)
+      expect(returned.categories['Arc-shaped things'].hint).toBe('Do you see a curvy theme?')
+      expect(returned.categories['Arc-shaped things'].words).toEqual(
+        game.categories['Arc-shaped things'].words,
+      )
+    })
   })
 })

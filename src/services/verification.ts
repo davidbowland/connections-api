@@ -23,20 +23,41 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
       if (categoryReplacements > 1) {
         throw new Error('Fix exceeds category replacement limit (> 1)')
       }
+      log('Verification fix: category replacement', {
+        before: { name: oldName, ...categories[oldName] },
+        after: fix.category,
+      })
       delete categories[oldName]
       categories[fix.category.name] = {
         embeddedSubstrings: fix.category.embeddedSubstrings ?? [],
         hint: fix.category.hint,
         words: fix.category.words,
       }
-    } else if (fix.words) {
-      const oldWords = categories[oldName].words
-      const wordChanges = fix.words.filter((w) => !oldWords.includes(w)).length
-      if (wordChanges > 2) {
-        throw new Error(`Fix exceeds per-category word change limit (> 2) for category: ${oldName}`)
+    } else {
+      if (fix.words) {
+        const oldWords = categories[oldName].words
+        const wordChanges = fix.words.filter((w) => !oldWords.includes(w)).length
+        if (wordChanges > 2) {
+          throw new Error(
+            `Fix exceeds per-category word change limit (> 2) for category: ${oldName}`,
+          )
+        }
+        totalWordChanges += wordChanges
+        log('Verification fix: words', {
+          category: oldName,
+          before: oldWords,
+          after: fix.words,
+        })
+        categories[oldName] = { ...categories[oldName], words: fix.words }
       }
-      totalWordChanges += wordChanges
-      categories[oldName] = { ...categories[oldName], words: fix.words }
+      if (fix.hint) {
+        log('Verification fix: hint', {
+          category: oldName,
+          before: categories[oldName].hint,
+          after: fix.hint,
+        })
+        categories[oldName] = { ...categories[oldName], hint: fix.hint }
+      }
     }
   }
 

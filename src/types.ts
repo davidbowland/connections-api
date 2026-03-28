@@ -32,6 +32,7 @@ export interface VerificationResult {
   fixes?: {
     [categoryName: string]: {
       words?: string[]
+      hint?: string
       category?: {
         name: string
         words: string[]

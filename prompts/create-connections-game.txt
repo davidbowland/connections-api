@@ -32,7 +32,9 @@
   - All words must be uppercase
 - Generate a hint for each category
   - Phrase the hint as a question
+  - The hint MUST be about the CATEGORY THEME ONLY. It should nudge the solver toward the category concept without revealing any words
   - The hint must be vague enough to be a hint. DO NOT give the solution by rephrasing the category, but introduce new information
+  - NEVER reference, describe, paraphrase, or allude to ANY of the 4 words in the category. For example, if the words are ["FLAMENCO", "PHOTOGRAPHER", "LINGUIST", "CHEF"], the hint must NOT mention dancers, cameras, languages, cooking, or any synonym/description of those words
   - NEVER use any words from the category name
   - NEVER ask what things have in common
 </steps>
