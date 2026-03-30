@@ -2,24 +2,11 @@ import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda'
 
 import { getGameById, GameResult } from '../services/dynamodb'
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2, GameId } from '../types'
+import { isValidGameId } from '../utils/game-id'
 import { log, logError, xrayCapture } from '../utils/logging'
 import status from '../utils/status'
 
 const lambda = xrayCapture(new LambdaClient({ apiVersion: '2012-08-10' }))
-
-const isValidGameId = (gameId: string): boolean => {
-  const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/
-  if (!isoDateRegex.test(gameId)) {
-    return false
-  }
-
-  const date = new Date(gameId)
-  const startDate = new Date('2025-01-01')
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-
-  return date >= startDate && date < tomorrow && date.toISOString().split('T')[0] === gameId
-}
 
 const getConnectionsData = async (gameId: GameId): Promise<GameResult> => {
   log('Retrieving game', { gameId })

@@ -4,4 +4,11 @@ GET https://{{connections-api-host}}/v1/games HTTP/1.1
 
 ### Get specific game
 
-GET https://connections-api.bowland.link/v1/games/2025-06-28 HTTP/1.1
+GET https://{{connections-api-host}}/v1/games/2025-06-28 HTTP/1.1
+
+### Reroll game
+
+POST https://{{connections-api-host}}/v1/games/2026-03-28/reroll HTTP/1.1
+Content-Type: application/json
+
+{ "password": "your-password-here" }

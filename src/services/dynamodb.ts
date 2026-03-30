@@ -1,6 +1,7 @@
 import {
   BatchGetItemCommand,
   ConditionalCheckFailedException,
+  DeleteItemCommand,
   DynamoDB,
   GetItemCommand,
   PutItemCommand,
@@ -140,4 +141,16 @@ export const setGameGenerationStarted = async (gameId: GameId): Promise<boolean>
     }
     throw error
   }
+}
+
+export const deleteGameById = async (gameId: GameId): Promise<void> => {
+  const command = new DeleteItemCommand({
+    Key: {
+      GameId: {
+        S: `${gameId}`,
+      },
+    },
+    TableName: dynamodbGamesTableName,
+  })
+  await dynamodb.send(command)
 }

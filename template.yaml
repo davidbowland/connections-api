@@ -25,6 +25,7 @@ Mappings:
       logStreamFunction: log-subscriber
       project: connections
       promptsTable: connections-api-prompts
+      rerollPasswordPath: /connections-api/reroll-password
       scheduledGameCreationEnabled: true
       zoneId: Z072422417XWM8PIXXSFA
     test:
@@ -36,6 +37,7 @@ Mappings:
       logStreamFunction: log-subscriber-test
       project: connections-test
       promptsTable: connections-api-prompts-test
+      rerollPasswordPath: /connections-api-test/reroll-password
       scheduledGameCreationEnabled: false
       zoneId: Z01312547RGU1BYKIJXY
 
@@ -57,6 +59,7 @@ Resources:
         AllowMethods:
           - GET
           - OPTIONS
+          - POST
         AllowOrigins:
           - !FindInMap [EnvironmentMap, !Ref Environment, corsDomain]
       Domain:
@@ -284,6 +287,101 @@ Resources:
         - Function: !FindInMap [EnvironmentMap, !Ref Environment, logStreamFunction]
       FilterPattern: '[timestamp, uuid, level="ERROR", message]'
       LogGroupName: !Ref CreateGameLogGroup
+
+  # Reroll Game
+
+  # One-time setup — run this to create the SSM parameter before deploying:
+  # Prod:
+  # aws ssm put-parameter \
+  #   --name /connections-api/reroll-password \
+  #   --value "your-password-here" \
+  #   --type SecureString
+  # Test:
+  # aws ssm put-parameter \
+  #   --name /connections-api-test/reroll-password \
+  #   --value "your-password-here" \
+  #   --type SecureString
+  # Note: uses the AWS-managed SSM key (aws/ssm). If you switch to a CMK,
+  # add kms:Decrypt on the key ARN to the RerollGameFunction IAM policy.
+
+  RerollGameFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/reroll-game.rerollGameHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      MemorySize: 1536
+      Description: Delete and regenerate a connections game by date
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Action:
+                - 'dynamodb:DeleteItem'
+              Effect: Allow
+              Resource: !GetAtt GamesTable.Arn
+            - Action:
+                - 'lambda:InvokeFunction'
+              Effect: Allow
+              Resource: !GetAtt CreateGameFunction.Arn
+            - Action:
+                - 'ssm:GetParameter'
+              Effect: Allow
+              Resource: !Sub
+                - 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${RerollPasswordPath}'
+                - RerollPasswordPath:
+                    !FindInMap [EnvironmentMap, !Ref Environment, rerollPasswordPath]
+      Environment:
+        Variables:
+          CREATE_GAME_FUNCTION_NAME: !Ref CreateGameFunction
+          DEBUG_LOGGING: 'false'
+          DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
+          SSM_REROLL_PASSWORD_PATH:
+            !FindInMap [EnvironmentMap, !Ref Environment, rerollPasswordPath]
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /games/{gameId}/reroll
+            Method: post
+      Tags:
+        'created-by': 'connections-api'
+        'created-for': 'connections'
+        'environment': !Ref Environment
+      Timeout: 15
+      Tracing: Active
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: 'es2023'
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/reroll-game.ts
+
+  RerollGameLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${RerollGameFunction}
+      RetentionInDays: 30
+      Tags:
+        - Key: 'created-by'
+          Value: 'connections-api'
+        - Key: 'created-for'
+          Value: 'connections'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  RerollGameGroupSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: !Sub
+        - 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Function}'
+        - Function: !FindInMap [EnvironmentMap, !Ref Environment, logStreamFunction]
+      FilterPattern: '[timestamp, uuid, level="ERROR", message]'
+      LogGroupName: !Ref RerollGameLogGroup
 
   # DynamoDB
 

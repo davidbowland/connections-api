@@ -24,3 +24,7 @@ process.env.WORD_CONSTRAINT_CHANCE = '0.05'
 // Logging
 
 process.env.DEBUG_LOGGING = 'true'
+
+// Reroll
+
+process.env.SSM_REROLL_PASSWORD_PATH = '/connections-api/reroll-password'

@@ -36,3 +36,7 @@ export const gameGenerationTimeoutMs =
 // Logging
 
 export const debugLogging = (process.env.DEBUG_LOGGING as string) === 'true'
+
+// Reroll
+
+export const ssmRerollPasswordPath = process.env.SSM_REROLL_PASSWORD_PATH as string

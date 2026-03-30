@@ -2,6 +2,7 @@ import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb'
 
 import { connectionsData, gameId, prompt, promptConfig, promptId } from '../__mocks__'
 import {
+  deleteGameById,
   getGameById,
   getGamesByIds,
   getPromptById,
@@ -15,6 +16,7 @@ jest.mock('@aws-sdk/client-dynamodb', () => {
   return {
     BatchGetItemCommand: jest.fn().mockImplementation((x) => x),
     ConditionalCheckFailedException: actual.ConditionalCheckFailedException,
+    DeleteItemCommand: jest.fn().mockImplementation((x) => x),
     DynamoDB: jest.fn(() => ({
       send: (...args) => mockSend(...args),
     })),
@@ -201,6 +203,29 @@ describe('dynamodb', () => {
       mockSend.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
 
       await expect(setGameGenerationStarted(gameId)).rejects.toThrow('DynamoDB unavailable')
+    })
+  })
+
+  describe('deleteGameById', () => {
+    beforeEach(() => {
+      mockSend.mockResolvedValue({})
+    })
+
+    it('should send DeleteItemCommand with correct params', async () => {
+      await deleteGameById(gameId)
+
+      expect(mockSend).toHaveBeenCalledWith({
+        Key: {
+          GameId: { S: gameId },
+        },
+        TableName: 'games-table',
+      })
+    })
+
+    it('should propagate errors thrown by DynamoDB', async () => {
+      mockSend.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
+
+      await expect(deleteGameById(gameId)).rejects.toThrow('DynamoDB unavailable')
     })
   })
 })
