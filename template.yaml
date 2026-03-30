@@ -23,6 +23,7 @@ Mappings:
       domain: connections-api.dbowland.com
       gamesTable: connections-api-games
       logStreamFunction: log-subscriber
+      maxGameGenerationAttempts: 3
       project: connections
       promptsTable: connections-api-prompts
       rerollPasswordPath: /connections-api/reroll-password
@@ -35,6 +36,7 @@ Mappings:
       domain: connections-api.bowland.link
       gamesTable: connections-api-games-test
       logStreamFunction: log-subscriber-test
+      maxGameGenerationAttempts: 2
       project: connections-test
       promptsTable: connections-api-prompts-test
       rerollPasswordPath: /connections-api-test/reroll-password
@@ -230,6 +232,12 @@ Resources:
                 - 'bedrock:InvokeModel*'
               Effect: Allow
               Resource: '*'
+        - Version: 2012-10-17
+          Statement:
+            - Action:
+                - 'lambda:InvokeFunction'
+              Effect: Allow
+              Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-CreateGameFunction-*'
       Environment:
         Variables:
           AVOID_NEXT_GAMES_COUNT: 10
@@ -243,6 +251,8 @@ Resources:
           INSPIRATION_VERBS_COUNT: 8
           LLM_PROMPT_ID: create-connections-game
           LLM_VERIFY_PROMPT_ID: verify-connections-game
+          MAX_GAME_GENERATION_ATTEMPTS:
+            !FindInMap [EnvironmentMap, !Ref Environment, maxGameGenerationAttempts]
           WORD_CONSTRAINT_CHANCE: 0.12
       Events:
         Schedule:

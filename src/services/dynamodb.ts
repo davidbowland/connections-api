@@ -111,7 +111,7 @@ export const setGameById = async (
   return await dynamodb.send(command)
 }
 
-export const setGameGenerationStarted = async (gameId: GameId): Promise<boolean> => {
+export const setGameGenerationStarted = async (gameId: GameId): Promise<number | false> => {
   const now = Date.now()
   const command = new PutItemCommand({
     ConditionExpression:
@@ -134,7 +134,38 @@ export const setGameGenerationStarted = async (gameId: GameId): Promise<boolean>
   })
   try {
     await dynamodb.send(command)
-    return true
+    return now
+  } catch (error: unknown) {
+    if (error instanceof ConditionalCheckFailedException) {
+      return false
+    }
+    throw error
+  }
+}
+
+export const resetGameGenerationStarted = async (
+  gameId: GameId,
+  expectedTimestamp: number,
+): Promise<number | false> => {
+  const now = Date.now()
+  const command = new PutItemCommand({
+    ConditionExpression: 'GenerationStarted = :expected',
+    ExpressionAttributeValues: {
+      ':expected': { N: String(expectedTimestamp) },
+    },
+    Item: {
+      GameId: {
+        S: `${gameId}`,
+      },
+      GenerationStarted: {
+        N: `${now}`,
+      },
+    },
+    TableName: dynamodbGamesTableName,
+  })
+  try {
+    await dynamodb.send(command)
+    return now
   } catch (error: unknown) {
     if (error instanceof ConditionalCheckFailedException) {
       return false

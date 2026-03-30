@@ -6,6 +6,7 @@ import {
   getGameById,
   getGamesByIds,
   getPromptById,
+  resetGameGenerationStarted,
   setGameById,
   setGameGenerationStarted,
 } from '@services/dynamodb'
@@ -165,7 +166,7 @@ describe('dynamodb', () => {
 
       const result = await setGameGenerationStarted(gameId)
 
-      expect(result).toBe(true)
+      expect(result).toBe(mockNow)
       expect(mockSend).toHaveBeenCalledWith({
         ConditionExpression:
           'attribute_not_exists(GameId) OR (attribute_not_exists(#data) AND (attribute_not_exists(GenerationStarted) OR GenerationStarted < :expiry))',
@@ -203,6 +204,49 @@ describe('dynamodb', () => {
       mockSend.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
 
       await expect(setGameGenerationStarted(gameId)).rejects.toThrow('DynamoDB unavailable')
+    })
+  })
+
+  describe('resetGameGenerationStarted', () => {
+    it('should write new timestamp conditionally and return it', async () => {
+      const mockNow = 1234567890
+      const expectedTimestamp = 1000000000
+      jest.spyOn(Date, 'now').mockReturnValue(mockNow)
+
+      const result = await resetGameGenerationStarted(gameId, expectedTimestamp)
+
+      expect(result).toBe(mockNow)
+      expect(mockSend).toHaveBeenCalledWith({
+        ConditionExpression: 'GenerationStarted = :expected',
+        ExpressionAttributeValues: {
+          ':expected': { N: String(expectedTimestamp) },
+        },
+        Item: {
+          GameId: { S: gameId },
+          GenerationStarted: { N: mockNow.toString() },
+        },
+        TableName: 'games-table',
+      })
+
+      jest.restoreAllMocks()
+    })
+
+    it('should return false when conditional check fails', async () => {
+      mockSend.mockRejectedValueOnce(
+        new ConditionalCheckFailedException({ $metadata: {}, message: 'Condition not met' }),
+      )
+
+      const result = await resetGameGenerationStarted(gameId, 1000000000)
+
+      expect(result).toBe(false)
+    })
+
+    it('should rethrow non-conditional-check errors', async () => {
+      mockSend.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
+
+      await expect(resetGameGenerationStarted(gameId, 1000000000)).rejects.toThrow(
+        'DynamoDB unavailable',
+      )
     })
   })
 

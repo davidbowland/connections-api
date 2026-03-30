@@ -5,6 +5,7 @@ process.env.DYNAMODB_PROMPTS_TABLE_NAME = 'prompts-table'
 
 // Lambda
 
+process.env.AWS_LAMBDA_FUNCTION_NAME = 'create-game-function'
 process.env.CREATE_GAME_FUNCTION_NAME = 'create-game-function'
 
 // LLM
@@ -20,6 +21,7 @@ process.env.INSPIRATION_ADJECTIVES_COUNT = '2'
 process.env.INSPIRATION_NOUNS_COUNT = '2'
 process.env.INSPIRATION_VERBS_COUNT = '2'
 process.env.WORD_CONSTRAINT_CHANCE = '0.05'
+process.env.MAX_GAME_GENERATION_ATTEMPTS = '3'
 
 // Logging
 
