@@ -162,6 +162,7 @@ Resources:
           DEBUG_LOGGING: 'false'
           CREATE_GAME_FUNCTION_NAME: !Ref CreateGameFunction
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
+          GAME_GENERATION_TIMEOUT: !FindInMap [EnvironmentMap, !Ref Environment, createGameTimeout]
       Events:
         Api:
           Type: HttpApi

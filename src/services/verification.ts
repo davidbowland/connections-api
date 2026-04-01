@@ -72,10 +72,15 @@ export const verifyAndFixGame = async (
   game: ConnectionsGame,
   modelContext: Record<string, any>,
 ): Promise<ConnectionsGame> => {
+  log('Invoking verify prompt', { game, modelContext })
   const prompt = await getPromptById(llmVerifyPromptId)
   const result: VerificationResult = await invokeModel(prompt, { game, modelContext })
 
-  log('Haiku verification result', { reason: result.reason, verdict: result.verdict })
+  log('Verify prompt result', {
+    reason: result.reason,
+    verdict: result.verdict,
+    fixes: result.fixes,
+  })
 
   if (result.verdict === 'pass') {
     return game

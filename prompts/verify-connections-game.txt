@@ -77,7 +77,10 @@ Or for a hint-only fix (when the hint leaks words but the category/words are fin
 
 For pass or fail verdicts, omit the "fixes" key entirely.
 
-Include your thinking in <thinking> tags as a preamble, then output the JSON.
+- Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
+- The output will be a JSON object consisting of one key:
+  - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings that all words must contain (empty array if not a spelling category)
+- Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
 </format>
 <context>
 ${context}

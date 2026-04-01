@@ -1,7 +1,7 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime'
 
 import { Prompt } from '../types'
-import { logDebug } from '../utils/logging'
+import { log, logDebug } from '../utils/logging'
 
 const runtimeClient = new BedrockRuntimeClient({ region: 'us-east-1' })
 
@@ -33,10 +33,15 @@ export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
   const response = await runtimeClient.send(command)
   const modelResponse = JSON.parse(new TextDecoder().decode(response.body))
   logDebug('Model response', { modelResponse, text: modelResponse.content[0].text })
-  return JSON.parse(
-    modelResponse.content[0].text.replace(
-      /(^\s*<thinking>.*?<\/thinking>\s*|^\s*|\s*`(json)?\s*|\s*$)/gs,
-      '',
-    ),
-  )
+  return parseResponse(modelResponse.content[0].text)
+}
+
+const parseResponse = <T>(str: string): T => {
+  const content = str.replace(/(^\s*<thinking>.*?<\/thinking>\s*|^\s*|\s*`(json)?\s*|\s*$)/gs, '')
+  try {
+    return JSON.parse(content)
+  } catch (e: unknown) {
+    log('Response is not valid JSON', { content })
+    throw e
+  }
 }
