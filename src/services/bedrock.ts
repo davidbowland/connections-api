@@ -38,10 +38,11 @@ export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
 
 const parseResponse = <T>(str: string): T => {
   const content = str.replace(/(^\s*<thinking>.*?<\/thinking>\s*|^\s*|\s*`(json)?\s*|\s*$)/gs, '')
+  const jsonMatch = content.match(/{.*}/s)?.[0] ?? content
   try {
-    return JSON.parse(content)
-  } catch (e: unknown) {
+    return JSON.parse(jsonMatch)
+  } catch {
     log('Response is not valid JSON', { content })
-    throw e
+    throw new Error(`Response is not valid JSON: ${content.substring(0, 200)}`)
   }
 }

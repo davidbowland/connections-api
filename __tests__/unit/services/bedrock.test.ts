@@ -1,4 +1,10 @@
-import { connectionsData, invokeModelCategories, invokeModelResponse, prompt } from '../__mocks__'
+import {
+  connectionsData,
+  invokeModelCategories,
+  invokeModelResponse,
+  invokeModelResponseData,
+  prompt,
+} from '../__mocks__'
 import { invokeModel, invokeModelMessage } from '@services/bedrock'
 
 const mockSend = jest.fn()
@@ -88,6 +94,58 @@ describe('bedrock', () => {
         contentType: 'application/json',
         modelId: 'the-best-ai:1.0',
       })
+    })
+  })
+
+  describe('parseResponse (via invokeModelMessage)', () => {
+    const buildMockResponse = (text: string) => ({
+      ...invokeModelResponse,
+      body: new TextEncoder().encode(
+        JSON.stringify({
+          ...invokeModelResponseData,
+          content: [{ type: 'text', text }],
+        }),
+      ),
+    })
+
+    const expectedCategories = { ...connectionsData, wordList: undefined }
+    const json = JSON.stringify(invokeModelCategories, null, 2)
+
+    it('should strip preamble text before JSON', async () => {
+      mockSend.mockResolvedValue(
+        buildMockResponse(
+          `Looking at the April Fools' Day constraint, I need to create categories...\n${json}`,
+        ),
+      )
+      const result = await invokeModelMessage(prompt)
+      expect(result).toEqual(expectedCategories)
+    })
+
+    it('should strip preamble text and trailing text around JSON', async () => {
+      mockSend.mockResolvedValue(buildMockResponse(`Here is the game:\n${json}\nHope that works!`))
+      const result = await invokeModelMessage(prompt)
+      expect(result).toEqual(expectedCategories)
+    })
+
+    it('should handle thinking tags followed by preamble text', async () => {
+      mockSend.mockResolvedValue(
+        buildMockResponse(
+          `<thinking>Let me think...</thinking>\nLooking at the constraints...\n${json}`,
+        ),
+      )
+      const result = await invokeModelMessage(prompt)
+      expect(result).toEqual(expectedCategories)
+    })
+
+    it('should handle clean JSON with no preamble', async () => {
+      mockSend.mockResolvedValue(buildMockResponse(json))
+      const result = await invokeModelMessage(prompt)
+      expect(result).toEqual(expectedCategories)
+    })
+
+    it('should throw on response with no JSON object', async () => {
+      mockSend.mockResolvedValue(buildMockResponse('this is not json at all'))
+      await expect(invokeModelMessage(prompt)).rejects.toThrow()
     })
   })
 })
