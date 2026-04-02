@@ -84,7 +84,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: src/handlers/get-game-ids.getGameIdsHandler
-      Runtime: nodejs22.x
+      Runtime: nodejs24.x
       Architectures:
         - x86_64
       MemorySize: 1536
@@ -142,7 +142,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: src/handlers/get-game-by-id.getGameByIdHandler
-      Runtime: nodejs22.x
+      Runtime: nodejs24.x
       Architectures:
         - x86_64
       MemorySize: 1536
@@ -213,7 +213,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: src/handlers/create-game.createGameHandler
-      Runtime: nodejs22.x
+      Runtime: nodejs24.x
       Architectures:
         - x86_64
       MemorySize: 1536
@@ -319,7 +319,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: src/handlers/reroll-game.rerollGameHandler
-      Runtime: nodejs22.x
+      Runtime: nodejs24.x
       Architectures:
         - x86_64
       MemorySize: 1536

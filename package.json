@@ -4,7 +4,7 @@
   "description": "Lambda for Connections API",
   "author": "David Bowland",
   "engines": {
-    "node": "^22.0.0"
+    "node": "^24.0.0"
   },
   "license": "ISC",
   "repository": {
@@ -37,14 +37,14 @@
     ]
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.1019.0",
-    "@aws-sdk/client-dynamodb": "^3.1019.0",
-    "@aws-sdk/client-lambda": "^3.1019.0",
-    "@aws-sdk/client-ssm": "^3.1019.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1022.0",
+    "@aws-sdk/client-dynamodb": "^3.1022.0",
+    "@aws-sdk/client-lambda": "^3.1022.0",
+    "@aws-sdk/client-ssm": "^3.1022.0",
     "aws-xray-sdk-core": "^3.12.0",
     "axios": "^1.14.0",
     "axios-retry": "^4.5.0",
-    "esbuild": "^0.27.4",
+    "esbuild": "^0.27.5",
     "fast-json-patch": "^3.1.1",
     "husky": "^9.1.7"
   },
@@ -55,7 +55,7 @@
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/aws-lambda": "^8.10.161",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.19.15",
+    "@types/node": "^24.12.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "babel-jest": "^29.7.0",

@@ -29,11 +29,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v4
-      - name: Install Node 22
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v5
+      - name: Install Node 24
+        uses: actions/setup-node@v5
         with:
-          node-version: 22.x
+          node-version: 24.x
       - name: Install and audit packages
         run: npm ci && npm audit --audit-level=critical
         env:
@@ -48,23 +48,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Python 3
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.8
+          python-version: '3.12'
       - name: Install AWS SAM
         uses: aws-actions/setup-sam@v2
 
-      - name: Install Node 22
-        uses: actions/setup-node@v4
+      - name: Install Node 24
+        uses: actions/setup-node@v5
         with:
-          node-version: 22.x
+          node-version: 24.x
       - name: Build resources
         run: sam build --template ${SAM_TEMPLATE} --use-container --container-env-var NODE_ENV=production
 
       - name: Assume the testing pipeline user role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
@@ -98,23 +98,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Python 3
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.8
+          python-version: '3.12'
       - name: Install AWS SAM
         uses: aws-actions/setup-sam@v2
 
-      - name: Install Node 22
-        uses: actions/setup-node@v4
+      - name: Install Node 24
+        uses: actions/setup-node@v5
         with:
-          node-version: 22.x
+          node-version: 24.x
       - name: Build resources
         run: sam build --template ${SAM_TEMPLATE} --use-container --container-env-var NODE_ENV=production
 
       - name: Assume the testing pipeline user role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
@@ -132,13 +132,13 @@ jobs:
             --region ${TESTING_REGION} \
             --output-template-file packaged-testing.yaml
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: packaged-testing.yaml
           path: packaged-testing.yaml
 
       - name: Assume the prod pipeline user role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
@@ -156,7 +156,7 @@ jobs:
             --region ${PROD_REGION} \
             --output-template-file packaged-prod.yaml
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: packaged-prod.yaml
           path: packaged-prod.yaml
@@ -168,19 +168,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Python 3
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.8
+          python-version: '3.12'
       - name: Install AWS SAM
         uses: aws-actions/setup-sam@v2
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: packaged-testing.yaml
 
       - name: Assume the testing pipeline user role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
@@ -202,10 +202,10 @@ jobs:
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
             --parameter-overrides "Environment=test"
 
-      - name: Install Node 22
-        uses: actions/setup-node@v4
+      - name: Install Node 24
+        uses: actions/setup-node@v5
         with:
-          node-version: 22.x
+          node-version: 24.x
       - name: Install packages for prompt deployment
         run: npm ci
       - name: Deploy prompts to testing
@@ -218,19 +218,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Python 3
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.8
+          python-version: '3.12'
       - name: Install AWS SAM
         uses: aws-actions/setup-sam@v2
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: packaged-prod.yaml
 
       - name: Assume the prod pipeline user role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
@@ -251,10 +251,10 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn ${PROD_CLOUDFORMATION_EXECUTION_ROLE}
 
-      - name: Install Node 22
-        uses: actions/setup-node@v4
+      - name: Install Node 24
+        uses: actions/setup-node@v5
         with:
-          node-version: 22.x
+          node-version: 24.x
       - name: Install packages for prompt deployment
         run: npm ci
       - name: Deploy prompts to production
@@ -266,11 +266,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v4
-      - name: Install Node 22
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v5
+      - name: Install Node 24
+        uses: actions/setup-node@v5
         with:
-          node-version: 22.x
+          node-version: 24.x
       - name: Set git name and email
         run: |
           git config --local user.email "${GIT_EMAIL}"
