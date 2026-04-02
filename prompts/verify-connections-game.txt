@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":10000,"model":"us.anthropic.claude-haiku-4-5-20251001-v1:0","temperature":0.2,"topK":50}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":16000,"model":"us.anthropic.claude-haiku-4-5-20251001-v1:0","thinkingBudgetTokens":10000}
 
 <instructions>
 <context>
@@ -30,6 +30,7 @@ Return one of three verdicts:
 - **pass** — No issues found. Return the game unchanged.
 - **fix** — Issues exist but are fixable by replacing at most 2 words per category (word-only fix) and/or replacing at most 1 full category (concept-level fix) and/or rewriting hints that leak words. Return the full corrected word lists, category objects, and/or corrected hints for affected categories only.
 - **fail** — The concept is fundamentally broken or would require more changes than the fix limits allow.
+  - Games with wordConstraints specified CANNOT FAIL, only fix or pass
 
 When returning a `fix` verdict, always return the **full corrected list** for each affected entry, not a diff.
 </verdict-rules>
@@ -80,7 +81,7 @@ For pass or fail verdicts, omit the "fixes" key entirely.
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
 - The output will be a JSON object consisting of one key:
   - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings that all words must contain (empty array if not a spelling category)
-- Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
+- Including no preambles or code blocks in the output.
 </format>
 <context>
 ${context}

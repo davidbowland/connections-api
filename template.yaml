@@ -36,7 +36,7 @@ Mappings:
       domain: connections-api.bowland.link
       gamesTable: connections-api-games-test
       logStreamFunction: log-subscriber-test
-      maxGameGenerationAttempts: 2
+      maxGameGenerationAttempts: 1
       project: connections-test
       promptsTable: connections-api-prompts-test
       rerollPasswordPath: /connections-api-test/reroll-password

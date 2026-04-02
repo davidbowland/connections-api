@@ -3,7 +3,9 @@ import {
   invokeModelCategories,
   invokeModelResponse,
   invokeModelResponseData,
+  invokeModelThinkingResponse,
   prompt,
+  thinkingPrompt,
 } from '../__mocks__'
 import { invokeModel, invokeModelMessage } from '@services/bedrock'
 
@@ -74,11 +76,8 @@ describe('bedrock', () => {
   })
 
   describe('invokeModelMessage', () => {
-    beforeAll(() => {
+    it('should send temperature/topK for non-thinking prompts', async () => {
       mockSend.mockResolvedValue(invokeModelResponse)
-    })
-
-    it('should invoke the correct model based on the prompt', async () => {
       const result = await invokeModelMessage(prompt)
       expect(result).toEqual({ ...connectionsData, wordList: undefined })
       expect(mockSend).toHaveBeenCalledWith({
@@ -95,25 +94,53 @@ describe('bedrock', () => {
         modelId: 'the-best-ai:1.0',
       })
     })
+
+    it('should send thinking config for thinking-enabled prompts', async () => {
+      mockSend.mockResolvedValue(invokeModelThinkingResponse)
+      const result = await invokeModelMessage(thinkingPrompt)
+      expect(result).toEqual({ ...connectionsData, wordList: undefined })
+      expect(mockSend).toHaveBeenCalledWith({
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            anthropic_version: 'bedrock-2023-05-31',
+            max_tokens: 32000,
+            messages: [{ content: thinkingPrompt.contents, role: 'user' }],
+            thinking: { type: 'enabled', budget_tokens: 25000 },
+          }),
+        ),
+        contentType: 'application/json',
+        modelId: 'the-thinking-ai:1.0',
+      })
+    })
+
+    it('should extract text block from thinking response with multiple content blocks', async () => {
+      mockSend.mockResolvedValue(invokeModelThinkingResponse)
+      const result = await invokeModelMessage(thinkingPrompt)
+      expect(result).toEqual({ ...connectionsData, wordList: undefined })
+    })
   })
 
   describe('parseResponse (via invokeModelMessage)', () => {
-    const buildMockResponse = (text: string) => ({
+    const buildMockResponse = (
+      contentBlocks: Array<{ type: string; text?: string; thinking?: string }>,
+    ) => ({
       ...invokeModelResponse,
       body: new TextEncoder().encode(
         JSON.stringify({
           ...invokeModelResponseData,
-          content: [{ type: 'text', text }],
+          content: contentBlocks,
         }),
       ),
     })
+
+    const buildTextOnlyResponse = (text: string) => buildMockResponse([{ type: 'text', text }])
 
     const expectedCategories = { ...connectionsData, wordList: undefined }
     const json = JSON.stringify(invokeModelCategories, null, 2)
 
     it('should strip preamble text before JSON', async () => {
       mockSend.mockResolvedValue(
-        buildMockResponse(
+        buildTextOnlyResponse(
           `Looking at the April Fools' Day constraint, I need to create categories...\n${json}`,
         ),
       )
@@ -122,14 +149,16 @@ describe('bedrock', () => {
     })
 
     it('should strip preamble text and trailing text around JSON', async () => {
-      mockSend.mockResolvedValue(buildMockResponse(`Here is the game:\n${json}\nHope that works!`))
+      mockSend.mockResolvedValue(
+        buildTextOnlyResponse(`Here is the game:\n${json}\nHope that works!`),
+      )
       const result = await invokeModelMessage(prompt)
       expect(result).toEqual(expectedCategories)
     })
 
     it('should handle thinking tags followed by preamble text', async () => {
       mockSend.mockResolvedValue(
-        buildMockResponse(
+        buildTextOnlyResponse(
           `<thinking>Let me think...</thinking>\nLooking at the constraints...\n${json}`,
         ),
       )
@@ -138,13 +167,31 @@ describe('bedrock', () => {
     })
 
     it('should handle clean JSON with no preamble', async () => {
-      mockSend.mockResolvedValue(buildMockResponse(json))
+      mockSend.mockResolvedValue(buildTextOnlyResponse(json))
+      const result = await invokeModelMessage(prompt)
+      expect(result).toEqual(expectedCategories)
+    })
+
+    it('should parse text block from structured thinking response', async () => {
+      mockSend.mockResolvedValue(
+        buildMockResponse([
+          { type: 'thinking', thinking: 'Deep thoughts about categories...' },
+          { type: 'text', text: json },
+        ]),
+      )
       const result = await invokeModelMessage(prompt)
       expect(result).toEqual(expectedCategories)
     })
 
     it('should throw on response with no JSON object', async () => {
-      mockSend.mockResolvedValue(buildMockResponse('this is not json at all'))
+      mockSend.mockResolvedValue(buildTextOnlyResponse('this is not json at all'))
+      await expect(invokeModelMessage(prompt)).rejects.toThrow()
+    })
+
+    it('should throw when response has no text block', async () => {
+      mockSend.mockResolvedValue(
+        buildMockResponse([{ type: 'thinking', thinking: 'Only thinking, no text' }]),
+      )
       await expect(invokeModelMessage(prompt)).rejects.toThrow()
     })
   })

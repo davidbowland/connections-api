@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":100000,"model":"us.anthropic.claude-sonnet-4-6","temperature":0.8,"topK":500}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":60000,"model":"us.anthropic.claude-sonnet-4-6","thinkingBudgetTokens":40000}
 
 <instructions>
 <context>
@@ -57,7 +57,7 @@ KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather 
 - Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
 - The output will be a JSON object consisting of one key:
   - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings that all words must contain (empty array if not a spelling category)
-- Including your thinking in <thinking> tags as a preamble, but use no other preambles or code blocks.
+- Including no preambles or code blocks in the output.
 </format>
 <context>
 ${context}
