@@ -22,34 +22,35 @@ export const wordConstraints: string[] = [
 
 // Tier 1: Common patterns - good misdirection, appear frequently (weight: 4x)
 const tier1CategoryConstraints: string[] = [
-  'Fill in the blank: (e.g., "BAKE A ___", "WET & ___")',
-  'Words that can follow a common word (e.g., "Words after SWEET", "Words that can follow FIRE")',
-  'Words that can precede a common word (e.g., "Words before HOUSE", "Words that can precede BALL")',
   'Specific category of things/items (e.g., "Punctuation marks", "Kitchen appliances", "Cocktails")',
   'Things with a shared property (e.g., "Things that are stripy", "Things that are pink", "Foamy things")',
+  'Properties of one thing (e.g., "Attributes of a frog", "Describes tires")',
   'Things found in/seen in a specific context (e.g., "Seen at airport security", "Words on Monopoly squares")',
-  'Associated with a person/character (e.g., "Associated with Poe", "PIXAR protagonists described indirectly")',
-  'Pop culture with modifier (e.g., "Oscar winners", "90s action films", "Rappers without Lil")',
   'Specific types within a category (e.g., "Types of tomatoes", "Basketball shots", "Action film subgenres")',
   'Parts/components of something (e.g., "Parts of a tooth", "Features of a car console")',
-  'Words that become new words with a common prefix (e.g., "Words that become new words with UN___", "Add RE___ to make new words", "OUT___ words")',
-  'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH", "Verbs that are also nouns: RUN, PLAY, BREAK")',
+  'Associated with a person/character (e.g., "Associated with Poe", "PIXAR protagonists described indirectly")',
+  'Pop culture with modifier (e.g., "Oscar winners", "90s action films", "Rappers without Lil")',
+  'Words that plausibly fit into multiple common categories, creating maximum misdirection (e.g., words that could be colors, animals, OR verbs)',
+  'Literature references, but not more than one name unless they are also common words (e.g. "The four horsemen of the apocalypse: CONQUEST, WAR, FAMINE, DEATH" or "Characters in The Canterbury Tales: MILLER, PARDONER, KNIGHT, WIFE OF BATH")',
+  'History references, but not more than one name unless they are also common words (e.g. "Originated in ancient Greece: GEOMETRY, THEATRE, ATOMIC THEORY, MEDICINE")',
+  'Words associated with a specific sense — taste, texture, sound (e.g., "Things that are crunchy", "Words that sound soft", "Things that taste bitter")',
+  'Pop culture concepts, but not more than one name unless they are also common words (e.g. "Rocky Horror Picture Show: ROCKY, HORROR, PICTURE, SHOW" or "Members of The Breakfast Club: BRAIN, ATHLETE, BASKET CASE, PRINCESS")',
 ]
 
 // Tier 2: Uncommon patterns - interesting but could become predictable (weight: 2x)
 const tier2CategoryConstraints: string[] = [
   'Synonyms for something (e.g., "Euphemisms for death", "Ways to say yes", "Slang for money")',
   'Compound word components (e.g., "First words in compounds with BALL", "Second words in compounds with FIRE")',
-  'Pop culture concepts, but not more than one name unless they are also common words (e.g. "Rocky Horror Picture Show: ROCKY, HORROR, PICTURE, SHOW" or "Members of The Breakfast Club: BRAIN, ATHLETE, BASKET CASE, PRINCESS")',
   'Ending/starting with [category] (e.g., "Ending in colors: INFRARED, MARIGOLD" where each color appears ONLY ONCE)',
-  'Literature references, but not more than one name unless they are also common words (e.g. "The four horsemen of the apocalypse: CONQUEST, WAR, FAMINE, DEATH" or "Characters in The Canterbury Tales: MILLER, PARDONER, KNIGHT, WIFE OF BATH")',
-  'History references, but not more than one name unless they are also common words (e.g. "Originated in ancient Greece: GEOMETRY, THEATRE, ATOMIC THEORY, MEDICINE")',
   'Idiom/phrase components (e.g., "First word in common idioms: BREAK, BURN, BITE, BURY", "Last word in common phrases")',
-  'Words associated with a specific sense — taste, texture, sound (e.g., "Things that are crunchy", "Words that sound soft", "Things that taste bitter")',
-  'Words that plausibly fit into multiple common categories, creating maximum misdirection (e.g., words that could be colors, animals, OR verbs)',
+  'Fill in the blank: (e.g., "BAKE A ___", "WET & ___")',
+  'Words that can follow a common word (e.g., "Words after SWEET", "Words that can follow FIRE")',
+  'Words that can precede a common word (e.g., "Words before HOUSE", "Words that can precede BALL")',
+  'Words that become new words with a common prefix (e.g., "Words that become new words with UN___", "Add RE___ to make new words", "OUT___ words")',
+  'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH", "Verbs that are also nouns: RUN, PLAY, BREAK")',
 ]
 
-// Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
+// Tier 4: Rare patterns - very specific, should appear infrequently (weight: 1x)
 const tier3CategoryConstraints: string[] = [
   'Homophones of a category (e.g., "Homophones of body parts", "Homophones of tools")',
   'Words spelled backwards are [category] (e.g., "Backwards animals: FLOW, GOD, TAB")',
@@ -61,7 +62,6 @@ const tier3CategoryConstraints: string[] = [
   'Anagrams of [category] (e.g., "Anagrams of animals", "Anagrams of states")',
   `Words containing an embedded word of at least 4 characters but aren't compound words (e.g., "Words containing RISK", "Words containing body parts" where each body part appears ONLY ONCE)`,
   'Words that sound like [specific pattern] (e.g., "Sound like letter + word combination")',
-  'Words with specific letter patterns in the middle, not beginning or end (e.g., "Words containing PATH")',
   'Portmanteau components (e.g., "First halves of portmanteaus: BREAK in BREAKFAST, MOTOR in MOTEL")',
 ]
 

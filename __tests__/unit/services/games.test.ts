@@ -50,7 +50,7 @@ describe('games', () => {
       mockMathRandom.mockReturnValueOnce(1)
       const result = await createGame('2025-01-01')
 
-      const categoryExpect = expect.stringContaining('Fill in the blank:')
+      const categoryExpect = expect.stringContaining('Specific category of things/items')
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
         expect.objectContaining({
