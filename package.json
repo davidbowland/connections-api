@@ -37,14 +37,14 @@
     ]
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.1022.0",
-    "@aws-sdk/client-dynamodb": "^3.1022.0",
-    "@aws-sdk/client-lambda": "^3.1022.0",
-    "@aws-sdk/client-ssm": "^3.1022.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1035.0",
+    "@aws-sdk/client-dynamodb": "^3.1035.0",
+    "@aws-sdk/client-lambda": "^3.1035.0",
+    "@aws-sdk/client-ssm": "^3.1035.0",
     "aws-xray-sdk-core": "^3.12.0",
-    "axios": "^1.14.0",
+    "axios": "^1.15.2",
     "axios-retry": "^4.5.0",
-    "esbuild": "^0.27.5",
+    "esbuild": "^0.28.0",
     "fast-json-patch": "^3.1.1",
     "husky": "^9.1.7"
   },
@@ -55,7 +55,7 @@
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/aws-lambda": "^8.10.161",
     "@types/jest": "^29.5.14",
-    "@types/node": "^24.12.0",
+    "@types/node": "^24.12.2",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "babel-jest": "^29.7.0",
@@ -64,7 +64,7 @@
     "eslint-plugin-jest": "^28.14.0",
     "jest": "^29.7.0",
     "lint-staged": "^15.5.2",
-    "prettier": "^3.8.1",
+    "prettier": "^3.8.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

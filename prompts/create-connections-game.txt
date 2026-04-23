@@ -13,6 +13,8 @@
 - The context shows category themes, disallowed categories, and words for inspiration.
 - Generate 4 unique categories
   - ALWAYS abide by categoryConstraints, if provided
+  - NEVER generate a "____ WORD" or "WORD ____" cateogry unless explicitly asked in categoryConstraints
+  - NEVER generate a category that is an example in categoryConstraints
   - ALWAYS consider the word constraints (wordConstraints), if provided
   - ALWAYS use at least one inspiration word in the category or as one of the words (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use appropriate casing
   - NEVER generate a category that is similar to disallowed categories, another category, or example categories ("weather" and "storms" are too similar)

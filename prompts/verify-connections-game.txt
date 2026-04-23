@@ -9,15 +9,17 @@ The game data is provided as JSON with two keys: "game" (the connections game) a
 <checks>
 Examine each category in the game and check for the following issues:
 
-1. **Embedded substring categories** — If a category has non-empty `embeddedSubstrings`, every word must contain every listed substring. Also check whether the category name implies an embedded pattern (e.g. "contains MITT", "words with BLUE inside") but `embeddedSubstrings` is empty or missing — flag this as a problem.
+1. **Embedded substring categories** - If a category has non-empty `embeddedSubstrings`, every word must contain every listed substring. Also check whether the category name implies an embedded pattern (e.g. "contains MITT", "words with BLUE inside") but `embeddedSubstrings` is empty or missing — flag this as a problem.
 
-2. **Pattern categories** (e.g. `[profession] + letter`, `[X] minus a letter`, `starts with a color`) — The varying element (the letter, color, etc.) must genuinely differ across words. Flag if all words use the same varying element (e.g. all profession plurals ending in S when the category claims different letters, or all words starting with the same color).
+2. **Pattern categories** (e.g. `[profession] + letter`, `[X] minus a letter`, `starts with a color`) - The varying element (the letter, color, etc.) must genuinely differ across words. Flag if all words use the same varying element (e.g. all profession plurals ending in S when the category claims different letters, or all words starting with the same color).
 
-3. **Obviousness** — Flag if 2 or more words together would immediately betray the category to a casual solver without any lateral thinking required (e.g. "BAILIFF" and "JUDGE" in the same category).
+3. **Obviousness** - Flag if 2 or more words together would immediately betray the category to a casual solver without any lateral thinking required (e.g. "BAILIFF" and "JUDGE" in the same category).
 
-4. **Category uniqueness** — Flag if two categories are semantically too similar to each other (e.g. one category for "dog breeds" and another for "types of dogs").
+4. **Category uniqueness** - Flag if two categories are semantically too similar to each other (e.g. one category for "dog breeds" and another for "types of dogs").
 
-5. **Hint quality** — Each category's `hint` must be a vague question about the category theme. Flag if a hint:
+5. **Category alignment** - Flag if the category is something like "____ WORD" when the categoryConstraint is "Things with a shared property"
+
+6. **Hint quality** - Each category's `hint` must be a vague question about the category theme. Flag if a hint:
   - References, describes, paraphrases, or alludes to ANY of the 4 words in the category (e.g. mentioning "dancer" when FLAMENCO is a word, or "photographer" when PHOTOGRAPHER is a word)
   - Contains any word from the category name
   - Asks what things "have in common"
