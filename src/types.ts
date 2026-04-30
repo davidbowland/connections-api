@@ -43,8 +43,6 @@ export interface VerificationResult {
   }
 }
 
-// LLM
-
 // Prompts
 
 export type PromptId = string
@@ -53,15 +51,7 @@ export interface PromptConfig {
   anthropicVersion: string
   maxTokens: number
   model: string
-  temperature?: number
-  topK?: number
-  thinkingBudgetTokens?: number
-}
-
-export interface LargePromptOptions {
-  chunkSize?: number
-  useSystemMessage?: boolean
-  systemMessage?: string
+  thinkingBudgetTokens: number
 }
 
 export interface Prompt {

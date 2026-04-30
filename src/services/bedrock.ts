@@ -14,14 +14,11 @@ export const invokeModel = async <T>(prompt: Prompt, context?: Record<string, an
 
 export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
   logDebug('Invoking model', { prompt })
-  const thinkingConfig = prompt.config.thinkingBudgetTokens
-    ? { thinking: { type: 'enabled', budget_tokens: prompt.config.thinkingBudgetTokens } }
-    : { temperature: prompt.config.temperature, top_k: prompt.config.topK }
   const messageBody = {
     anthropic_version: prompt.config.anthropicVersion,
     max_tokens: prompt.config.maxTokens,
     messages: [{ content: prompt.contents, role: 'user' }],
-    ...thinkingConfig,
+    thinking: { type: 'enabled', budget_tokens: prompt.config.thinkingBudgetTokens },
   }
   logDebug('Passing to model', {
     messageBody,
@@ -36,11 +33,14 @@ export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
   const modelResponse = JSON.parse(new TextDecoder().decode(response.body))
   const textBlock = modelResponse.content.find((b: { type: string }) => b.type === 'text')
   logDebug('Model response', { modelResponse, text: textBlock?.text })
-  return parseResponse(textBlock?.text ?? '')
+  if (!textBlock?.text) {
+    throw new Error('Model response contained no text block')
+  }
+  return parseResponse(textBlock.text)
 }
 
 const parseResponse = <T>(str: string): T => {
-  const content = str.replace(/(^\s*<thinking>.*?<\/thinking>\s*|^\s*|\s*`(json)?\s*|\s*$)/gs, '')
+  const content = str.replace(/(^\s*|\s*```(json)?\s*|\s*$)/gs, '')
   const jsonMatch = content.match(/{.*}/s)?.[0] ?? content
   try {
     return JSON.parse(jsonMatch)

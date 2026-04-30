@@ -65,8 +65,12 @@ export const invokeModelResponseData = {
   id: 'msg_bdrk_01YA7pmVfUZvZM9reruSimYT',
   type: 'message',
   role: 'assistant',
-  model: 'claude-3-5-sonnet-20241022',
+  model: 'claude-sonnet-4-6',
   content: [
+    {
+      type: 'thinking',
+      thinking: 'Let me think about the categories...',
+    },
     {
       type: 'text',
       text: JSON.stringify(invokeModelCategories, null, 2),
@@ -74,7 +78,7 @@ export const invokeModelResponseData = {
   ],
   stop_reason: 'end_turn',
   stop_sequence: null,
-  usage: { input_tokens: 3398, output_tokens: 99 },
+  usage: { input_tokens: 3_398, output_tokens: 99 },
 }
 
 export const invokeModelResponse = {
@@ -92,52 +96,13 @@ export const invokeModelResponse = {
   body: new TextEncoder().encode(JSON.stringify(invokeModelResponseData)),
 }
 
-export const invokeModelInvalidResponseData = {
-  id: 'msg_bdrk_01YA7pmVfUZvZM9reruSimYT',
-  type: 'message',
-  role: 'assistant',
-  model: 'claude-3-5-sonnet-20241022',
-  content: [
-    {
-      type: 'text',
-      text: 'this-is-invalid-json',
-    },
-  ],
-  stop_reason: 'end_turn',
-  stop_sequence: null,
-  usage: { input_tokens: 3398, output_tokens: 99 },
-}
-
-export const invokeModelInvalidResponse = {
-  $metadata: {
-    attempts: 1,
-    cfId: undefined,
-    extendedRequestId: undefined,
-    httpStatusCode: 200,
-    requestId: 'fragglerock',
-    retryDelay: 0,
-    statusCode: 200,
-    success: true,
-    totalRetryDelay: 0,
-  },
-  body: new TextEncoder().encode(JSON.stringify(invokeModelInvalidResponseData)),
-}
-
 // Prompts
 
 export const promptConfig: PromptConfig = {
   anthropicVersion: 'bedrock-2023-05-31',
-  maxTokens: 256,
-  model: 'the-best-ai:1.0',
-  temperature: 0.5,
-  topK: 250,
-}
-
-export const thinkingPromptConfig: PromptConfig = {
-  anthropicVersion: 'bedrock-2023-05-31',
-  maxTokens: 32000,
+  maxTokens: 32_000,
   model: 'the-thinking-ai:1.0',
-  thinkingBudgetTokens: 25000,
+  thinkingBudgetTokens: 25_000,
 }
 
 export const promptId: PromptId = '5253'
@@ -145,44 +110,4 @@ export const promptId: PromptId = '5253'
 export const prompt: Prompt = {
   config: promptConfig,
   contents: 'You are a helpful assistant. ${data}',
-}
-
-export const thinkingPrompt: Prompt = {
-  config: thinkingPromptConfig,
-  contents: 'You are a helpful assistant. ${data}',
-}
-
-export const invokeModelThinkingResponseData = {
-  id: 'msg_bdrk_01YA7pmVfUZvZM9reruSimYT',
-  type: 'message',
-  role: 'assistant',
-  model: 'claude-sonnet-4-6',
-  content: [
-    {
-      type: 'thinking',
-      thinking: 'Let me think about the categories...',
-    },
-    {
-      type: 'text',
-      text: JSON.stringify(invokeModelCategories, null, 2),
-    },
-  ],
-  stop_reason: 'end_turn',
-  stop_sequence: null,
-  usage: { input_tokens: 3398, output_tokens: 99 },
-}
-
-export const invokeModelThinkingResponse = {
-  $metadata: {
-    attempts: 1,
-    cfId: undefined,
-    extendedRequestId: undefined,
-    httpStatusCode: 200,
-    requestId: 'fragglerock',
-    retryDelay: 0,
-    statusCode: 200,
-    success: true,
-    totalRetryDelay: 0,
-  },
-  body: new TextEncoder().encode(JSON.stringify(invokeModelThinkingResponseData)),
 }
