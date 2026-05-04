@@ -13,7 +13,7 @@
 - The context shows category themes, disallowed categories, and words for inspiration.
 - Generate 4 unique categories
   - ALWAYS abide by categoryConstraints, if provided
-  - NEVER generate a "____ WORD" or "WORD ____" cateogry unless explicitly asked in categoryConstraints
+  - NEVER generate a "____ WORD" or "WORD ____" category unless explicitly asked in categoryConstraints
   - NEVER generate a category that is an example in categoryConstraints
   - ALWAYS consider the word constraints (wordConstraints), if provided
   - ALWAYS use at least one inspiration word in the category or as one of the words (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use appropriate casing
@@ -32,15 +32,45 @@
     - Are not obvious to a category (for example, `bailiff` and `judge` together are too obvious)
   - NEVER include words from the category
   - All words must be uppercase
-- Generate a hint for each category
-  - Phrase the hint as a question
-  - The hint MUST be about the CATEGORY THEME ONLY. ALWAYS nudge the solver towards a key word, phrase, or idea
-  - The hint must be vague enough to be a hint. DO NOT give the solution by rephrasing the category, but introduce new information
-  - NEVER reference, describe, paraphrase, or allude to ANY of the 4 words in the category. For example, if the words are ["FLAMENCO", "PHOTOGRAPHER", "LINGUIST", "CHEF"], the hint must NOT mention dancers, cameras, languages, cooking, or any synonym/description of those words
-  - NEVER use any words from the category name
-  - NEVER ask what things have in common
-  - A good hint points at the category concept without revealing the words (e.g. "Do you see a color theme?" for "Black-and-white things" or "Is there an ending at the beginning?" for "BACK ___"). Hints should be about the contents of a category, not the style.
+- Generate a hint for each category (see <hint_rules> section — that is the authoritative source for all hint requirements)
 </steps>
+<hint_rules>
+A hint is a SHORT question that nudges the solver toward the category's key concept.
+
+RULES:
+- Phrase the hint as a question
+- The hint MUST point at the category's key word, phrase, or idea through a creative association (example: category "NAME ____" hint "What do they call you?")
+- NEVER give the solution by rephrasing the category, but introduce new information
+- NEVER use any words from the category name
+- NEVER reference, describe, paraphrase, or allude to ANY of the 4 words in the category
+- NEVER ask what things "have in common", what word "follows", "precedes", "connects", or "completes" them
+- NEVER describe the category's structure or mechanic
+- A good hint points at the category concept without revealing the words (e.g. "Do you see a color theme?" for "Black-and-white things" or "Is there an ending at the beginning?" for "BACK ___")
+
+FOR WORD-PATTERN CATEGORIES (e.g., "___ BALL", "FIRE ___", "Words after SWEET"):
+- The hint MUST creatively evoke the shared/connecting word itself
+- Think of a scenario, feeling, image, or association with that connecting word
+- NEVER describe the pattern — always evoke the answer
+
+SELF-CHECK: Before finalizing each hint, ask yourself: could this exact hint apply to a completely different category? If yes, it is too generic — rewrite it.
+
+BAD HINTS (mechanic-describing — NEVER do this):
+- "What word follows all four of these to make a phrase?" ← describes the pattern
+- "Could a single word precede each of these?" ← describes the pattern
+- "Do these words share a common beginning?" ← describes the pattern
+- "Could any words share an adjective?" ← describes the pattern
+- "Is there a word that completes all four of these phrases?" ← describes the pattern
+
+GOOD HINTS (concept-evoking):
+- "FIRE ___" → "Feeling hot?" (evokes fire)
+- "___ BALL" → "What's round and bouncy?" (evokes ball)
+- "Words after SWEET" → "Got a sugar craving?" (evokes sweet)
+- "BACK ___" → "Is there an ending at the beginning?" (wordplay on back)
+- "Words after T" → "Who is your cell provider?" (evokes T-Mobile)
+- "Black-and-white things" → "Do you see a color theme?" (evokes the visual)
+- "Boast" → "What might someone do when they're proud?" (evokes the concept)
+- "Cereal mascots" → "Have you seen some of these during your morning routine?" (evokes breakfast)
+</hint_rules>
 <categoryConstraints>
 KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather than categorical knowledge. ONLY group words that have SURPRISING or CLEVER connections
 
@@ -106,7 +136,7 @@ ${context}
       "words": ["CAMO", "DRAB", "FATIGUE", "KHAKI"],
       "embeddedSubstrings": []
     },
-    "Presidental nicknames": {
+    "Presidential nicknames": {
       "hint": "Do any words strike you as informal?",
       "words": ["ABE", "CAL", "DICK", "TEDDY"],
       "embeddedSubstrings": []
@@ -122,7 +152,7 @@ ${context}
 
 <example>
 <category>Wax ___</category>
-<hint>Could any words share an adjective?</hint>
+<hint>What keeps your car shiny?</hint>
 <words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
 </example>
 <example>
@@ -141,9 +171,8 @@ ${context}
 <words><word>MOBILE</word><word>PAIN</word><word>REX</word><word>SHIRT</word></words>
 </example>
 <example>
-<example>
 <category>Items in a sewing kit</category>
-<hint>Could you find some things in the same place?</hint>
+<hint>Do you have a talent for stitching?</hint>
 <words><word>BUTTON</word><word>NEEDLE</word><word>SCISSORS</word><word>THREAD</word></words>
 </example>
 <example>
@@ -158,12 +187,26 @@ ${context}
 </example>
 <example>
 <category>Mettle</category>
-<hint>Does GRIT always mean sand or small pebbles?</hint>
+<hint>What separates the tough from the timid?</hint>
 <words><word>FIGHT</word><word>GRIT</word><word>RESOLVE</word><word>SPIRIT</word></words>
 </example>
 <example>
 <category>Figures in classic Disney animated films</category>
 <hint>Are you a fan of older cartoons?</hint>
-<words><word>ELEPANT</word><word>FAWN</word><word>MARIONETTE</word><word>MOUSE</word></words>
+<words><word>ELEPHANT</word><word>FAWN</word><word>MARIONETTE</word><word>MOUSE</word></words>
 </example>
-</example_categories>
+<example>
+<category>___ HOUSE</category>
+<hint>Where do you live?</hint>
+<words><word>BIRD</word><word>DOG</word><word>FIRE</word><word>TREE</word></words>
+</example>
+<example>
+<category>Words that can follow HAND</category>
+<hint>Give me five?</hint>
+<words><word>BAG</word><word>MADE</word><word>SHAKE</word><word>WRITING</word></words>
+</example>
+<example>
+<category>HEAD ___</category>
+<hint>What sits on top of your shoulders?</hint>
+<words><word>BAND</word><word>HUNTER</word><word>LINE</word><word>QUARTERS</word></words>
+</example>

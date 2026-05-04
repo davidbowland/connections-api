@@ -68,13 +68,25 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
   return { ...game, categories }
 }
 
+const getVerifierContext = (
+  game: ConnectionsGame,
+  modelContext: Record<string, any>,
+): Record<string, any> => {
+  return {
+    game,
+    categoryConstraints: modelContext.categoryConstraints,
+    wordConstraints: modelContext.wordConstraints,
+  }
+}
+
 export const verifyAndFixGame = async (
   game: ConnectionsGame,
   modelContext: Record<string, any>,
 ): Promise<ConnectionsGame> => {
-  log('Invoking verify prompt', { game, modelContext })
+  const verifierContext = getVerifierContext(game, modelContext)
+  log('Invoking verify prompt', { verifierContext })
   const prompt = await getPromptById(llmVerifyPromptId)
-  const result: VerificationResult = await invokeModel(prompt, { game, modelContext })
+  const result: VerificationResult = await invokeModel(prompt, verifierContext)
 
   log('Verify prompt result', {
     reason: result.reason,
@@ -85,7 +97,7 @@ export const verifyAndFixGame = async (
   if (result.verdict === 'pass') {
     return game
   } else if (result.verdict === 'fail') {
-    throw new Error(`Haiku verification failed: ${result.reason}`)
+    throw new Error(`Verification failed: ${result.reason}`)
   } else if (result.verdict === 'fix') {
     return applyFixes(game, result)
   } else {
