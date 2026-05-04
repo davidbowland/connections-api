@@ -119,7 +119,7 @@ describe('verification', () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
 
       await expect(verifyAndFixGame(game, {})).rejects.toThrow(
-        'Haiku verification failed: Category concept is fundamentally broken',
+        'Verification failed: Category concept is fundamentally broken',
       )
     })
 
@@ -130,7 +130,7 @@ describe('verification', () => {
       await expect(verifyAndFixGame(game, {})).rejects.toThrow('Unrecognised verdict: retry')
     })
 
-    it('should throw on malformed Haiku response (JSON parse failure)', async () => {
+    it('should throw on malformed verifier response (JSON parse failure)', async () => {
       jest
         .mocked(bedrock)
         .invokeModel.mockRejectedValueOnce(new SyntaxError('Unexpected token in JSON'))
@@ -191,14 +191,23 @@ describe('verification', () => {
       )
     })
 
-    it('should pass game and modelContext as context to invokeModel', async () => {
+    it('should pass only game and relevant constraints to invokeModel', async () => {
       const result: VerificationResult = { verdict: 'pass', reason: 'All good' }
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
-      const modelContext = { wordConstraints: 'all words must be 4 letters' }
+      const modelContext = {
+        categoryConstraints: ['Things with a shared property'],
+        wordConstraints: 'all words must be 4 letters',
+        disallowedCategories: ['Weather'],
+        inspirationNouns: ['dog'],
+      }
 
       await verifyAndFixGame(game, modelContext)
 
-      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, { game, modelContext })
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, {
+        categoryConstraints: ['Things with a shared property'],
+        game,
+        wordConstraints: 'all words must be 4 letters',
+      })
     })
 
     it('should apply a hint-only fix without changing words', async () => {
