@@ -17,14 +17,14 @@ export const wordConstraints: string[] = [
   'all words must contain exactly one vowel, but categories MUST be more specific than "words with one vowel"',
   'all words must be borrowed from another language (e.g., FIESTA, KINDERGARTEN, SUSHI), but categories MUST be more specific than "loanwords"',
   'all words must also be common first names (e.g., MARK, GRACE, BILL), but categories MUST be more specific than "words that are names"',
+  'all "words" must be two-word phrases (e.g., "WARM RECEPTION", "COLD SHOULDER", "HOT PURSUIT", "COOL HAND"). Within each category, the four phrases share a theme through words in one position — either all first words or all second words; the position can differ between categories. The category name describes that positional word\'s theme (e.g., "Temperature + ___" for phrases whose first word is a temperature like WARM/COLD/HOT/COOL, or "___ + Metal" for phrases whose second word is a metal)',
   'always generate 5 categories rather than 4',
 ]
 
 // Tier 1: Common patterns - good misdirection, appear frequently (weight: 4x)
 const tier1CategoryConstraints: string[] = [
-  'Specific category of things/items (e.g., "Punctuation marks", "Kitchen appliances", "Cocktails")',
-  'Things with a shared property (e.g., "Things that are stripy", "Things that are pink", "Foamy things")',
-  'Properties of one thing (e.g., "Attributes of a frog", "Describes tires")',
+  'Specific category of things/items — avoid pure semantic fields like "types of drinks" or "kitchen appliances"; prefer categories with lateral misdirection (e.g., "Punctuation marks", "Olympic events", "Monopoly tokens")',
+  'Things sharing a property, or attributes of one specific thing (e.g., "Things that are stripy", "Things that are pink", "Foamy things", "Attributes of a frog", "Describes tires")',
   'Things found in/seen in a specific context (e.g., "Seen at airport security", "Words on Monopoly squares")',
   'Specific types within a category (e.g., "Types of tomatoes", "Basketball shots", "Action film subgenres")',
   'Parts/components of something (e.g., "Parts of a tooth", "Features of a car console")',
@@ -63,6 +63,7 @@ const tier3CategoryConstraints: string[] = [
   `Words containing an embedded word of at least 4 characters but aren't compound words (e.g., "Words containing RISK", "Words containing body parts" where each body part appears ONLY ONCE)`,
   'Words that sound like [specific pattern] (e.g., "Sound like letter + word combination")',
   'Portmanteau components (e.g., "First halves of portmanteaus: BREAK in BREAKFAST, MOTOR in MOTEL")',
+  'Eponyms — common words derived from real people\'s names, grouped by domain (e.g., "Named after military figures: CARDIGAN, SHRAPNEL, WELLINGTON, BOWIE" or "Named after scientists: WATT, FAHRENHEIT, DIESEL, BUNSEN"). Always pick a consistent domain — never mix domains in one category.',
 ]
 
 export const categoryConstraints: string[] = [

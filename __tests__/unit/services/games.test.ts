@@ -21,13 +21,11 @@ describe('games', () => {
     jest.mocked(dynamodb).setGameById.mockResolvedValue({} as any)
     jest.mocked(constraints).getDateConstraint.mockReturnValue(undefined)
     jest.mocked(verification).verifyAndFixGame.mockImplementation(async (g) => g)
-
-    Math.random = mockMathRandom
   })
 
   describe('createGame', () => {
     it('should create a game with specialConstraints (wordConstraints)', async () => {
-      const result = await createGame('2025-01-01')
+      const result = await createGame('2025-01-01', mockMathRandom)
 
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
@@ -48,7 +46,7 @@ describe('games', () => {
 
     it('should create a game with normalConstraints (categoryConstraints)', async () => {
       mockMathRandom.mockReturnValueOnce(1)
-      const result = await createGame('2025-01-01')
+      const result = await createGame('2025-01-01', mockMathRandom)
 
       const categoryExpect = expect.stringContaining('Specific category of things/items')
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
@@ -87,7 +85,7 @@ describe('games', () => {
         },
       })
 
-      await createGame('2025-01-01')
+      await createGame('2025-01-01', mockMathRandom)
 
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
@@ -105,7 +103,9 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01')).rejects.toThrow('Generated words are not unique')
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+        'Generated words are not unique',
+      )
     })
 
     it('should throw error when wrong number of categories is generated', async () => {
@@ -118,7 +118,9 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01')).rejects.toThrow('Generated wrong number of categories')
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+        'Generated wrong number of categories',
+      )
     })
 
     it('should throw error when a category has wrong number of words', async () => {
@@ -132,7 +134,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01')).rejects.toThrow(
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
         'Generated a category with the wrong number of words',
       )
     })
@@ -152,7 +154,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      const result = await createGame('2025-01-01')
+      const result = await createGame('2025-01-01', mockMathRandom)
 
       expect(dynamodb.setGameById).toHaveBeenCalledWith(
         '2025-01-01',
@@ -183,7 +185,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01')).rejects.toThrow(
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
         'Generated invalid embedded substrings',
       )
     })
@@ -195,7 +197,7 @@ describe('games', () => {
           'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
         )
 
-      const result = await createGame('2025-10-31')
+      const result = await createGame('2025-10-31', mockMathRandom)
 
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-10-31'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
@@ -216,7 +218,7 @@ describe('games', () => {
     it('should fall back to specialConstraints when no holiday constraint exists', async () => {
       jest.mocked(constraints).getDateConstraint.mockReturnValueOnce(undefined)
 
-      const result = await createGame('2025-06-15')
+      const result = await createGame('2025-06-15', mockMathRandom)
 
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-06-15'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
@@ -237,7 +239,7 @@ describe('games', () => {
       jest.mocked(constraints).getDateConstraint.mockReturnValueOnce(undefined)
       mockMathRandom.mockReturnValueOnce(1) // Force normal constraints
 
-      const result = await createGame('2025-06-15')
+      const result = await createGame('2025-06-15', mockMathRandom)
 
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-06-15'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
@@ -270,7 +272,9 @@ describe('games', () => {
         },
       })
 
-      await expect(createGame('2025-01-01')).rejects.toThrow('Generated words are not unique')
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+        'Generated words are not unique',
+      )
     })
   })
 })

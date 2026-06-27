@@ -24,30 +24,42 @@ import { verifyAndFixGame } from './verification'
 const getRandomSample = <T>(
   array: T[],
   count: number,
-  withDuplicates = false,
-  length?: number,
+  {
+    withDuplicates = false,
+    length,
+    random = Math.random,
+  }: { withDuplicates?: boolean; length?: number; random?: () => number } = {},
 ): T[] => {
-  const max = length ?? array.length - 1
-  const index = Math.floor(Math.random() * max)
+  const max = length ?? array.length
+  const index = Math.floor(random() * max)
   const value = array[index]
   if (count === 1) {
     return [value]
   } else if (withDuplicates) {
-    return [value, ...getRandomSample(array, count - 1, true, max)]
+    return [
+      value,
+      ...getRandomSample(array, count - 1, { withDuplicates: true, length: max, random }),
+    ]
   } else {
-    array[index] = array[max]
-    return [value, ...getRandomSample(array, count - 1, false, max - 1)]
+    array[index] = array[max - 1]
+    return [value, ...getRandomSample(array, count - 1, { length: max - 1, random })]
   }
 }
 
-const getModelContext = (date: Date, disallowedCategories: string[]): Record<string, any> => {
-  const wordConstraintValue = Math.random()
+const getModelContext = (
+  date: Date,
+  disallowedCategories: string[],
+  random = Math.random,
+): Record<string, any> => {
+  const wordConstraintValue = random()
   const useWordConstraint = wordConstraintValue < wordConstraintChance
   const holidayConstraints = getDateConstraint(date)
 
-  const inspirationNouns = getRandomSample([...nouns], inspirationNounsCount)
-  const inspirationVerbs = getRandomSample([...verbs], inspirationVerbsCount)
-  const inspirationAdjectives = getRandomSample([...adjectives], inspirationAdjectivesCount)
+  const inspirationNouns = getRandomSample([...nouns], inspirationNounsCount, { random })
+  const inspirationVerbs = getRandomSample([...verbs], inspirationVerbsCount, { random })
+  const inspirationAdjectives = getRandomSample([...adjectives], inspirationAdjectivesCount, {
+    random,
+  })
 
   log('Constraint chance', {
     holidayConstraints,
@@ -68,7 +80,7 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
   }
 
   if (useWordConstraint) {
-    const wordConstraints = getRandomSample([...wordConstraintsChoices], 1)[0]
+    const wordConstraints = getRandomSample([...wordConstraintsChoices], 1, { random })[0]
     return {
       disallowedCategories,
       inspirationAdjectives,
@@ -77,8 +89,10 @@ const getModelContext = (date: Date, disallowedCategories: string[]): Record<str
       wordConstraints,
     }
   } else {
-    const allowDuplicates = true
-    const categoryConstraints = getRandomSample([...categoryConstraintChoices], 4, allowDuplicates)
+    const categoryConstraints = getRandomSample([...categoryConstraintChoices], 4, {
+      withDuplicates: true,
+      random,
+    })
     return {
       categoryConstraints,
       disallowedCategories,
@@ -150,13 +164,16 @@ export const validateGame = (categories: CategoryObject): string[] => {
   return wordList
 }
 
-export const createGame = async (gameId: GameId): Promise<ConnectionsData> => {
+export const createGame = async (
+  gameId: GameId,
+  random = Math.random,
+): Promise<ConnectionsData> => {
   const contextGameIds = getContextGameIds(gameId)
   const contextGames = await getGamesByIds(contextGameIds)
   const disallowedCategories = Object.values(contextGames).flatMap((game) =>
     Object.keys(game.categories),
   )
-  const modelContext = getModelContext(new Date(gameId), disallowedCategories)
+  const modelContext = getModelContext(new Date(gameId), disallowedCategories, random)
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)
