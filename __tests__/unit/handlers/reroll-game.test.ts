@@ -32,9 +32,6 @@ describe('reroll-game', () => {
   beforeAll(() => {
     jest.useFakeTimers()
     jest.setSystemTime(new Date('2025-01-05'))
-  })
-
-  beforeEach(() => {
     mockSsmSend.mockResolvedValue({ Parameter: { Value: password } })
     mockLambdaSend.mockResolvedValue({})
     jest.mocked(dynamodb).deleteGameById.mockResolvedValue(undefined)

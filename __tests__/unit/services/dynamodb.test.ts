@@ -55,12 +55,8 @@ describe('dynamodb', () => {
   })
 
   describe('getGameById', () => {
-    beforeEach(() => {
-      jest.clearAllMocks()
-    })
-
     it('should return game data when game exists', async () => {
-      mockSend.mockResolvedValue({
+      mockSend.mockResolvedValueOnce({
         Item: { Data: { S: JSON.stringify(connectionsData) } },
       })
 
@@ -76,29 +72,29 @@ describe('dynamodb', () => {
     })
 
     it('should return isGenerating true when generation started recently', async () => {
-      const recentTime = Date.now() - 100000 // 100 seconds ago
-      mockSend.mockResolvedValue({
-        Item: { GenerationStarted: { N: recentTime.toString() } },
+      const now = 1_000_000_000_000
+      mockSend.mockResolvedValueOnce({
+        Item: { GenerationStarted: { N: (now - 100_000).toString() } },
       })
 
-      const result = await getGameById(gameId)
+      const result = await getGameById(gameId, () => now)
 
       expect(result).toEqual({ isGenerating: true })
     })
 
     it('should return isGenerating false when generation started long ago', async () => {
-      const oldTime = Date.now() - 1_000_000 // 1000 seconds ago, beyond 900s timeout
-      mockSend.mockResolvedValue({
-        Item: { GenerationStarted: { N: oldTime.toString() } },
+      const now = 1_000_000_000_000
+      mockSend.mockResolvedValueOnce({
+        Item: { GenerationStarted: { N: (now - 1_000_000).toString() } },
       })
 
-      const result = await getGameById(gameId)
+      const result = await getGameById(gameId, () => now)
 
       expect(result).toEqual({ isGenerating: false })
     })
 
     it('should return isGenerating false when no item exists', async () => {
-      mockSend.mockResolvedValue({})
+      mockSend.mockResolvedValueOnce({})
 
       const result = await getGameById(gameId)
 
@@ -162,9 +158,8 @@ describe('dynamodb', () => {
   describe('setGameGenerationStarted', () => {
     it('should call DynamoDB with GenerationStarted timestamp and condition expression', async () => {
       const mockNow = 1234567890
-      jest.spyOn(Date, 'now').mockReturnValue(mockNow)
 
-      const result = await setGameGenerationStarted(gameId)
+      const result = await setGameGenerationStarted(gameId, () => mockNow)
 
       expect(result).toBe(mockNow)
       expect(mockSend).toHaveBeenCalledWith({
@@ -186,8 +181,6 @@ describe('dynamodb', () => {
         },
         TableName: 'games-table',
       })
-
-      jest.restoreAllMocks()
     })
 
     it('should return false when conditional check fails', async () => {
@@ -211,9 +204,8 @@ describe('dynamodb', () => {
     it('should write new timestamp conditionally and return it', async () => {
       const mockNow = 1234567890
       const expectedTimestamp = 1000000000
-      jest.spyOn(Date, 'now').mockReturnValue(mockNow)
 
-      const result = await resetGameGenerationStarted(gameId, expectedTimestamp)
+      const result = await resetGameGenerationStarted(gameId, expectedTimestamp, () => mockNow)
 
       expect(result).toBe(mockNow)
       expect(mockSend).toHaveBeenCalledWith({
@@ -227,8 +219,6 @@ describe('dynamodb', () => {
         },
         TableName: 'games-table',
       })
-
-      jest.restoreAllMocks()
     })
 
     it('should return false when conditional check fails', async () => {
@@ -251,7 +241,7 @@ describe('dynamodb', () => {
   })
 
   describe('deleteGameById', () => {
-    beforeEach(() => {
+    beforeAll(() => {
       mockSend.mockResolvedValue({})
     })
 

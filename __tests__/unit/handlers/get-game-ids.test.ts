@@ -10,9 +10,6 @@ describe('get-game-ids', () => {
 
   beforeAll(() => {
     jest.useFakeTimers()
-  })
-
-  beforeEach(() => {
     jest.setSystemTime(new Date('2025-01-05'))
   })
 

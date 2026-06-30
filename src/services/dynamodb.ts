@@ -43,7 +43,7 @@ export interface GameResult {
   game?: ConnectionsData
 }
 
-export const getGameById = async (gameId: GameId): Promise<GameResult> => {
+export const getGameById = async (gameId: GameId, now = Date.now): Promise<GameResult> => {
   const command = new GetItemCommand({
     Key: {
       GameId: {
@@ -62,7 +62,7 @@ export const getGameById = async (gameId: GameId): Promise<GameResult> => {
 
   const generationStarted = response.Item?.GenerationStarted?.N
   const isGenerating = generationStarted
-    ? parseInt(generationStarted) + gameGenerationTimeoutMs > Date.now()
+    ? parseInt(generationStarted) + gameGenerationTimeoutMs > now()
     : false
   return { isGenerating }
 }
@@ -111,8 +111,11 @@ export const setGameById = async (
   return await dynamodb.send(command)
 }
 
-export const setGameGenerationStarted = async (gameId: GameId): Promise<number | false> => {
-  const now = Date.now()
+export const setGameGenerationStarted = async (
+  gameId: GameId,
+  now = Date.now,
+): Promise<number | false> => {
+  const timestamp = now()
   const command = new PutItemCommand({
     ConditionExpression:
       'attribute_not_exists(GameId) OR (attribute_not_exists(#data) AND (attribute_not_exists(GenerationStarted) OR GenerationStarted < :expiry))',
@@ -120,21 +123,21 @@ export const setGameGenerationStarted = async (gameId: GameId): Promise<number |
       '#data': 'Data',
     },
     ExpressionAttributeValues: {
-      ':expiry': { N: `${now - gameGenerationTimeoutMs}` },
+      ':expiry': { N: `${timestamp - gameGenerationTimeoutMs}` },
     },
     Item: {
       GameId: {
         S: `${gameId}`,
       },
       GenerationStarted: {
-        N: `${now}`,
+        N: `${timestamp}`,
       },
     },
     TableName: dynamodbGamesTableName,
   })
   try {
     await dynamodb.send(command)
-    return now
+    return timestamp
   } catch (error: unknown) {
     if (error instanceof ConditionalCheckFailedException) {
       return false
@@ -146,8 +149,9 @@ export const setGameGenerationStarted = async (gameId: GameId): Promise<number |
 export const resetGameGenerationStarted = async (
   gameId: GameId,
   expectedTimestamp: number,
+  now = Date.now,
 ): Promise<number | false> => {
-  const now = Date.now()
+  const timestamp = now()
   const command = new PutItemCommand({
     ConditionExpression: 'GenerationStarted = :expected',
     ExpressionAttributeValues: {
@@ -158,14 +162,14 @@ export const resetGameGenerationStarted = async (
         S: `${gameId}`,
       },
       GenerationStarted: {
-        N: `${now}`,
+        N: `${timestamp}`,
       },
     },
     TableName: dynamodbGamesTableName,
   })
   try {
     await dynamodb.send(command)
-    return now
+    return timestamp
   } catch (error: unknown) {
     if (error instanceof ConditionalCheckFailedException) {
       return false
