@@ -58,3 +58,9 @@ export interface Prompt {
   config: PromptConfig
   contents: string
 }
+
+export interface ToolSchema {
+  name: string
+  description: string
+  input_schema: Record<string, any>
+}

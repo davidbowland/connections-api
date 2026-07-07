@@ -1,7 +1,7 @@
 import { game, prompt } from '../__mocks__'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
-import { verifyAndFixGame } from '@services/verification'
+import { verdictTool, verifyAndFixGame } from '@services/verification'
 import { VerificationResult } from '@types'
 
 jest.mock('@services/bedrock')
@@ -203,7 +203,7 @@ describe('verification', () => {
 
       await verifyAndFixGame(game, modelContext)
 
-      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, {
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, verdictTool, {
         categoryConstraints: ['Things with a shared property'],
         game,
         wordConstraints: 'all words must be 4 letters',

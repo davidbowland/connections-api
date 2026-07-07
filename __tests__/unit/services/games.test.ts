@@ -1,7 +1,7 @@
 import { connectionsData, prompt } from '../__mocks__'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
-import { createGame } from '@services/games'
+import { createGame, gameTool } from '@services/games'
 import * as verification from '@services/verification'
 import * as constraints from '@utils/constraints'
 
@@ -29,6 +29,7 @@ describe('games', () => {
 
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.objectContaining({
           disallowedCategories: [],
           wordConstraints: expect.stringContaining('all words must be 4 letters'),
@@ -36,6 +37,7 @@ describe('games', () => {
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.not.objectContaining({
           categoryConstraints: expect.anything(),
         }),
@@ -51,6 +53,7 @@ describe('games', () => {
       const categoryExpect = expect.stringContaining('Specific category of things/items')
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.objectContaining({
           categoryConstraints: expect.arrayContaining([
             categoryExpect,
@@ -66,6 +69,7 @@ describe('games', () => {
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.not.objectContaining({
           wordConstraints: expect.anything(),
         }),
@@ -89,6 +93,7 @@ describe('games', () => {
 
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.objectContaining({
           disallowedCategories: ['Previous Category 1', 'Previous Category 2'],
         }),
@@ -202,6 +207,7 @@ describe('games', () => {
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-10-31'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.objectContaining({
           disallowedCategories: [],
           wordConstraints:
@@ -223,6 +229,7 @@ describe('games', () => {
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-06-15'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.objectContaining({
           disallowedCategories: [],
           wordConstraints: expect.stringContaining('all words must be 4 letters'),
@@ -244,6 +251,7 @@ describe('games', () => {
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-06-15'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.objectContaining({
           categoryConstraints: expect.any(Array),
           disallowedCategories: [],
@@ -251,6 +259,7 @@ describe('games', () => {
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
+        gameTool,
         expect.not.objectContaining({
           wordConstraints: expect.anything(),
         }),

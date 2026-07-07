@@ -86,10 +86,8 @@ KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather 
 - If the category is a word either before or after, think about whether each word actually BEGINS or ENDS with correct word (eg "____ DRAW" matches "QUICKDRAW" but NOT "DRAWSTRING")
 </category_guidelines>
 <format>
-- Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
-- The output will be a JSON object consisting of one key:
-  - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings that all words must contain (empty array if not a spelling category)
-- Including no preambles or code blocks in the output.
+Call the `submit_game` tool with your result:
+- categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings where every word must contain at least one of the listed substrings (empty array if not a spelling category)
 </format>
 <context>
 ${context}
