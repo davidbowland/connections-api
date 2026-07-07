@@ -18,6 +18,7 @@ export const wordConstraints: string[] = [
   'all words must be borrowed from another language (e.g., FIESTA, KINDERGARTEN, SUSHI), but categories MUST be more specific than "loanwords"',
   'all words must also be common first names (e.g., MARK, GRACE, BILL), but categories MUST be more specific than "words that are names"',
   'all "words" must be two-word phrases (e.g., "WARM RECEPTION", "COLD SHOULDER", "HOT PURSUIT", "COOL HAND"). Within each category, the four phrases share a theme through words in one position — either all first words or all second words; the position can differ between categories. The category name describes that positional word\'s theme (e.g., "Temperature + ___" for phrases whose first word is a temperature like WARM/COLD/HOT/COOL, or "___ + Metal" for phrases whose second word is a metal)',
+  'all "words" must be a two-word hyphenated phrases (e.g., "WELL-BEING", "FAR-FETCHED"). Within each category, the four phrases share a theme through words in one position — either all first words or all second words; the position can differ between categories. The category name describes that positional word\'s theme (e.g., "Temperature + ___" for phrases whose first word is a temperature like WARM/COLD/HOT/COOL, or "___ + Metal" for phrases whose second word is a metal)',
   'always generate 5 categories rather than 4',
 ]
 

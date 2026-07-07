@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":60000,"model":"us.anthropic.claude-sonnet-4-6","thinkingBudgetTokens":40000}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":15000,"model":"us.anthropic.claude-opus-4-8","thinkingBudgetTokens":12000}
 
 <instructions>
 <context>
@@ -7,7 +7,7 @@
 - There are 4 categories
 - Each category has 4 associated words
 - No categories or words should be offensive or indecent
-- No categories or words should overlap
+- No categories or words should be duplicated
 </context>
 <steps>
 - The context shows category themes, disallowed categories, and words for inspiration.
@@ -25,10 +25,9 @@
   - Use surprising twists like "OLD MAN" instead of "Carl from Up"
   - ALWAYS generate words that make sense with the category.
   - ALWAYS follow the word constraints (wordConstraints), if provided
-  - Generate words that are EXTREMELY difficult to guess. Difficult to guess words:
+  - Generate categories that are EXTREMELY clever or surprising, but accessible to most people. Difficult to guess words:
     - Appear to fit in more than one category
     - Have multiple meanings (for example, a `draft` paper vs `draft` into the army)
-    - Are different from other words in the category
     - Are not obvious to a category (for example, `bailiff` and `judge` together are too obvious)
   - NEVER include words from the category
   - All words must be uppercase
@@ -52,7 +51,7 @@ FOR WORD-PATTERN CATEGORIES (e.g., "___ BALL", "FIRE ___", "Words after SWEET"):
 - Think of a scenario, feeling, image, or association with that connecting word
 - NEVER describe the pattern — always evoke the answer
 
-SELF-CHECK: Before finalizing each hint, ask yourself: could this exact hint apply to a completely different category? If yes, it is too generic — rewrite it.
+SELF-CHECK: Before finalizing each hint, ask yourself: could this exact hint apply to a different category? If yes, it is too generic — rewrite it.
 
 BAD HINTS (mechanic-describing — NEVER do this):
 - "What word follows all four of these to make a phrase?" ← describes the pattern
