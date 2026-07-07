@@ -1,34 +1,32 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":60000,"model":"us.anthropic.claude-sonnet-4-6","thinkingBudgetTokens":40000}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":24000,"model":"us.anthropic.claude-opus-4-8","thinkingEffort":"high"}
 
 <instructions>
-<context>
+<game_overview>
 "Connections" is a word game where the goal is to choose associated words
 
 - There are 4 categories
 - Each category has 4 associated words
 - No categories or words should be offensive or indecent
-- No categories or words should overlap
-</context>
+- No categories or words should be duplicated
+</game_overview>
 <steps>
-- The context shows category themes, disallowed categories, and words for inspiration.
-- Generate 4 unique categories
+- The <context> block below provides disallowed categories, inspiration words, and any category or word constraints for this game.
+- Generate 4 unique categories — unless wordConstraints directs a different count
   - ALWAYS abide by categoryConstraints, if provided
   - NEVER generate a "____ WORD" or "WORD ____" category unless explicitly asked in categoryConstraints
-  - NEVER generate a category that is an example in categoryConstraints
   - ALWAYS consider the word constraints (wordConstraints), if provided
   - ALWAYS use at least one inspiration word in the category or as one of the words (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use appropriate casing
   - NEVER generate a category that is similar to disallowed categories, another category, or example categories ("weather" and "storms" are too similar)
-  - Categories should highly specific and surprising (eg "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER") or have clever framing
+  - Categories should be highly specific, and surprising, funny, or cleverly framed (eg "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER")
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
   - Words can contain spaces or hyphens, as long as they're one concept (eg "FIRE EXTINGUISHER", "CUP HOLDER", "RINKY-DINK")
   - Use surprising twists like "OLD MAN" instead of "Carl from Up"
   - ALWAYS generate words that make sense with the category.
   - ALWAYS follow the word constraints (wordConstraints), if provided
-  - Generate words that are EXTREMELY difficult to guess. Difficult to guess words:
+  - Generate categories that are EXTREMELY clever, surprising, or funny, but accessible to most people. Difficult to guess words:
     - Appear to fit in more than one category
     - Have multiple meanings (for example, a `draft` paper vs `draft` into the army)
-    - Are different from other words in the category
     - Are not obvious to a category (for example, `bailiff` and `judge` together are too obvious)
   - NEVER include words from the category
   - All words must be uppercase
@@ -52,7 +50,7 @@ FOR WORD-PATTERN CATEGORIES (e.g., "___ BALL", "FIRE ___", "Words after SWEET"):
 - Think of a scenario, feeling, image, or association with that connecting word
 - NEVER describe the pattern — always evoke the answer
 
-SELF-CHECK: Before finalizing each hint, ask yourself: could this exact hint apply to a completely different category? If yes, it is too generic — rewrite it.
+SELF-CHECK: Before finalizing each hint, ask yourself: could this exact hint apply to a different category? If yes, it is too generic — rewrite it.
 
 BAD HINTS (mechanic-describing — NEVER do this):
 - "What word follows all four of these to make a phrase?" ← describes the pattern
@@ -71,12 +69,12 @@ GOOD HINTS (concept-evoking):
 - "Boast" → "What might someone do when they're proud?" (evokes the concept)
 - "Cereal mascots" → "Have you seen some of these during your morning routine?" (evokes breakfast)
 </hint_rules>
-<categoryConstraints>
-KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather than categorical knowledge. ONLY group words that have SURPRISING or CLEVER connections
+<category_guidelines>
+KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather than categorical knowledge. ONLY group words that have SURPRISING, CLEVER, or FUNNY connections
 
 - Create categories and prioritize words that have multiple meanings or unexpected secondary connections. Avoid obvious groupings
 - Use abstract functional relationships. Include groupings by what things DO rather than what they ARE
-- Include categories requiring specialized knowledge -- pop culture, sports, technical terms, proper nouns
+- Specialized-knowledge categories (pop culture, sports, technical terms, proper nouns) are welcome when the connection itself is surprising, clever, or funny — never include one just because it tests niche knowledge
 - For categories based on a specific named work, artist, or person: prefer words that are recognizable to a general audience even without knowing that source. Use common associations, traits, or shared concepts — not names or terms that require deep familiarity (e.g., Disney films: ELEPHANT, FAWN, MARIONETTE, MOUSE — solvable without having seen each film). Never create a category where solving requires knowing a musician's full discography, an author's complete bibliography, or an obscure work's details in depth.
 - ALWAYS ensure words could plausibly fit in multiple categories. This creates crucial MISDIRECTION
 - Avoid categories where all words obviously belong to the same semantic field -- no "cat behaviors" or "types of drinks"
@@ -86,12 +84,10 @@ KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather 
   - If any category relies on word spelling, double-check that the spelling constraints are followed. Then, triple-check
   - ONLY create spelling categories if instructed by constraints. NEVER create spelling categories unless told to do so
 - If the category is a word either before or after, think about whether each word actually BEGINS or ENDS with correct word (eg "____ DRAW" matches "QUICKDRAW" but NOT "DRAWSTRING")
-</categoryConstraints>
+</category_guidelines>
 <format>
-- Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
-- The output will be a JSON object consisting of one key:
-  - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings that all words must contain (empty array if not a spelling category)
-- Including no preambles or code blocks in the output.
+Call the `submit_game` tool with your result:
+- categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings where every word must contain at least one of the listed substrings (empty array if not a spelling category)
 </format>
 <context>
 ${context}
@@ -101,9 +97,9 @@ ${context}
 <example_output>
 {
   "categories": {
-    "Boast": {
-      "hint": "What might someone do when they're proud?",
-      "words": ["BLUSTER", "CROW", "SHOW OFF", "STRUT"],
+    "Associated with Freud": {
+      "hint": "When is a cigar just a cigar?",
+      "words": ["DREAMS", "ID", "OEDIPUS", "SLIP"],
       "embeddedSubstrings": []
     },
     "Arc-shaped things": {
@@ -111,9 +107,9 @@ ${context}
       "words": ["BANANA", "EYEBROW", "FLIGHT PATH", "RAINBOW"],
       "embeddedSubstrings": []
     },
-    "Cereal mascots": {
-      "hint": "Have you seen some of these words during your morning routine?",
-      "words": ["COUNT", "ELVES", "LEPRECHAUN", "ROOSTER"],
+    "Items in a sewing kit": {
+      "hint": "Do you have a talent for stitching?",
+      "words": ["BUTTON", "NEEDLE", "SCISSORS", "THREAD"],
       "embeddedSubstrings": []
     },
     "Ways to denote a citation": {
@@ -127,9 +123,9 @@ ${context}
 <example_output>
 {
   "categories": {
-    "Black-and-white things": {
-      "hint": "Do you see a color theme?",
-      "words": ["CROSSWORD", "OREO", "PANDA", "TUXEDO"],
+    "Pro wrestling icons, with \"The\"": {
+      "hint": "Have you heard of Hulk Hogan?",
+      "words": ["HITMAN", "ROCK", "SNAKE", "UNDERTAKER"],
       "embeddedSubstrings": []
     },
     "Military clothing descriptors": {
@@ -150,64 +146,3 @@ ${context}
   }
 }
 </example_output>
-
-<example>
-<category>Wax ___</category>
-<hint>What keeps your car shiny?</hint>
-<words><word>MUSEUM</word><word>PAPER</word><word>POETIC</word><word>SEAL</word></words>
-</example>
-<example>
-<category>Clear as __</category>
-<hint>What is the opposite of opaque?</hint>
-<words><word>BELL</word><word>CRYSTAL</word><word>DAY</word><word>MUD</word></words>
-</example>
-<example>
-<category>Associated with Freud</category>
-<hint>When is a cigar just a cigar?</hint>
-<words><word>DREAMS</word><word>ID</word><word>OEDIPUS</word><word>SLIP</word></words>
-</example>
-<example>
-<category>Words after "T"</category>
-<hint>Who is your cell provider?</hint>
-<words><word>MOBILE</word><word>PAIN</word><word>REX</word><word>SHIRT</word></words>
-</example>
-<example>
-<category>Items in a sewing kit</category>
-<hint>Do you have a talent for stitching?</hint>
-<words><word>BUTTON</word><word>NEEDLE</word><word>SCISSORS</word><word>THREAD</word></words>
-</example>
-<example>
-<category>Capture on video</category>
-<hint>Are you a shutterbug?</hint>
-<words><word>FILM</word><word>RECORD</word><word>SHOOT</word><word>TAPE</word></words>
-</example>
-<example>
-<category>Pro wrestling icons, with "The"</category>
-<hint>Have you heard of Hulk Hogan?</hint>
-<words><word>HITMAN</word><word>ROCK</word><word>SNAKE</word><word>UNDERTAKER</word></words>
-</example>
-<example>
-<category>Mettle</category>
-<hint>What separates the tough from the timid?</hint>
-<words><word>FIGHT</word><word>GRIT</word><word>RESOLVE</word><word>SPIRIT</word></words>
-</example>
-<example>
-<category>Figures in classic Disney animated films</category>
-<hint>Are you a fan of older cartoons?</hint>
-<words><word>ELEPHANT</word><word>FAWN</word><word>MARIONETTE</word><word>MOUSE</word></words>
-</example>
-<example>
-<category>___ HOUSE</category>
-<hint>Where do you live?</hint>
-<words><word>BIRD</word><word>DOG</word><word>FIRE</word><word>TREE</word></words>
-</example>
-<example>
-<category>Words that can follow HAND</category>
-<hint>Give me five?</hint>
-<words><word>BAG</word><word>MADE</word><word>SHAKE</word><word>WRITING</word></words>
-</example>
-<example>
-<category>HEAD ___</category>
-<hint>What sits on top of your shoulders?</hint>
-<words><word>BAND</word><word>HUNTER</word><word>LINE</word><word>QUARTERS</word></words>
-</example>

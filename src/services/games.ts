@@ -14,12 +14,35 @@ import {
   llmPromptId,
   wordConstraintChance,
 } from '../config'
-import { CategoryObject, ConnectionsData, GameId } from '../types'
+import { CategoryObject, ConnectionsData, GameId, ToolSchema } from '../types'
 import { getDateConstraint } from '../utils/constraints'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
 import { verifyAndFixGame } from './verification'
+
+export const gameTool: ToolSchema = {
+  description: 'Submit the generated Connections game.',
+  input_schema: {
+    properties: {
+      categories: {
+        additionalProperties: {
+          properties: {
+            embeddedSubstrings: { items: { type: 'string' }, type: 'array' },
+            hint: { type: 'string' },
+            words: { items: { type: 'string' }, maxItems: 4, minItems: 4, type: 'array' },
+          },
+          required: ['words', 'hint'],
+          type: 'object',
+        },
+        type: 'object',
+      },
+    },
+    required: ['categories'],
+    type: 'object',
+  },
+  name: 'submit_game',
+}
 
 const getRandomSample = <T>(
   array: T[],
@@ -177,7 +200,7 @@ export const createGame = async (
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)
-  const returnedData: ConnectionsData = await invokeModel(prompt, modelContext)
+  const returnedData: ConnectionsData = await invokeModel(prompt, gameTool, modelContext)
   const connectionsData = transformWordsToUpperCase(returnedData)
   validateGame(connectionsData.categories)
 

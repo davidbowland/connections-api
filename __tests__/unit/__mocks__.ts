@@ -7,6 +7,7 @@ import {
   Prompt,
   PromptConfig,
   PromptId,
+  ToolSchema,
 } from '@types'
 
 // Games
@@ -72,11 +73,13 @@ export const invokeModelResponseData = {
       thinking: 'Let me think about the categories...',
     },
     {
-      type: 'text',
-      text: JSON.stringify(invokeModelCategories, null, 2),
+      type: 'tool_use',
+      id: 'toolu_bdrk_01YA7pmVfUZvZM9reruSimYT',
+      name: 'submit_game',
+      input: invokeModelCategories,
     },
   ],
-  stop_reason: 'end_turn',
+  stop_reason: 'tool_use',
   stop_sequence: null,
   usage: { input_tokens: 3_398, output_tokens: 99 },
 }
@@ -96,13 +99,23 @@ export const invokeModelResponse = {
   body: new TextEncoder().encode(JSON.stringify(invokeModelResponseData)),
 }
 
+export const toolSchema: ToolSchema = {
+  name: 'submit_data',
+  description: 'Submit the data.',
+  input_schema: {
+    type: 'object',
+    properties: { data: { type: 'string' } },
+    required: ['data'],
+  },
+}
+
 // Prompts
 
 export const promptConfig: PromptConfig = {
   anthropicVersion: 'bedrock-2023-05-31',
   maxTokens: 32_000,
   model: 'the-thinking-ai:1.0',
-  thinkingBudgetTokens: 25_000,
+  thinkingEffort: 'high',
 }
 
 export const promptId: PromptId = '5253'

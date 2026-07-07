@@ -51,10 +51,16 @@ export interface PromptConfig {
   anthropicVersion: string
   maxTokens: number
   model: string
-  thinkingBudgetTokens: number
+  thinkingEffort: 'low' | 'medium' | 'high' | 'max'
 }
 
 export interface Prompt {
   config: PromptConfig
   contents: string
+}
+
+export interface ToolSchema {
+  name: string
+  description: string
+  input_schema: Record<string, any>
 }

@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":16000,"model":"us.anthropic.claude-sonnet-4-6","thinkingBudgetTokens":10000}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":8000,"model":"us.anthropic.claude-sonnet-5","thinkingEffort":"medium"}
 
 <instructions>
 <context>
@@ -12,7 +12,7 @@ The game data is provided as JSON with the following keys:
 <checks>
 Examine each category in the game and check for the following issues:
 
-1. **Embedded substring categories** - If a category has non-empty `embeddedSubstrings`, every word must contain every listed substring. Also check whether the category name implies an embedded pattern (e.g. "contains MITT", "words with BLUE inside") but `embeddedSubstrings` is empty or missing — flag this as a problem.
+1. **Embedded substring categories** - If a category has non-empty `embeddedSubstrings`, every word must contain at least one of the listed substrings (not necessarily the same one — e.g. one word may match "ONE" while another matches "TWO"). Also check whether the category name implies an embedded pattern (e.g. "contains MITT", "words with BLUE inside") but `embeddedSubstrings` is empty or missing — flag this as a problem.
 
 2. **Pattern categories** (e.g. `[profession] + letter`, `[X] minus a letter`, `starts with a color`) - The varying element (the letter, color, etc.) must genuinely differ across words. Flag if all words use the same varying element (e.g. all profession plurals ending in S when the category claims different letters, or all words starting with the same color).
 
@@ -23,6 +23,7 @@ Examine each category in the game and check for the following issues:
 5. **Category alignment** - Flag if the category is something like "____ WORD" when the categoryConstraint is "Things with a shared property"
 
 6. **Hint quality** - Each category's `hint` must be a creative question that evokes the category's key concept. Flag if a hint:
+  - Is not phrased as an actual question (a good hint reads like something a solver could ask themselves, and ends in "?")
   - References, describes, paraphrases, or alludes to ANY of the 4 words in the category (e.g. mentioning "dancer" when FLAMENCO is a word, or "photographer" when PHOTOGRAPHER is a word)
   - Contains any word from the category name
   - Describes the category's MECHANIC or STRUCTURE rather than evoking its concept. This includes any hint that uses words like "follow", "precede", "come before", "come after", "share", "common", "connect", "complete", "make a phrase", "make a word", "make an expression", or asks what things "have in common"
@@ -40,6 +41,7 @@ Examine each category in the game and check for the following issues:
   - "What word precedes all four of these to make common expressions?" ← describes the pattern
   - "Is there a word that completes all four of these phrases?" ← describes the pattern
   - "Could any words share an adjective?" ← describes the pattern
+  - "This category is about feeling hot." ← a statement, not a question
 
   Hints should be about the contents of a category, not the style.
 </checks>
@@ -54,7 +56,7 @@ Return one of three verdicts:
 When returning a `fix` verdict, always return the **full corrected list** for each affected entry, not a diff.
 </verdict-rules>
 <format>
-Output valid JSON matching one of these structures:
+Call the `submit_verdict` tool with input matching one of these shapes:
 
 For a word-only fix:
 {
@@ -101,9 +103,6 @@ For pass or fail verdicts:
 }
 
 For pass or fail verdicts, omit the "fixes" key entirely.
-
-- Output should be in valid JSON format. Pay special attention to syntax, including escaping \" and \n
-- Include no preambles or code blocks in the output.
 </format>
 <examples>
 EXAMPLE 1 — pass (all hints evoke concepts, no issues):

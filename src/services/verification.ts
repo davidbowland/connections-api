@@ -1,8 +1,43 @@
 import { llmVerifyPromptId } from '../config'
-import { CategoryObject, ConnectionsGame, VerificationResult } from '../types'
+import { CategoryObject, ConnectionsGame, ToolSchema, VerificationResult } from '../types'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getPromptById } from './dynamodb'
+
+const categoryReplacementSchema = {
+  properties: {
+    embeddedSubstrings: { items: { type: 'string' }, type: 'array' },
+    hint: { type: 'string' },
+    name: { type: 'string' },
+    words: { items: { type: 'string' }, maxItems: 4, minItems: 4, type: 'array' },
+  },
+  required: ['name', 'words', 'hint'],
+  type: 'object',
+}
+
+export const verdictTool: ToolSchema = {
+  description: 'Submit the verification verdict for a Connections game.',
+  input_schema: {
+    properties: {
+      fixes: {
+        additionalProperties: {
+          properties: {
+            category: categoryReplacementSchema,
+            hint: { type: 'string' },
+            words: { items: { type: 'string' }, maxItems: 4, minItems: 4, type: 'array' },
+          },
+          type: 'object',
+        },
+        type: 'object',
+      },
+      reason: { type: 'string' },
+      verdict: { enum: ['pass', 'fix', 'fail'], type: 'string' },
+    },
+    required: ['verdict', 'reason'],
+    type: 'object',
+  },
+  name: 'submit_verdict',
+}
 
 const applyFixes = (game: ConnectionsGame, result: VerificationResult): ConnectionsGame => {
   if (!result.fixes) {
@@ -86,7 +121,7 @@ export const verifyAndFixGame = async (
   const verifierContext = getVerifierContext(game, modelContext)
   log('Invoking verify prompt', { verifierContext })
   const prompt = await getPromptById(llmVerifyPromptId)
-  const result: VerificationResult = await invokeModel(prompt, verifierContext)
+  const result: VerificationResult = await invokeModel(prompt, verdictTool, verifierContext)
 
   log('Verify prompt result', {
     reason: result.reason,

@@ -1,15 +1,15 @@
 export const wordConstraints: string[] = [
   'all words must be 4 letters, but categories MUST be more specific than "4-letter words"',
   'all words must be 5 letters, but categories MUST be more specific than "5-letter words"',
-  'all words must have double letters, but categories MUST be more specific than "words with double letters" or "words that contain \"look\""',
+  'all words must have double letters, but categories MUST be more specific than "words with double letters"',
   'all words must be compound words, but categories MUST be more specific than "words that contain \"look\"" or "compound words" (for example: "words containing animals")',
   'most words should appear in titles or famous phrases, but categories should reference the SOURCE, not just "words from titles"',
-  'most words should have either a Z or a Q in them, but categories MUST be more specific than "words with a Z"',
+  'most words should have either a Z or a Q in them, but categories MUST be more specific than "words with a Z or Q"',
   'all words must begin with the same letter, but categories MUST be more specific than "words beginning with L". There should be one beginning letter for the game. The beginning letter should not be different in different categories.',
   'all words must end with the same letter, but categories MUST be more specific than "words ending with Y". There should be one ending letter for the game. The ending letter should not be different in different categories.',
   'all words must end in the same suffix (-ing, -er, -ly, etc), but categories MUST be more specific than "words ending with the suffix -ing". There should be one suffix for the game. The suffix should not be different in different categories.',
   'most words should rhyme with each other. There should be one rhyming sound for the game. The rhyming sound should not be different in different categories.',
-  'all words must have silent letters, but categories MUST be more specific than "words with silent letters" or "words with silent B")',
+  'all words must have silent letters, but categories MUST be more specific than "words with silent letters" or "words with silent B"',
   'all words must have 1 syllable, but categories MUST be more specific than "one-syllable words"',
   'all words must have 2 syllables, but categories MUST be more specific than "two-syllable words"',
   'all words must have 3 syllables, but categories MUST be more specific than "three-syllable words"',
@@ -18,6 +18,7 @@ export const wordConstraints: string[] = [
   'all words must be borrowed from another language (e.g., FIESTA, KINDERGARTEN, SUSHI), but categories MUST be more specific than "loanwords"',
   'all words must also be common first names (e.g., MARK, GRACE, BILL), but categories MUST be more specific than "words that are names"',
   'all "words" must be two-word phrases (e.g., "WARM RECEPTION", "COLD SHOULDER", "HOT PURSUIT", "COOL HAND"). Within each category, the four phrases share a theme through words in one position — either all first words or all second words; the position can differ between categories. The category name describes that positional word\'s theme (e.g., "Temperature + ___" for phrases whose first word is a temperature like WARM/COLD/HOT/COOL, or "___ + Metal" for phrases whose second word is a metal)',
+  'all "words" must be a two-word hyphenated phrases (e.g., "WELL-BEING", "FAR-FETCHED"). Within each category, the four phrases share a theme through words in one position — either all first words or all second words; the position can differ between categories. The category name describes that positional word\'s theme (e.g., "Temperature + ___" for phrases whose first word is a temperature like WARM/COLD/HOT/COOL, or "___ + Metal" for phrases whose second word is a metal)',
   'always generate 5 categories rather than 4',
 ]
 
@@ -50,7 +51,7 @@ const tier2CategoryConstraints: string[] = [
   'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH", "Verbs that are also nouns: RUN, PLAY, BREAK")',
 ]
 
-// Tier 4: Rare patterns - very specific, should appear infrequently (weight: 1x)
+// Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
 const tier3CategoryConstraints: string[] = [
   'Homophones of a category (e.g., "Homophones of body parts", "Homophones of tools")',
   'Words spelled backwards are [category] (e.g., "Backwards animals: FLOW, GOD, TAB")',
@@ -95,6 +96,7 @@ export const fixedDateCategoryConstraints: Record<string, string> = {
     'all words must be related to Earth Day/nature/environment/conservation, but categories are NOT required to be environment-related',
   '0704':
     'all words must be related to Independence Day/July 4th, but categories are NOT required to be patriotic',
+  // Author's wedding anniversary
   '0920':
     'all words must be related to weddings/anniversaries/love, but categories are NOT required to be wedding-related',
   '1031':

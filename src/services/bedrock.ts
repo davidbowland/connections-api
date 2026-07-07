@@ -1,24 +1,42 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime'
 
-import { Prompt } from '../types'
-import { log, logDebug } from '../utils/logging'
+import { Prompt, ToolSchema } from '../types'
+import { logDebug } from '../utils/logging'
 
 const runtimeClient = new BedrockRuntimeClient({ region: 'us-east-1' })
 
-export const invokeModel = async <T>(prompt: Prompt, context?: Record<string, any>): Promise<T> => {
+// Context values may originate from prior LLM output (e.g. category names), which is untrusted.
+// Escaping </> stops it from breaking out of the <context> XML tags in the prompt templates.
+const escapeXml = (value: string): string => value.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+export const invokeModel = async <T>(
+  prompt: Prompt,
+  tool: ToolSchema,
+  context?: Record<string, any>,
+): Promise<T> => {
   const promptWithContext = context
-    ? { ...prompt, contents: prompt.contents.replace('${context}', JSON.stringify(context)) }
+    ? {
+      ...prompt,
+      // A replacer function (not a string) avoids Node interpreting $&/$`/$'-style
+      // sequences that might appear in untrusted context values as replacement patterns.
+      contents: prompt.contents.replace('${context}', () => escapeXml(JSON.stringify(context))),
+    }
     : prompt
-  return invokeModelMessage(promptWithContext)
+  return invokeModelMessage(promptWithContext, tool)
 }
 
-export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
-  logDebug('Invoking model', { prompt })
+export const invokeModelMessage = async <T>(prompt: Prompt, tool: ToolSchema): Promise<T> => {
+  logDebug('Invoking model', { prompt, tool })
   const messageBody = {
     anthropic_version: prompt.config.anthropicVersion,
     max_tokens: prompt.config.maxTokens,
     messages: [{ content: prompt.contents, role: 'user' }],
-    thinking: { type: 'enabled', budget_tokens: prompt.config.thinkingBudgetTokens },
+    output_config: { effort: prompt.config.thinkingEffort },
+    thinking: { type: 'adaptive' },
+    // Forced tool_choice ("tool"/"any") is not supported alongside extended thinking, so we can
+    // only steer the model to call the tool via "auto" and validate that it did so below.
+    tool_choice: { type: 'auto' },
+    tools: [tool],
   }
   logDebug('Passing to model', {
     messageBody,
@@ -31,21 +49,11 @@ export const invokeModelMessage = async <T>(prompt: Prompt): Promise<T> => {
   })
   const response = await runtimeClient.send(command)
   const modelResponse = JSON.parse(new TextDecoder().decode(response.body))
-  const textBlock = modelResponse.content.find((b: { type: string }) => b.type === 'text')
-  logDebug('Model response', { modelResponse, text: textBlock?.text })
-  if (!textBlock?.text) {
-    throw new Error('Model response contained no text block')
+  const toolBlock = modelResponse.content.find((b: { type: string }) => b.type === 'tool_use') as
+    { input?: T } | undefined
+  logDebug('Model response', { modelResponse, toolInput: toolBlock?.input })
+  if (!toolBlock?.input) {
+    throw new Error(`Model response contained no ${tool.name} tool call`)
   }
-  return parseResponse(textBlock.text)
-}
-
-const parseResponse = <T>(str: string): T => {
-  const content = str.replace(/(^\s*|\s*```(json)?\s*|\s*$)/gs, '')
-  const jsonMatch = content.match(/{.*}/s)?.[0] ?? content
-  try {
-    return JSON.parse(jsonMatch)
-  } catch {
-    log('Response is not valid JSON', { content })
-    throw new Error(`Response is not valid JSON: ${content.substring(0, 200)}`)
-  }
+  return toolBlock.input
 }
