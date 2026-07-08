@@ -26,7 +26,7 @@ describe('bedrock', () => {
       mockSend.mockResolvedValue(invokeModelResponse)
     })
 
-    it('should invoke the model with thinking enabled and the tool attached', async () => {
+    it('should invoke the model with adaptive thinking and the tool attached', async () => {
       const result = await invokeModel(prompt, toolSchema)
 
       expect(result).toEqual(invokeModelCategories)
@@ -36,7 +36,8 @@ describe('bedrock', () => {
             anthropic_version: 'bedrock-2023-05-31',
             max_tokens: 32_000,
             messages: [{ content: prompt.contents, role: 'user' }],
-            thinking: { type: 'enabled', budget_tokens: 25_000 },
+            output_config: { effort: 'high' },
+            thinking: { type: 'adaptive' },
             tool_choice: { type: 'auto' },
             tools: [toolSchema],
           }),
@@ -65,7 +66,8 @@ describe('bedrock', () => {
                 role: 'user',
               },
             ],
-            thinking: { type: 'enabled', budget_tokens: 25_000 },
+            output_config: { effort: 'high' },
+            thinking: { type: 'adaptive' },
             tool_choice: { type: 'auto' },
             tools: [toolSchema],
           }),
@@ -97,7 +99,8 @@ describe('bedrock', () => {
                   role: 'user',
                 },
               ],
-              thinking: { type: 'enabled', budget_tokens: 25_000 },
+              output_config: { effort: 'high' },
+              thinking: { type: 'adaptive' },
               tool_choice: { type: 'auto' },
               tools: [toolSchema],
             }),
@@ -125,7 +128,8 @@ describe('bedrock', () => {
                   role: 'user',
                 },
               ],
-              thinking: { type: 'enabled', budget_tokens: 25_000 },
+              output_config: { effort: 'high' },
+              thinking: { type: 'adaptive' },
               tool_choice: { type: 'auto' },
               tools: [toolSchema],
             }),

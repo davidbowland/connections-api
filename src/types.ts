@@ -51,7 +51,7 @@ export interface PromptConfig {
   anthropicVersion: string
   maxTokens: number
   model: string
-  thinkingBudgetTokens: number
+  thinkingEffort: 'low' | 'medium' | 'high' | 'max'
 }
 
 export interface Prompt {

@@ -31,7 +31,8 @@ export const invokeModelMessage = async <T>(prompt: Prompt, tool: ToolSchema): P
     anthropic_version: prompt.config.anthropicVersion,
     max_tokens: prompt.config.maxTokens,
     messages: [{ content: prompt.contents, role: 'user' }],
-    thinking: { type: 'enabled', budget_tokens: prompt.config.thinkingBudgetTokens },
+    output_config: { effort: prompt.config.thinkingEffort },
+    thinking: { type: 'adaptive' },
     // Forced tool_choice ("tool"/"any") is not supported alongside extended thinking, so we can
     // only steer the model to call the tool via "auto" and validate that it did so below.
     tool_choice: { type: 'auto' },

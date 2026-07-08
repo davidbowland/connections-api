@@ -115,7 +115,7 @@ export const promptConfig: PromptConfig = {
   anthropicVersion: 'bedrock-2023-05-31',
   maxTokens: 32_000,
   model: 'the-thinking-ai:1.0',
-  thinkingBudgetTokens: 25_000,
+  thinkingEffort: 'high',
 }
 
 export const promptId: PromptId = '5253'
