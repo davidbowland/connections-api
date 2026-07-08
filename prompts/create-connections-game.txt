@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":15000,"model":"us.anthropic.claude-opus-4-8","thinkingEffort":"high"}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":24000,"model":"us.anthropic.claude-opus-4-8","thinkingEffort":"high"}
 
 <instructions>
 <game_overview>
