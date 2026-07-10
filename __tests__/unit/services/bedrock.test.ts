@@ -1,12 +1,12 @@
 import {
-  connectionsData,
   invokeModelCategories,
   invokeModelResponse,
   invokeModelResponseData,
   prompt,
   toolSchema,
 } from '../__mocks__'
-import { invokeModel, invokeModelMessage } from '@services/bedrock'
+import { invokeModel } from '@services/bedrock'
+import { log } from '@utils/logging'
 
 const mockSend = jest.fn()
 jest.mock('@aws-sdk/client-bedrock-runtime', () => ({
@@ -54,7 +54,7 @@ describe('bedrock', () => {
       }
       const result = await invokeModel(promptWithContext, toolSchema, { data })
 
-      expect(result).toEqual({ ...connectionsData, wordList: undefined })
+      expect(result).toEqual(invokeModelCategories)
       expect(mockSend).toHaveBeenCalledWith({
         body: new TextEncoder().encode(
           JSON.stringify({
@@ -137,33 +137,32 @@ describe('bedrock', () => {
         }),
       )
     })
-  })
 
-  describe('invokeModelMessage', () => {
-    it('should extract tool_use input from thinking response with multiple content blocks', async () => {
-      mockSend.mockResolvedValue(invokeModelResponse)
-      const result = await invokeModelMessage(prompt, toolSchema)
+    it('should extract tool_use input from a response with multiple content blocks', async () => {
+      mockSend.mockResolvedValueOnce(invokeModelResponse)
+      const result = await invokeModel(prompt, toolSchema)
       expect(result).toEqual(invokeModelCategories)
     })
 
-    it('should throw a clear error when the response has no tool_use block', async () => {
-      mockSend.mockResolvedValue({
+    it('should fall back to parsing JSON from a text block when no tool_use block is present', async () => {
+      mockSend.mockResolvedValueOnce({
         ...invokeModelResponse,
         body: new TextEncoder().encode(
           JSON.stringify({
             ...invokeModelResponseData,
-            content: [{ type: 'thinking', thinking: 'Only thinking, no tool call' }],
+            content: [
+              { type: 'text', text: '```json\n' + JSON.stringify(invokeModelCategories) + '\n```' },
+            ],
           }),
         ),
       })
 
-      await expect(invokeModelMessage(prompt, toolSchema)).rejects.toThrow(
-        `Model response contained no ${toolSchema.name} tool call`,
-      )
+      const result = await invokeModel(prompt, toolSchema)
+      expect(result).toEqual(invokeModelCategories)
     })
 
     it('should ignore a text block and use the tool_use block when both are present', async () => {
-      mockSend.mockResolvedValue({
+      mockSend.mockResolvedValueOnce({
         ...invokeModelResponse,
         body: new TextEncoder().encode(
           JSON.stringify({
@@ -181,8 +180,99 @@ describe('bedrock', () => {
         ),
       })
 
-      const result = await invokeModelMessage(prompt, toolSchema)
+      const result = await invokeModel(prompt, toolSchema)
       expect(result).toEqual(invokeModelCategories)
+    })
+
+    it('should throw a clear error when the response has no tool_use block or text block', async () => {
+      mockSend.mockResolvedValueOnce({
+        ...invokeModelResponse,
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            ...invokeModelResponseData,
+            content: [{ type: 'thinking', thinking: 'Only thinking, no tool call' }],
+          }),
+        ),
+      })
+
+      await expect(invokeModel(prompt, toolSchema)).rejects.toThrow(
+        `Model response contained no ${toolSchema.name} tool call`,
+      )
+    })
+
+    it('should throw when the fallback text block does not contain parseable JSON', async () => {
+      mockSend.mockResolvedValueOnce({
+        ...invokeModelResponse,
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            ...invokeModelResponseData,
+            content: [{ type: 'text', text: 'not json at all' }],
+          }),
+        ),
+      })
+
+      await expect(invokeModel(prompt, toolSchema)).rejects.toThrow()
+    })
+
+    it('should throw and log when the response body is not valid JSON', async () => {
+      mockSend.mockResolvedValueOnce({
+        ...invokeModelResponse,
+        body: new TextEncoder().encode('not valid json'),
+      })
+
+      await expect(invokeModel(prompt, toolSchema)).rejects.toThrow()
+      expect(log).toHaveBeenCalledWith(
+        'Failed to parse Bedrock response body as JSON',
+        expect.objectContaining({ model: prompt.config.model }),
+      )
+    })
+
+    it('should log Bedrock $metadata and rethrow when the send call rejects', async () => {
+      const sendError = Object.assign(new Error('Throttled'), {
+        $metadata: { attempts: 4, httpStatusCode: 429, requestId: 'req-1', totalRetryDelay: 1_200 },
+        name: 'ThrottlingException',
+      })
+      mockSend.mockRejectedValueOnce(sendError)
+
+      await expect(invokeModel(prompt, toolSchema)).rejects.toThrow('Throttled')
+      expect(log).toHaveBeenCalledWith(
+        'Bedrock invocation failed',
+        expect.objectContaining({
+          attempts: 4,
+          errorName: 'ThrottlingException',
+          httpStatusCode: 429,
+          message: 'Throttled',
+          requestId: 'req-1',
+          totalRetryDelay: 1_200,
+        }),
+      )
+    })
+
+    it('should throw and log when the model response fails schema validation', async () => {
+      mockSend.mockResolvedValueOnce({
+        ...invokeModelResponse,
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            ...invokeModelResponseData,
+            content: [
+              {
+                type: 'tool_use',
+                id: 'toolu_1',
+                name: toolSchema.name,
+                input: { wrongField: true },
+              },
+            ],
+          }),
+        ),
+      })
+
+      await expect(invokeModel(prompt, toolSchema)).rejects.toThrow(
+        `Model response failed schema validation for tool "${toolSchema.name}"`,
+      )
+      expect(log).toHaveBeenCalledWith(
+        'Model response failed schema validation',
+        expect.objectContaining({ toolName: toolSchema.name }),
+      )
     })
   })
 })

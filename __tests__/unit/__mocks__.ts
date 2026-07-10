@@ -104,8 +104,8 @@ export const toolSchema: ToolSchema = {
   description: 'Submit the data.',
   input_schema: {
     type: 'object',
-    properties: { data: { type: 'string' } },
-    required: ['data'],
+    properties: { categories: { type: 'object' } },
+    required: ['categories'],
   },
 }
 
