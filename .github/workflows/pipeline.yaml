@@ -1,10 +1,7 @@
 name: Pipeline
 
 env:
-  GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
   HUSKY: 0
-  PIPELINE_USER_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  PIPELINE_USER_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   PROD_ARTIFACTS_BUCKET: connections-lambda
   PROD_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/connections-cloudformation
   PROD_PIPELINE_EXECUTION_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/connections-pipeline
@@ -19,8 +16,12 @@ env:
 
 on: push
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -29,9 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install Node 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: Install and audit packages
@@ -48,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install Python 3
         uses: actions/setup-python@v6
         with:
@@ -57,7 +58,7 @@ jobs:
         uses: aws-actions/setup-sam@v2
 
       - name: Install Node 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: Build resources
@@ -66,8 +67,8 @@ jobs:
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.TESTING_REGION }}
           role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
           role-session-name: feature-deployment
@@ -98,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install Python 3
         uses: actions/setup-python@v6
         with:
@@ -107,7 +108,7 @@ jobs:
         uses: aws-actions/setup-sam@v2
 
       - name: Install Node 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: Build resources
@@ -116,8 +117,8 @@ jobs:
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.TESTING_REGION }}
           role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
           role-session-name: testing-packaging
@@ -132,7 +133,7 @@ jobs:
             --region ${TESTING_REGION} \
             --output-template-file packaged-testing.yaml
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v6
         with:
           name: packaged-testing.yaml
           path: packaged-testing.yaml
@@ -140,8 +141,8 @@ jobs:
       - name: Assume the prod pipeline user role
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.PROD_REGION }}
           role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
           role-session-name: prod-packaging
@@ -156,7 +157,7 @@ jobs:
             --region ${PROD_REGION} \
             --output-template-file packaged-prod.yaml
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v6
         with:
           name: packaged-prod.yaml
           path: packaged-prod.yaml
@@ -168,22 +169,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install Python 3
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install AWS SAM
         uses: aws-actions/setup-sam@v2
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v7
         with:
           name: packaged-testing.yaml
 
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.TESTING_REGION }}
           role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
           role-session-name: testing-deployment
@@ -203,7 +204,7 @@ jobs:
             --parameter-overrides "Environment=test"
 
       - name: Install Node 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: Install packages for prompt deployment
@@ -218,22 +219,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install Python 3
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install AWS SAM
         uses: aws-actions/setup-sam@v2
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v7
         with:
           name: packaged-prod.yaml
 
       - name: Assume the prod pipeline user role
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.PROD_REGION }}
           role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
           role-session-name: prod-deployment
@@ -252,7 +253,7 @@ jobs:
             --role-arn ${PROD_CLOUDFORMATION_EXECUTION_ROLE}
 
       - name: Install Node 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: Install packages for prompt deployment
@@ -264,14 +265,18 @@ jobs:
     name: Bump the version number and tag the commit
     needs: deploy-prod
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout latest code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install Node 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: Set git name and email
+        env:
+          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
         run: |
           git config --local user.email "${GIT_EMAIL}"
           git config --local user.name "github-actions[bot]"
