@@ -1,10 +1,3 @@
-import axios from 'axios'
-import axiosRetry from 'axios-retry'
-
-// Axios
-
-axiosRetry(axios, { retries: 3 })
-
 // DynamoDB
 
 export const dynamodbGamesTableName = process.env.DYNAMODB_GAMES_TABLE_NAME as string
