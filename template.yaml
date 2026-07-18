@@ -250,8 +250,7 @@ Resources:
           INSPIRATION_VERBS_COUNT: 8
           LLM_PROMPT_ID: create-connections-game
           LLM_VERIFY_PROMPT_ID: verify-connections-game
-          MAX_GAME_GENERATION_ATTEMPTS:
-            !FindInMap [EnvironmentMap, !Ref Environment, maxGameGenerationAttempts]
+          MAX_GAME_GENERATION_ATTEMPTS: !FindInMap [EnvironmentMap, !Ref Environment, maxGameGenerationAttempts]
           WORD_CONSTRAINT_CHANCE: 0.12
       Events:
         Schedule:
@@ -339,15 +338,13 @@ Resources:
               Effect: Allow
               Resource: !Sub
                 - 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${RerollPasswordPath}'
-                - RerollPasswordPath:
-                    !FindInMap [EnvironmentMap, !Ref Environment, rerollPasswordPath]
+                - RerollPasswordPath: !FindInMap [EnvironmentMap, !Ref Environment, rerollPasswordPath]
       Environment:
         Variables:
           CREATE_GAME_FUNCTION_NAME: !Ref CreateGameFunction
           DEBUG_LOGGING: 'false'
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
-          SSM_REROLL_PASSWORD_PATH:
-            !FindInMap [EnvironmentMap, !Ref Environment, rerollPasswordPath]
+          SSM_REROLL_PASSWORD_PATH: !FindInMap [EnvironmentMap, !Ref Environment, rerollPasswordPath]
       Events:
         Api:
           Type: HttpApi

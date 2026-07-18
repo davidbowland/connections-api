@@ -58,21 +58,14 @@ const getRandomSample = <T>(
   if (count === 1) {
     return [value]
   } else if (withDuplicates) {
-    return [
-      value,
-      ...getRandomSample(array, count - 1, { withDuplicates: true, length: max, random }),
-    ]
+    return [value, ...getRandomSample(array, count - 1, { withDuplicates: true, length: max, random })]
   } else {
     array[index] = array[max - 1]
     return [value, ...getRandomSample(array, count - 1, { length: max - 1, random })]
   }
 }
 
-const getModelContext = (
-  date: Date,
-  disallowedCategories: string[],
-  random = Math.random,
-): Record<string, any> => {
+const getModelContext = (date: Date, disallowedCategories: string[], random = Math.random): Record<string, any> => {
   const wordConstraintValue = random()
   const useWordConstraint = wordConstraintValue < wordConstraintChance
   const holidayConstraints = getDateConstraint(date)
@@ -173,10 +166,7 @@ export const validateGame = (categories: CategoryObject): string[] => {
   return wordList
 }
 
-export const createGame = async (
-  gameId: GameId,
-  random = Math.random,
-): Promise<ConnectionsData> => {
+export const createGame = async (gameId: GameId, random = Math.random): Promise<ConnectionsData> => {
   const pastGames = await getAllGames()
   const disallowedCategories = [
     ...alwaysDisallowedCategories,

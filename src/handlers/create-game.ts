@@ -23,11 +23,7 @@ const nextGameId = (): string => {
 export const createGameHandler = async (event: ScheduledEvent | CreateGameEvent): Promise<void> => {
   log('Received event', { event })
 
-  const {
-    gameId: eventGameId,
-    attempt = 1,
-    generationStartedAt: eventGenerationStartedAt,
-  } = event as CreateGameEvent
+  const { gameId: eventGameId, attempt = 1, generationStartedAt: eventGenerationStartedAt } = event as CreateGameEvent
   const gameId = eventGameId ?? nextGameId()
   log('Creating game', { attempt, gameId })
 

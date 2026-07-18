@@ -73,9 +73,7 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
         const oldWords = categories[oldName].words
         const wordChanges = fix.words.filter((w) => !oldWords.includes(w)).length
         if (wordChanges > 2) {
-          throw new Error(
-            `Fix exceeds per-category word change limit (> 2) for category: ${oldName}`,
-          )
+          throw new Error(`Fix exceeds per-category word change limit (> 2) for category: ${oldName}`)
         }
         totalWordChanges += wordChanges
         log('Verification fix: words', {
@@ -103,10 +101,7 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
   return { ...game, categories }
 }
 
-const getVerifierContext = (
-  game: ConnectionsGame,
-  modelContext: Record<string, any>,
-): Record<string, any> => {
+const getVerifierContext = (game: ConnectionsGame, modelContext: Record<string, any>): Record<string, any> => {
   return {
     game,
     categoryConstraints: modelContext.categoryConstraints,

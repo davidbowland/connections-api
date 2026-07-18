@@ -1,5 +1,3 @@
-/* eslint-disable sort-keys */
-
 export default {
   OK: { statusCode: 200 },
   CREATED: { statusCode: 201 },

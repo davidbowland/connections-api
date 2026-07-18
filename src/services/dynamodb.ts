@@ -9,11 +9,7 @@ import {
   ScanCommand,
 } from '@aws-sdk/client-dynamodb'
 
-import {
-  dynamodbGamesTableName,
-  dynamodbPromptsTableName,
-  gameGenerationTimeoutMs,
-} from '../config'
+import { dynamodbGamesTableName, dynamodbPromptsTableName, gameGenerationTimeoutMs } from '../config'
 import { ConnectionsData, GameId, Prompt, PromptId } from '../types'
 import { xrayCapture } from '../utils/logging'
 
@@ -61,9 +57,7 @@ export const getGameById = async (gameId: GameId, now = Date.now): Promise<GameR
   }
 
   const generationStarted = response.Item?.GenerationStarted?.N
-  const isGenerating = generationStarted
-    ? parseInt(generationStarted) + gameGenerationTimeoutMs > now()
-    : false
+  const isGenerating = generationStarted ? parseInt(generationStarted) + gameGenerationTimeoutMs > now() : false
   return { isGenerating }
 }
 
@@ -88,10 +82,7 @@ export const getAllGames = async (): Promise<Record<GameId, ConnectionsData>> =>
   return result
 }
 
-export const setGameById = async (
-  gameId: GameId,
-  data: ConnectionsData,
-): Promise<PutItemOutput> => {
+export const setGameById = async (gameId: GameId, data: ConnectionsData): Promise<PutItemOutput> => {
   const command = new PutItemCommand({
     Item: {
       Data: {
@@ -106,10 +97,7 @@ export const setGameById = async (
   return await dynamodb.send(command)
 }
 
-export const setGameGenerationStarted = async (
-  gameId: GameId,
-  now = Date.now,
-): Promise<number | false> => {
+export const setGameGenerationStarted = async (gameId: GameId, now = Date.now): Promise<number | false> => {
   const timestamp = now()
   const command = new PutItemCommand({
     ConditionExpression:

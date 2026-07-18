@@ -27,9 +27,7 @@ describe('get-game-by-id', () => {
     jest.useFakeTimers()
     jest.setSystemTime(new Date('2025-01-05'))
 
-    jest
-      .mocked(dynamodb)
-      .getGameById.mockResolvedValue({ game: connectionsData, isGenerating: false })
+    jest.mocked(dynamodb).getGameById.mockResolvedValue({ game: connectionsData, isGenerating: false })
     mockSend.mockResolvedValue({})
   })
 

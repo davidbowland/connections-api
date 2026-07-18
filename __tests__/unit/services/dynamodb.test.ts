@@ -34,9 +34,7 @@ describe('dynamodb', () => {
   describe('getPromptById', () => {
     beforeAll(() => {
       mockSend.mockResolvedValue({
-        Items: [
-          { Config: { S: JSON.stringify(promptConfig) }, SystemPrompt: { S: prompt.contents } },
-        ],
+        Items: [{ Config: { S: JSON.stringify(promptConfig) }, SystemPrompt: { S: prompt.contents } }],
       })
     })
 
@@ -238,9 +236,7 @@ describe('dynamodb', () => {
     it('should rethrow non-conditional-check errors', async () => {
       mockSend.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
 
-      await expect(resetGameGenerationStarted(gameId, 1000000000)).rejects.toThrow(
-        'DynamoDB unavailable',
-      )
+      await expect(resetGameGenerationStarted(gameId, 1000000000)).rejects.toThrow('DynamoDB unavailable')
     })
   })
 

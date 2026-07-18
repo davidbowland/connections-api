@@ -36,10 +36,7 @@ const parsePromptFile = (filename: string, content: string, now: number): Prompt
   }
 }
 
-const getExistingPrompt = async (
-  tableName: string,
-  promptId: string,
-): Promise<ExistingPrompt | null> => {
+const getExistingPrompt = async (tableName: string, promptId: string): Promise<ExistingPrompt | null> => {
   const command = new QueryCommand({
     ExpressionAttributeValues: { ':promptId': { S: promptId } },
     KeyConditionExpression: 'PromptId = :promptId',
@@ -58,7 +55,7 @@ const getExistingPrompt = async (
       config: response.Items[0].Config?.S as string,
       systemPrompt: response.Items[0].SystemPrompt?.S as string,
     }
-  } catch (error: unknown) {
+  } catch {
     return null
   }
 }
@@ -108,10 +105,7 @@ const deployPrompts = async (): Promise<void> => {
       const promptData = parsePromptFile(file, content, now)
       const existingPrompt = await getExistingPrompt(tableName, promptData.promptId)
 
-      if (
-        existingPrompt?.systemPrompt === promptData.systemPrompt &&
-        existingPrompt?.config === promptData.config
-      ) {
+      if (existingPrompt?.systemPrompt === promptData.systemPrompt && existingPrompt?.config === promptData.config) {
         console.log('Skipping unchanged prompt', { promptId: promptData.promptId })
       } else {
         await deployPrompt(tableName, promptData)

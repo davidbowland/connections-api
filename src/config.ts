@@ -14,19 +14,12 @@ export const llmVerifyPromptId = process.env.LLM_VERIFY_PROMPT_ID as string
 
 // Games
 
-export const inspirationAdjectivesCount = parseInt(
-  process.env.INSPIRATION_ADJECTIVES_COUNT as string,
-  10,
-)
+export const inspirationAdjectivesCount = parseInt(process.env.INSPIRATION_ADJECTIVES_COUNT as string, 10)
 export const inspirationNounsCount = parseInt(process.env.INSPIRATION_NOUNS_COUNT as string, 10)
 export const inspirationVerbsCount = parseInt(process.env.INSPIRATION_VERBS_COUNT as string, 10)
 export const wordConstraintChance = Number(process.env.WORD_CONSTRAINT_CHANCE as string)
-export const gameGenerationTimeoutMs =
-  parseInt(process.env.GAME_GENERATION_TIMEOUT as string, 10) * 1000
-export const maxGameGenerationAttempts = parseInt(
-  process.env.MAX_GAME_GENERATION_ATTEMPTS as string,
-  10,
-)
+export const gameGenerationTimeoutMs = parseInt(process.env.GAME_GENERATION_TIMEOUT as string, 10) * 1000
+export const maxGameGenerationAttempts = parseInt(process.env.MAX_GAME_GENERATION_ATTEMPTS as string, 10)
 
 // Logging
 

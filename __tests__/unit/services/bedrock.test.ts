@@ -1,10 +1,4 @@
-import {
-  invokeModelCategories,
-  invokeModelResponse,
-  invokeModelResponseData,
-  prompt,
-  toolSchema,
-} from '../__mocks__'
+import { invokeModelCategories, invokeModelResponse, invokeModelResponseData, prompt, toolSchema } from '../__mocks__'
 import { invokeModel } from '@services/bedrock'
 import { log } from '@utils/logging'
 
@@ -150,9 +144,7 @@ describe('bedrock', () => {
         body: new TextEncoder().encode(
           JSON.stringify({
             ...invokeModelResponseData,
-            content: [
-              { type: 'text', text: '```json\n' + JSON.stringify(invokeModelCategories) + '\n```' },
-            ],
+            content: [{ type: 'text', text: '```json\n' + JSON.stringify(invokeModelCategories) + '\n```' }],
           }),
         ),
       })

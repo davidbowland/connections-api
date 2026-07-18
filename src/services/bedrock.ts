@@ -36,9 +36,7 @@ const escapeXml = (value: string): string => value.replace(/</g, '&lt;').replace
 // A replacer function (not a string) avoids Node interpreting $&/$`/$'-style sequences
 // that might appear in untrusted context values as replacement patterns.
 const buildPromptContents = (prompt: Prompt, context?: Record<string, any>): string =>
-  context
-    ? prompt.contents.replace('${context}', () => escapeXml(JSON.stringify(context)))
-    : prompt.contents
+  context ? prompt.contents.replace('${context}', () => escapeXml(JSON.stringify(context))) : prompt.contents
 
 const buildRequestBody = (prompt: Prompt, tool: ToolSchema, contents: string) => ({
   anthropic_version: prompt.config.anthropicVersion,
@@ -161,11 +159,7 @@ const validateResponse = <T>(tool: ToolSchema, parsed: unknown): T => {
   return parsed as T
 }
 
-export const invokeModel = async <T>(
-  prompt: Prompt,
-  tool: ToolSchema,
-  context?: Record<string, any>,
-): Promise<T> => {
+export const invokeModel = async <T>(prompt: Prompt, tool: ToolSchema, context?: Record<string, any>): Promise<T> => {
   const contents = buildPromptContents(prompt, context)
   logDebug('Invoking model', { contents, prompt, tool })
 

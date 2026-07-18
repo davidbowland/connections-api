@@ -126,9 +126,7 @@ describe('reroll-game', () => {
         body: JSON.stringify({ password }),
       } as unknown as APIGatewayProxyEventV2)
 
-      expect(result).toEqual(
-        expect.objectContaining({ statusCode: status.INTERNAL_SERVER_ERROR.statusCode }),
-      )
+      expect(result).toEqual(expect.objectContaining({ statusCode: status.INTERNAL_SERVER_ERROR.statusCode }))
       expect(dynamodb.deleteGameById).not.toHaveBeenCalled()
     })
 
@@ -152,9 +150,7 @@ describe('reroll-game', () => {
         body: JSON.stringify({ password }),
       } as unknown as APIGatewayProxyEventV2)
 
-      expect(result).toEqual(
-        expect.objectContaining({ statusCode: status.INTERNAL_SERVER_ERROR.statusCode }),
-      )
+      expect(result).toEqual(expect.objectContaining({ statusCode: status.INTERNAL_SERVER_ERROR.statusCode }))
       expect(mockLambdaSend).not.toHaveBeenCalled()
     })
   })

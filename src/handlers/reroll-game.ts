@@ -20,9 +20,7 @@ const getPassword = async (): Promise<string> => {
   return response.Parameter?.Value as string
 }
 
-export const rerollGameHandler = async (
-  event: APIGatewayProxyEventV2,
-): Promise<APIGatewayProxyResultV2<unknown>> => {
+export const rerollGameHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2<unknown>> => {
   log('Received event', { ...event, body: undefined })
 
   const gameId: GameId | undefined = event.pathParameters?.gameId

@@ -74,9 +74,7 @@ describe('create-game', () => {
     })
 
     it('should rethrow errors from setGameGenerationStarted', async () => {
-      jest
-        .mocked(dynamodb)
-        .setGameGenerationStarted.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
+      jest.mocked(dynamodb).setGameGenerationStarted.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
 
       await expect(createGameHandler(scheduledEvent)).rejects.toThrow('DynamoDB unavailable')
       expect(games.createGame).not.toHaveBeenCalled()
@@ -129,10 +127,7 @@ describe('create-game', () => {
       })
 
       expect(dynamodb.setGameGenerationStarted).not.toHaveBeenCalled()
-      expect(dynamodb.resetGameGenerationStarted).toHaveBeenCalledWith(
-        tomorrow,
-        GENERATION_STARTED_AT,
-      )
+      expect(dynamodb.resetGameGenerationStarted).toHaveBeenCalledWith(tomorrow, GENERATION_STARTED_AT)
       expect(games.createGame).toHaveBeenCalledWith(tomorrow)
     })
 

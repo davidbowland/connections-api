@@ -56,12 +56,7 @@ describe('games', () => {
         prompt,
         gameTool,
         expect.objectContaining({
-          categoryConstraints: expect.arrayContaining([
-            categoryExpect,
-            categoryExpect,
-            categoryExpect,
-            categoryExpect,
-          ]),
+          categoryConstraints: expect.arrayContaining([categoryExpect, categoryExpect, categoryExpect, categoryExpect]),
           disallowedCategories: alwaysDisallowedCategories,
           inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
           inspirationNouns: expect.arrayContaining(['time', 'execution']),
@@ -96,11 +91,7 @@ describe('games', () => {
         prompt,
         gameTool,
         expect.objectContaining({
-          disallowedCategories: [
-            ...alwaysDisallowedCategories,
-            'Previous Category 1',
-            'Previous Category 2',
-          ],
+          disallowedCategories: [...alwaysDisallowedCategories, 'Previous Category 1', 'Previous Category 2'],
         }),
       )
     })
@@ -113,9 +104,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
-        'Generated words are not unique',
-      )
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated words are not unique')
     })
 
     it('should throw error when wrong number of categories is generated', async () => {
@@ -128,9 +117,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
-        'Generated wrong number of categories',
-      )
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated wrong number of categories')
     })
 
     it('should throw error when a category has wrong number of words', async () => {
@@ -195,9 +182,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
-        'Generated invalid embedded substrings',
-      )
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated invalid embedded substrings')
     })
 
     it('should create a game with holiday constraints when date has holiday', async () => {
@@ -286,9 +271,7 @@ describe('games', () => {
         },
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
-        'Generated words are not unique',
-      )
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated words are not unique')
     })
   })
 })

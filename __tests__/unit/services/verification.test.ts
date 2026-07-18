@@ -76,9 +76,7 @@ describe('verification', () => {
       }
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
 
-      await expect(verifyAndFixGame(game, {})).rejects.toThrow(
-        'Fix exceeds total word change limit (> 4)',
-      )
+      await expect(verifyAndFixGame(game, {})).rejects.toThrow('Fix exceeds total word change limit (> 4)')
     })
 
     it('should throw when fix replaces more than 1 category', async () => {
@@ -106,9 +104,7 @@ describe('verification', () => {
       }
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
 
-      await expect(verifyAndFixGame(game, {})).rejects.toThrow(
-        'Fix exceeds category replacement limit (> 1)',
-      )
+      await expect(verifyAndFixGame(game, {})).rejects.toThrow('Fix exceeds category replacement limit (> 1)')
     })
 
     it('should throw on fail verdict', async () => {
@@ -131,9 +127,7 @@ describe('verification', () => {
     })
 
     it('should throw on malformed verifier response (JSON parse failure)', async () => {
-      jest
-        .mocked(bedrock)
-        .invokeModel.mockRejectedValueOnce(new SyntaxError('Unexpected token in JSON'))
+      jest.mocked(bedrock).invokeModel.mockRejectedValueOnce(new SyntaxError('Unexpected token in JSON'))
 
       await expect(verifyAndFixGame(game, {})).rejects.toThrow('Unexpected token in JSON')
     })
@@ -186,9 +180,7 @@ describe('verification', () => {
       }
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
 
-      await expect(verifyAndFixGame(game, {})).rejects.toThrow(
-        'Fix references unknown category: Unknown Category',
-      )
+      await expect(verifyAndFixGame(game, {})).rejects.toThrow('Fix references unknown category: Unknown Category')
     })
 
     it('should pass only game and relevant constraints to invokeModel', async () => {
@@ -267,9 +259,7 @@ describe('verification', () => {
       expect(returned.categories['Boast'].hint).toBe('Are you feeling proud?')
       expect(returned.categories['Boast'].words).toEqual(game.categories['Boast'].words)
       expect(returned.categories['Arc-shaped things'].hint).toBe('Do you see a curvy theme?')
-      expect(returned.categories['Arc-shaped things'].words).toEqual(
-        game.categories['Arc-shaped things'].words,
-      )
+      expect(returned.categories['Arc-shaped things'].words).toEqual(game.categories['Arc-shaped things'].words)
     })
   })
 })

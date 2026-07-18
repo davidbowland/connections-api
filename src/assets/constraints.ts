@@ -12,7 +12,7 @@ export const wordConstraints: string[] = [
   'all words must be 4 letters, but categories MUST be more specific than "4-letter words"',
   'all words must be 5 letters, but categories MUST be more specific than "5-letter words"',
   'all words must have double letters, but categories MUST be more specific than "words with double letters"',
-  'all words must be compound words, but categories MUST be more specific than "words that contain \"look\"" or "compound words" (for example: "words containing animals")',
+  'all words must be compound words, but categories MUST be more specific than "words that contain "look"" or "compound words" (for example: "words containing animals")',
   'most words should appear in titles or famous phrases, but categories should reference the SOURCE, not just "words from titles"',
   'most words should have either a Z or a Q in them, but categories MUST be more specific than "words with a Z or Q"',
   'all words must begin with the same letter, but categories MUST be more specific than "words beginning with L". There should be one beginning letter for the game. The beginning letter should not be different in different categories.',
@@ -88,14 +88,11 @@ export const categoryConstraints: string[] = [
 ]
 
 export const fixedDateCategoryConstraints: Record<string, string> = {
-  '0101':
-    "all words must be related to New Year's Day, but categories are NOT required to be New Year-related",
+  '0101': "all words must be related to New Year's Day, but categories are NOT required to be New Year-related",
   '0202':
     'all words must be related to Groundhog Day/weather predictions/repetition, but categories are NOT required to be weather-related',
-  '0214':
-    "all words must be related to Valentine's Day, but categories are NOT required to be Valentine's Day-related",
-  '0314':
-    'all words must be related to Pi Day/math/circles/pies, but categories are NOT required to be math-related',
+  '0214': "all words must be related to Valentine's Day, but categories are NOT required to be Valentine's Day-related",
+  '0314': 'all words must be related to Pi Day/math/circles/pies, but categories are NOT required to be math-related',
   '0317':
     "all words must be related to St. Patrick's Day/Ireland/luck/green, but categories are NOT required to be Irish-related",
   '0401':
@@ -104,15 +101,12 @@ export const fixedDateCategoryConstraints: Record<string, string> = {
     'all words must be related to Tax Day/money/forms/deadlines/numbers, but categories are NOT required to be tax-related',
   '0422':
     'all words must be related to Earth Day/nature/environment/conservation, but categories are NOT required to be environment-related',
-  '0704':
-    'all words must be related to Independence Day/July 4th, but categories are NOT required to be patriotic',
+  '0704': 'all words must be related to Independence Day/July 4th, but categories are NOT required to be patriotic',
   // Author's wedding anniversary
   '0920':
     'all words must be related to weddings/anniversaries/love, but categories are NOT required to be wedding-related',
-  '1031':
-    'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
+  '1031': 'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
   '1111':
     'all words must be related to Veterans Day/military/service, but categories are NOT required to be military-related',
-  '1225':
-    'all words must be related to Christmas, but categories are NOT required to be Christmas-related',
+  '1225': 'all words must be related to Christmas, but categories are NOT required to be Christmas-related',
 }
