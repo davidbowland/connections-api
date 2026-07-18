@@ -1,6 +1,6 @@
 # Lambdas for Connections API
 
-Lambdas for Connections API, which handles sessions as a back-end for connections-ui.
+Lambdas for Connections API, which serves the daily word-connections game as a back-end for connections-ui.
 
 ## Setup
 
@@ -68,9 +68,9 @@ npm run lint
 
 ### Deploying to Production
 
-When a pull request is merged into `master`, the lambda code is transpiled to commonjs, zipped, and then copied to S3. Afterwards, the infrastructure portion of the project is deployed, which picks up the new versions in S3 and updates each lambda.
+Deployment runs via GitHub Actions (`.github/workflows/pipeline.yaml`). On a push to `master`, `sam build` bundles each Lambda with esbuild, `sam package` uploads the build artifacts to S3, and `sam deploy` updates the stack — first in the testing account, then in production.
 
-In extreme cases, lambdas can be transpiled, zipped, and uploaded locally with:
+In extreme cases, the stack can be deployed locally with:
 
 ```bash
 npm run deploy
@@ -78,7 +78,7 @@ npm run deploy
 
 ## Infrastructure
 
-See `infrastructure` folder for information on updating infrastructure.
+The SAM/CloudFormation stack lives in this repo's `template.yaml`. Shared account-level infrastructure (pipeline roles, S3 buckets, etc.) is managed separately in [connections-infrastructure](https://github.com/davidbowland/connections-infrastructure).
 
 ## Additional Documentation
 
