@@ -3,8 +3,8 @@ import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb'
 import { connectionsData, gameId, prompt, promptConfig, promptId } from '../__mocks__'
 import {
   deleteGameById,
+  getAllGames,
   getGameById,
-  getGamesByIds,
   getPromptById,
   resetGameGenerationStarted,
   setGameById,
@@ -15,7 +15,6 @@ const mockSend = jest.fn()
 jest.mock('@aws-sdk/client-dynamodb', () => {
   const actual = jest.requireActual('@aws-sdk/client-dynamodb')
   return {
-    BatchGetItemCommand: jest.fn().mockImplementation((x) => x),
     ConditionalCheckFailedException: actual.ConditionalCheckFailedException,
     DeleteItemCommand: jest.fn().mockImplementation((x) => x),
     DynamoDB: jest.fn(() => ({
@@ -24,6 +23,7 @@ jest.mock('@aws-sdk/client-dynamodb', () => {
     GetItemCommand: jest.fn().mockImplementation((x) => x),
     PutItemCommand: jest.fn().mockImplementation((x) => x),
     QueryCommand: jest.fn().mockImplementation((x) => x),
+    ScanCommand: jest.fn().mockImplementation((x) => x),
   }
 })
 jest.mock('@utils/logging', () => ({
@@ -102,38 +102,42 @@ describe('dynamodb', () => {
     })
   })
 
-  describe('getGamesByIds', () => {
-    beforeAll(() => {
-      mockSend.mockResolvedValue({
-        Responses: {
-          'games-table': [
-            { Data: { S: JSON.stringify(connectionsData) }, GameId: { S: '2025-01-01' } },
-            { Data: { S: JSON.stringify(connectionsData) }, GameId: { S: '2025-01-02' } },
-          ],
-        },
+  describe('getAllGames', () => {
+    it('should scan the table and return games, skipping items without data', async () => {
+      mockSend.mockResolvedValueOnce({
+        Items: [
+          { Data: { S: JSON.stringify(connectionsData) }, GameId: { S: '2025-01-01' } },
+          { GameId: { S: '2025-01-02' }, GenerationStarted: { N: '1000' } },
+        ],
       })
+
+      const result = await getAllGames()
+
+      expect(mockSend).toHaveBeenCalledWith({ TableName: 'games-table' })
+      expect(result).toEqual({ '2025-01-01': connectionsData })
     })
 
-    it('should call DynamoDB with batch request', async () => {
-      const gameIds = ['2025-01-01', '2025-01-02']
-      const result = await getGamesByIds(gameIds)
+    it('should follow pagination until all pages are scanned', async () => {
+      mockSend
+        .mockResolvedValueOnce({
+          Items: [{ Data: { S: JSON.stringify(connectionsData) }, GameId: { S: '2025-01-01' } }],
+          LastEvaluatedKey: { GameId: { S: '2025-01-01' } },
+        })
+        .mockResolvedValueOnce({
+          Items: [{ Data: { S: JSON.stringify(connectionsData) }, GameId: { S: '2025-01-02' } }],
+        })
 
+      const result = await getAllGames()
+
+      expect(mockSend).toHaveBeenCalledWith({ TableName: 'games-table' })
       expect(mockSend).toHaveBeenCalledWith({
-        RequestItems: {
-          'games-table': {
-            Keys: [{ GameId: { S: '2025-01-01' } }, { GameId: { S: '2025-01-02' } }],
-          },
-        },
+        ExclusiveStartKey: { GameId: { S: '2025-01-01' } },
+        TableName: 'games-table',
       })
       expect(result).toEqual({
         '2025-01-01': connectionsData,
         '2025-01-02': connectionsData,
       })
-    })
-
-    it('should return empty object for empty input', async () => {
-      const result = await getGamesByIds([])
-      expect(result).toEqual({})
     })
   })
 

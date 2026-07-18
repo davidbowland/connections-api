@@ -15,8 +15,13 @@
   - ALWAYS abide by categoryConstraints, if provided
   - NEVER generate a "____ WORD" or "WORD ____" category unless explicitly asked in categoryConstraints
   - ALWAYS consider the word constraints (wordConstraints), if provided
-  - ALWAYS use at least one inspiration word in the category or as one of the words (inspirationAdjectives/inspirationNouns/inspirationVerbs), but use appropriate casing
+  - The inspiration words (inspirationAdjectives/inspirationNouns/inspirationVerbs) are the source of novelty for this game — seed EVERY category from a DIFFERENT inspiration word:
+    - Either build the category concept around the inspiration word, use the inspiration word in the category name, or include the inspiration word as one of the category's words (use appropriate casing)
+    - When a category comes from categoryConstraints, choose the specific instance of the pattern by starting from an inspiration word (eg constraint "Homophones of a category" + inspiration word "hymn" → "Homophones of music words")
+    - NEVER fall back on a stock category idea that ignores the inspiration words — if a category concept came to mind without an inspiration word, discard it and derive one from an inspiration word instead
   - NEVER generate a category that is similar to disallowed categories, another category, or example categories ("weather" and "storms" are too similar)
+  - disallowedCategories lists every category from every previous game — NEVER generate any of them again, nor a close paraphrase ("Homophones of body parts" and "Body part homophones" are the same category)
+  - Examples inside categoryConstraints and wordConstraints (text after "e.g.") illustrate the PATTERN only — NEVER submit an example itself as a category; always invent a fresh instance of the pattern
   - Categories should be highly specific, and surprising, funny, or cleverly framed (eg "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER")
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD

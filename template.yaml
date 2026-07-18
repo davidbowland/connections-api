@@ -241,8 +241,6 @@ Resources:
               Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-CreateGameFunction-*'
       Environment:
         Variables:
-          AVOID_NEXT_GAMES_COUNT: 10
-          AVOID_PAST_GAMES_COUNT: 20
           DEBUG_LOGGING: 'false'
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
           DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable

@@ -1,3 +1,13 @@
+// Categories the model gravitates toward repeatedly — always disallowed, even when absent from
+// game history (e.g., after a reroll deletes the game that used them)
+export const alwaysDisallowedCategories: string[] = [
+  'Homophones of body parts',
+  'Homophones of parts of the body',
+  'Spice Girls',
+  'Spice Girls members',
+  'Spice Girls songs',
+]
+
 export const wordConstraints: string[] = [
   'all words must be 4 letters, but categories MUST be more specific than "4-letter words"',
   'all words must be 5 letters, but categories MUST be more specific than "5-letter words"',
@@ -53,7 +63,7 @@ const tier2CategoryConstraints: string[] = [
 
 // Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
 const tier3CategoryConstraints: string[] = [
-  'Homophones of a category (e.g., "Homophones of body parts", "Homophones of tools")',
+  'Homophones of a category (e.g., "Homophones of tools", "Homophones of numbers")',
   'Words spelled backwards are [category] (e.g., "Backwards animals: FLOW, GOD, TAB")',
   '[Category] plus a letter (e.g., "Organ plus letter: COLONY, HEARTH, LUNGE")',
   '[Category] minus a letter (e.g., "Metal minus a letter")',

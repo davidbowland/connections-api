@@ -1,4 +1,5 @@
 import { connectionsData, prompt } from '../__mocks__'
+import { alwaysDisallowedCategories } from '@assets/constraints'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
 import { createGame, gameTool } from '@services/games'
@@ -16,7 +17,7 @@ describe('games', () => {
 
   beforeAll(() => {
     jest.mocked(bedrock).invokeModel.mockResolvedValue(connectionsData)
-    jest.mocked(dynamodb).getGamesByIds.mockResolvedValue({})
+    jest.mocked(dynamodb).getAllGames.mockResolvedValue({})
     jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
     jest.mocked(dynamodb).setGameById.mockResolvedValue({} as any)
     jest.mocked(constraints).getDateConstraint.mockReturnValue(undefined)
@@ -31,7 +32,7 @@ describe('games', () => {
         prompt,
         gameTool,
         expect.objectContaining({
-          disallowedCategories: [],
+          disallowedCategories: alwaysDisallowedCategories,
           wordConstraints: expect.stringContaining('all words must be 4 letters'),
         }),
       )
@@ -61,7 +62,7 @@ describe('games', () => {
             categoryExpect,
             categoryExpect,
           ]),
-          disallowedCategories: [],
+          disallowedCategories: alwaysDisallowedCategories,
           inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
           inspirationNouns: expect.arrayContaining(['time', 'execution']),
           inspirationVerbs: expect.arrayContaining(['be', 'shiver']),
@@ -78,8 +79,8 @@ describe('games', () => {
       expect(result).toEqual(connectionsData)
     })
 
-    it('should pass disallowed categories from context games', async () => {
-      jest.mocked(dynamodb).getGamesByIds.mockResolvedValueOnce({
+    it('should pass always-disallowed categories plus every category from game history', async () => {
+      jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce({
         '2024-12-31': {
           categories: {
             'Previous Category 1': { hint: 'hint', words: ['A', 'B', 'C', 'D'] },
@@ -95,7 +96,11 @@ describe('games', () => {
         prompt,
         gameTool,
         expect.objectContaining({
-          disallowedCategories: ['Previous Category 1', 'Previous Category 2'],
+          disallowedCategories: [
+            ...alwaysDisallowedCategories,
+            'Previous Category 1',
+            'Previous Category 2',
+          ],
         }),
       )
     })
@@ -209,7 +214,7 @@ describe('games', () => {
         prompt,
         gameTool,
         expect.objectContaining({
-          disallowedCategories: [],
+          disallowedCategories: alwaysDisallowedCategories,
           wordConstraints:
             'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
         }),
@@ -231,7 +236,7 @@ describe('games', () => {
         prompt,
         gameTool,
         expect.objectContaining({
-          disallowedCategories: [],
+          disallowedCategories: alwaysDisallowedCategories,
           wordConstraints: expect.stringContaining('all words must be 4 letters'),
         }),
       )
@@ -254,7 +259,7 @@ describe('games', () => {
         gameTool,
         expect.objectContaining({
           categoryConstraints: expect.any(Array),
-          disallowedCategories: [],
+          disallowedCategories: alwaysDisallowedCategories,
         }),
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(

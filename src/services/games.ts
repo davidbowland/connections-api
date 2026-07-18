@@ -1,13 +1,12 @@
 import { adjectives } from '../assets/adjectives'
 import {
+  alwaysDisallowedCategories,
   categoryConstraints as categoryConstraintChoices,
   wordConstraints as wordConstraintsChoices,
 } from '../assets/constraints'
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
 import {
-  avoidNextGamesCount,
-  avoidPastGamesCount,
   inspirationAdjectivesCount,
   inspirationNounsCount,
   inspirationVerbsCount,
@@ -18,7 +17,7 @@ import { CategoryObject, ConnectionsData, GameId, ToolSchema } from '../types'
 import { getDateConstraint } from '../utils/constraints'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
-import { getGamesByIds, getPromptById, setGameById } from './dynamodb'
+import { getAllGames, getPromptById, setGameById } from './dynamodb'
 import { verifyAndFixGame } from './verification'
 
 export const gameTool: ToolSchema = {
@@ -126,19 +125,6 @@ const getModelContext = (
   }
 }
 
-export const getContextGameIds = (gameId: string): GameId[] => {
-  const gameDate = new Date(gameId)
-  const contextGameIds: GameId[] = []
-  for (let i = -avoidPastGamesCount; i <= avoidNextGamesCount; i++) {
-    const contextDate = new Date(gameDate)
-    contextDate.setDate(contextDate.getDate() + i)
-    if (contextDate >= new Date('2025-01-01') && contextDate < new Date()) {
-      contextGameIds.push(contextDate.toISOString().split('T')[0])
-    }
-  }
-  return contextGameIds
-}
-
 const transformWordsToUpperCase = (connectionsData: ConnectionsData): ConnectionsData => ({
   ...connectionsData,
   categories: Object.entries(connectionsData.categories).reduce(
@@ -191,11 +177,11 @@ export const createGame = async (
   gameId: GameId,
   random = Math.random,
 ): Promise<ConnectionsData> => {
-  const contextGameIds = getContextGameIds(gameId)
-  const contextGames = await getGamesByIds(contextGameIds)
-  const disallowedCategories = Object.values(contextGames).flatMap((game) =>
-    Object.keys(game.categories),
-  )
+  const pastGames = await getAllGames()
+  const disallowedCategories = [
+    ...alwaysDisallowedCategories,
+    ...Object.values(pastGames).flatMap((game) => Object.keys(game.categories)),
+  ]
   const modelContext = getModelContext(new Date(gameId), disallowedCategories, random)
   log('Creating game with context', { modelContext })
 

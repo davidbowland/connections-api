@@ -1,5 +1,4 @@
 import {
-  BatchGetItemCommand,
   ConditionalCheckFailedException,
   DeleteItemCommand,
   DynamoDB,
@@ -7,6 +6,7 @@ import {
   PutItemCommand,
   PutItemOutput,
   QueryCommand,
+  ScanCommand,
 } from '@aws-sdk/client-dynamodb'
 
 import {
@@ -67,28 +67,23 @@ export const getGameById = async (gameId: GameId, now = Date.now): Promise<GameR
   return { isGenerating }
 }
 
-export const getGamesByIds = async (
-  gameIds: GameId[],
-): Promise<Record<GameId, ConnectionsData>> => {
-  if (gameIds.length === 0) return {}
-
-  const command = new BatchGetItemCommand({
-    RequestItems: {
-      [dynamodbGamesTableName]: {
-        Keys: gameIds.map((gameId) => ({ GameId: { S: gameId } })),
-      },
-    },
-  })
-  const response = await dynamodb.send(command)
+export const getAllGames = async (): Promise<Record<GameId, ConnectionsData>> => {
   const result: Record<GameId, ConnectionsData> = {}
+  let lastEvaluatedKey: Record<string, any> | undefined
 
-  response.Responses?.[dynamodbGamesTableName]?.forEach((item: any) => {
-    const gameId = item.GameId?.S as GameId
-    if (item.Data?.S) {
-      const data = JSON.parse(item.Data.S as string) as ConnectionsData
-      result[gameId] = data
-    }
-  })
+  do {
+    const command = new ScanCommand({
+      ...(lastEvaluatedKey ? { ExclusiveStartKey: lastEvaluatedKey } : {}),
+      TableName: dynamodbGamesTableName,
+    })
+    const response = await dynamodb.send(command)
+    response.Items?.forEach((item: any) => {
+      if (item.Data?.S) {
+        result[item.GameId?.S as GameId] = JSON.parse(item.Data.S as string) as ConnectionsData
+      }
+    })
+    lastEvaluatedKey = response.LastEvaluatedKey
+  } while (lastEvaluatedKey)
 
   return result
 }
