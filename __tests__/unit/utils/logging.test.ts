@@ -1,10 +1,4 @@
-import { DynamoDB } from '@aws-sdk/client-dynamodb'
-import * as AWSXRay from 'aws-xray-sdk-core'
-import https from 'https'
-
-import { extractRequestError, log, logDebug, logError, xrayCapture, xrayCaptureHttps } from '@utils/logging'
-
-jest.mock('aws-xray-sdk-core')
+import { extractRequestError, log, logDebug, logError } from '@utils/logging'
 
 describe('logging', () => {
   beforeAll(() => {
@@ -53,47 +47,6 @@ describe('logging', () => {
       await logError(error)
 
       expect(console.error).toHaveBeenCalledWith(error)
-    })
-  })
-
-  describe('xrayCapture', () => {
-    const capturedDynamodb = 'captured-dynamodb' as unknown as DynamoDB
-    const dynamodb = 'dynamodb'
-
-    beforeAll(() => {
-      jest.mocked(AWSXRay).captureAWSv3Client.mockReturnValue(capturedDynamodb)
-    })
-
-    it('should invoke AWSXRay.captureAWSClient when x-ray is enabled (not running locally)', () => {
-      process.env.AWS_SAM_LOCAL = 'false'
-      const result = xrayCapture(dynamodb)
-
-      expect(AWSXRay.captureAWSv3Client).toHaveBeenCalledWith(dynamodb)
-      expect(result).toEqual(capturedDynamodb)
-    })
-
-    it('should return the same object when x-ray is disabled (running locally)', () => {
-      process.env.AWS_SAM_LOCAL = 'true'
-      const result = xrayCapture(dynamodb)
-
-      expect(AWSXRay.captureAWSv3Client).toHaveBeenCalledTimes(0)
-      expect(result).toEqual(dynamodb)
-    })
-  })
-
-  describe('xrayCaptureHttps', () => {
-    it('should invoke AWSXRay.captureHTTPsGlobal when x-ray is enabled (not running locally)', () => {
-      process.env.AWS_SAM_LOCAL = 'false'
-      xrayCaptureHttps()
-
-      expect(AWSXRay.captureHTTPsGlobal).toHaveBeenCalledWith(https)
-    })
-
-    it('should return the same object when x-ray is disabled (running locally)', () => {
-      process.env.AWS_SAM_LOCAL = 'true'
-      xrayCaptureHttps()
-
-      expect(AWSXRay.captureHTTPsGlobal).toHaveBeenCalledTimes(0)
     })
   })
 })

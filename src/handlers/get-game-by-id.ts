@@ -3,10 +3,10 @@ import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda'
 import { getGameById, GameResult } from '../services/dynamodb'
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2, GameId } from '../types'
 import { isValidGameId } from '../utils/game-id'
-import { log, logError, xrayCapture } from '../utils/logging'
+import { log, logError } from '../utils/logging'
 import status from '../utils/status'
 
-const lambda = xrayCapture(new LambdaClient({ apiVersion: '2012-08-10' }))
+const lambda = new LambdaClient({ apiVersion: '2012-08-10' })
 
 const getConnectionsData = async (gameId: GameId): Promise<GameResult> => {
   log('Retrieving game', { gameId })

@@ -15,7 +15,6 @@ jest.mock('@services/dynamodb')
 jest.mock('@utils/logging', () => ({
   log: jest.fn(),
   logError: jest.fn(),
-  xrayCapture: jest.fn().mockImplementation((x) => x),
 }))
 
 const event = {

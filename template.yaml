@@ -106,7 +106,6 @@ Resources:
         'created-for': 'connections'
         'environment': !Ref Environment
       Timeout: 15
-      Tracing: Active
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -175,7 +174,6 @@ Resources:
         'created-for': 'connections'
         'environment': !Ref Environment
       Timeout: 15
-      Tracing: Active
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -264,7 +262,6 @@ Resources:
         'created-for': 'connections'
         'environment': !Ref Environment
       Timeout: !FindInMap [EnvironmentMap, !Ref Environment, createGameTimeout]
-      Tracing: Active
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -357,7 +354,6 @@ Resources:
         'created-for': 'connections'
         'environment': !Ref Environment
       Timeout: 15
-      Tracing: Active
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

@@ -11,9 +11,8 @@ import {
 
 import { dynamodbGamesTableName, dynamodbPromptsTableName, gameGenerationTimeoutMs } from '../config'
 import { ConnectionsData, GameId, Prompt, PromptId } from '../types'
-import { xrayCapture } from '../utils/logging'
 
-const dynamodb = xrayCapture(new DynamoDB({ apiVersion: '2012-08-10' }))
+const dynamodb = new DynamoDB({ apiVersion: '2012-08-10' })
 
 // Prompts
 

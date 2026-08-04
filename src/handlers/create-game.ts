@@ -4,7 +4,7 @@ import { ScheduledEvent } from 'aws-lambda'
 import { maxGameGenerationAttempts } from '../config'
 import { resetGameGenerationStarted, setGameGenerationStarted } from '../services/dynamodb'
 import { createGame } from '../services/games'
-import { log, xrayCapture } from '../utils/logging'
+import { log } from '../utils/logging'
 
 interface CreateGameEvent {
   gameId?: string
@@ -12,7 +12,7 @@ interface CreateGameEvent {
   generationStartedAt?: number
 }
 
-const lambda = xrayCapture(new LambdaClient({ apiVersion: '2012-08-10' }))
+const lambda = new LambdaClient({ apiVersion: '2012-08-10' })
 
 const nextGameId = (): string => {
   const tomorrow = new Date()

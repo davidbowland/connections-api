@@ -17,7 +17,6 @@ jest.mock('@services/dynamodb')
 jest.mock('@services/games')
 jest.mock('@utils/logging', () => ({
   log: jest.fn(),
-  xrayCapture: jest.fn().mockImplementation((x) => x),
 }))
 
 const scheduledEvent = {

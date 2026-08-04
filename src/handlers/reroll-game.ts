@@ -5,11 +5,11 @@ import { createGameFunctionName, ssmRerollPasswordPath } from '../config'
 import { deleteGameById } from '../services/dynamodb'
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2, GameId } from '../types'
 import { isValidGameId } from '../utils/game-id'
-import { log, logError, xrayCapture } from '../utils/logging'
+import { log, logError } from '../utils/logging'
 import status from '../utils/status'
 
-const lambda = xrayCapture(new LambdaClient({ apiVersion: '2012-08-10' }))
-const ssm = xrayCapture(new SSMClient({}))
+const lambda = new LambdaClient({ apiVersion: '2012-08-10' })
+const ssm = new SSMClient({})
 
 const getPassword = async (): Promise<string> => {
   const command = new GetParameterCommand({
