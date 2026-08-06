@@ -54,7 +54,7 @@ TypeScript accepts `connectionsData` (typed `ConnectionsData`) as input since `C
 Steps:
 
 1. Fetch Haiku prompt via `llmVerifyPromptId` (same DynamoDB pattern as `llmPromptId`)
-2. Call `invokeModel(prompt, { game, modelContext })` — both are serialised as a single JSON blob under the `${context}` substitution; the prompt receives `{ "game": {...}, "modelContext": {...} }` as one object
+2. Call `invokeModel(prompt, { game, modelContext })` — both are serialized as a single JSON blob under the `${context}` substitution; the prompt receives `{ "game": {...}, "modelContext": {...} }` as one object
 3. Parse `VerificationResult` from response
 4. Handle verdict:
    - `pass` → return `game` unchanged
@@ -90,12 +90,12 @@ Haiku always returns the **full corrected list**, not a diff. The service diffs 
 
 ## Fix Limits (enforced in service, not prompt)
 
-| Limit                               | Value | Behaviour if exceeded |
+| Limit                               | Value | Behavior if exceeded |
 | ----------------------------------- | ----- | --------------------- |
 | Word changes per category           | ≤ 2   | throw                 |
 | Word changes total (all categories) | ≤ 4   | throw                 |
 | Category replacements               | ≤ 1   | throw                 |
-| Unrecognised verdict string         | —     | throw                 |
+| Unrecognized verdict string         | —     | throw                 |
 
 Mechanical validation after fixes runs once in `createGame()`. Failure → throw. No second Haiku call. `verifyAndFixGame` itself does not run validation — it returns the modified game and lets `createGame()` validate.
 
@@ -156,7 +156,7 @@ export const llmVerifyPromptId = process.env.LLM_VERIFY_PROMPT_ID as string
 | `fix` exceeding total limit (> 4 word changes)        | throws                                   |
 | `fix` with > 1 category replaced                      | throws                                   |
 | `fail` verdict                                        | throws                                   |
-| Unrecognised verdict string (e.g. `"retry"`)          | throws                                   |
+| Unrecognized verdict string (e.g. `"retry"`)          | throws                                   |
 | Malformed Haiku response (JSON parse failure)         | throws                                   |
 
 Bedrock calls mocked the same way existing tests mock them.

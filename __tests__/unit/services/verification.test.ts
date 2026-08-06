@@ -119,11 +119,11 @@ describe('verification', () => {
       )
     })
 
-    it('should throw on unrecognised verdict string', async () => {
+    it('should throw on unrecognized verdict string', async () => {
       const result = { verdict: 'retry', reason: 'Try again' } as unknown as VerificationResult
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
 
-      await expect(verifyAndFixGame(game, {})).rejects.toThrow('Unrecognised verdict: retry')
+      await expect(verifyAndFixGame(game, {})).rejects.toThrow('Unrecognized verdict: retry')
     })
 
     it('should throw on malformed verifier response (JSON parse failure)', async () => {

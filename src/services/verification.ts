@@ -131,6 +131,6 @@ export const verifyAndFixGame = async (
   } else if (result.verdict === 'fix') {
     return applyFixes(game, result)
   } else {
-    throw new Error(`Unrecognised verdict: ${(result as any).verdict}`)
+    throw new Error(`Unrecognized verdict: ${(result as any).verdict}`)
   }
 }

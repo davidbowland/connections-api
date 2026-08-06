@@ -43,7 +43,7 @@ const tier1CategoryConstraints: string[] = [
   'Pop culture with modifier (e.g., "Oscar winners", "90s action films", "Rappers without Lil")',
   'Words that plausibly fit into multiple common categories, creating maximum misdirection (e.g., words that could be colors, animals, OR verbs)',
   'Literature references, but not more than one name unless they are also common words (e.g. "The four horsemen of the apocalypse: CONQUEST, WAR, FAMINE, DEATH" or "Characters in The Canterbury Tales: MILLER, PARDONER, KNIGHT, WIFE OF BATH")',
-  'History references, but not more than one name unless they are also common words (e.g. "Originated in ancient Greece: GEOMETRY, THEATRE, ATOMIC THEORY, MEDICINE")',
+  'History references, but not more than one name unless they are also common words (e.g. "Originated in ancient Greece: GEOMETRY, THEATER, ATOMIC THEORY, MEDICINE")',
   'Words associated with a specific sense — taste, texture, sound (e.g., "Things that are crunchy", "Words that sound soft", "Things that taste bitter")',
   'Pop culture concepts, but not more than one name unless they are also common words (e.g. "Rocky Horror Picture Show: ROCKY, HORROR, PICTURE, SHOW" or "Members of The Breakfast Club: BRAIN, ATHLETE, BASKET CASE, PRINCESS")',
 ]
