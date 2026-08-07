@@ -1,9 +1,14 @@
 # AWS SAM
 .aws-sam/
+
+# SWC compiler cache
 .swc/
 
 # Node artifact files
-node_modules/
+# No trailing slash on node_modules: parallel-agent worktrees symlink it rather
+# than reinstalling, and a trailing slash only matches directories, so `git add -A`
+# in a worktree would stage the symlink.
+node_modules
 dist/
 coverage/
 public/
@@ -49,5 +54,10 @@ Thumbs.db
 *.mov
 *.wmv
 
-docs/
+# Agent, editor, and incremental-build scratch
 .claude/
+.superpowers/
+.vscode
+.worktrees/
+docs/
+tsconfig.tsbuildinfo
