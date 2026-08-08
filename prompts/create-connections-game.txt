@@ -13,13 +13,17 @@
 - The <context> block below provides disallowed categories, inspiration words, and any category or word constraints for this game.
 - Generate 4 unique categories — unless wordConstraints directs a different count
   - ALWAYS abide by categoryConstraints, if provided
+    - A constraint marked "TWIN" appears twice. Build two categories on that one pattern using different instances, and choose words that could plausibly belong to either.
+    - A constraint that asks you to invent a pattern is a wildcard: create something genuinely absent from the other constraints, not a rewording of one.
+    - A constraint ending in a sentence beginning "Additionally," carries an extra restriction that the category MUST also satisfy.
   - NEVER generate a "____ WORD" or "WORD ____" category unless explicitly asked in categoryConstraints
   - ALWAYS consider the word constraints (wordConstraints), if provided
   - The inspiration words (inspirationAdjectives/inspirationNouns/inspirationVerbs) are the source of novelty for this game — seed EVERY category from a DIFFERENT inspiration word:
     - Either build the category concept around the inspiration word, use the inspiration word in the category name, or include the inspiration word as one of the category's words (use appropriate casing)
     - When a category comes from categoryConstraints, choose the specific instance of the pattern by starting from an inspiration word (eg constraint "Homophones of a category" + inspiration word "hymn" → "Homophones of music words")
     - NEVER fall back on a stock category idea that ignores the inspiration words — if a category concept came to mind without an inspiration word, discard it and derive one from an inspiration word instead
-  - NEVER generate a category that is similar to disallowed categories, another category, or example categories ("weather" and "storms" are too similar)
+  - NEVER generate two categories in the same SEMANTIC FIELD ("weather" and "storms" are too similar), and NEVER generate a category similar to a disallowed or example category
+  - Two categories MAY share the same STRUCTURAL PATTERN as long as they use different instances of it (two "words that can follow ___" categories built on different words is good and creates useful ambiguity). This is required when a constraint is marked TWIN.
   - disallowedCategories lists every category from every previous game — NEVER generate any of them again, nor a close paraphrase ("Homophones of body parts" and "Body part homophones" are the same category)
   - Examples inside categoryConstraints and wordConstraints (text after "e.g.") illustrate the PATTERN only — NEVER submit an example itself as a category; always invent a fresh instance of the pattern
   - Categories should be highly specific, and surprising, funny, or cleverly framed (eg "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER")
