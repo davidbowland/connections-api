@@ -77,6 +77,25 @@ export const tier3CategoryConstraints: string[] = [
   'Eponyms — common words derived from real people\'s names, grouped by domain (e.g., "Named after military figures: CARDIGAN, SHRAPNEL, WELLINGTON, BOWIE" or "Named after scientists: WATT, FAHRENHEIT, DIESEL, BUNSEN"). Always pick a consistent domain — never mix domains in one category.',
 ]
 
+// Occupies a single slot and asks the model to invent a pattern the tier lists do not cover.
+export const wildcardConstraint =
+  'Invent a category pattern that does not appear elsewhere in this list and is not a close variant of one. Describe the pattern plainly in the category name.'
+
+// Appended to the pattern shared by the two twin slots. Two categories on one pattern force the
+// solver to separate instances rather than spot the pattern once and be done.
+export const twinSuffix =
+  ' — TWIN: another category in this game uses this same pattern. Use a DIFFERENT instance of it, and choose words that could plausibly belong to either instance.'
+
+// Stacked onto one already-drawn slot to push a familiar pattern somewhere less predictable.
+export const constraintModifiers: string[] = [
+  'Additionally, every word in this category must also be a common verb.',
+  'Additionally, narrow this category to a single specific decade, place, or named source.',
+  'Additionally, invert the usual form of this pattern — build the category around what fails to fit it.',
+  'Additionally, every word in this category must also share one unrelated surface property (all compound words, all two syllables, all containing a double letter).',
+  'Additionally, combine this pattern with a second unrelated pattern so that each word satisfies both at once.',
+  'Additionally, restrict this category to words that are also proper nouns in a different context.',
+]
+
 export interface TierDefinition {
   constraints: string[]
   probability: number
