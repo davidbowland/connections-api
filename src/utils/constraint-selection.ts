@@ -95,10 +95,17 @@ export const selectCategoryConstraints = (count: number, random: () => number): 
     return selected
   }
 
-  // The wildcard slot is already an open instruction to invent a pattern; layering a modifier on
-  // top of it compounds ambiguity instead of adding variety.
-  const firstModifiable = useWildcard ? 1 : 0
-  const target = firstModifiable + pickIndex(modifierIndexRoll, count - firstModifiable)
+  // Skip the special slots. The wildcard is already an open instruction to invent a pattern, so
+  // layering a modifier on it compounds ambiguity instead of adding variety. The twin pair must
+  // stay byte-identical -- modifying one half would leave two categories that are supposed to be
+  // matched instances of one pattern carrying different instructions, which defeats the point.
+  const firstModifiable = useWildcard ? 1 : useTwin ? 2 : 0
+  const modifiableCount = count - firstModifiable
+  // A twin in a 2-slot game leaves nothing modifiable; skip rather than index out of range.
+  if (modifiableCount < 1) {
+    return selected
+  }
+  const target = firstModifiable + pickIndex(modifierIndexRoll, modifiableCount)
   const modifier = constraintModifiers[pickIndex(modifierChoiceRoll, constraintModifiers.length)]
   return selected.map((constraint, index) => (index === target ? `${constraint} ${modifier}` : constraint))
 }

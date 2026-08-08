@@ -213,6 +213,24 @@ describe('constraint-selection', () => {
 
       expect(random).toHaveBeenCalledTimes(10)
     })
+    it('should never modify only one half of a twin pair', () => {
+      // wildcard miss, twin hit, twin pattern, modifier HIT, index 0, choice 0
+      const random = jest.fn(mockSequence([0.99, 0, 0, 0, 0, 0]))
+
+      const selected = selectCategoryConstraints(4, random)
+      const twins = selected.filter((entry) => entry.includes(twinSuffix))
+
+      expect(twins).toHaveLength(2)
+      expect(twins[0]).toEqual(twins[1])
+    })
+
+    it('should still apply a modifier to a non-twin slot when a twin fires', () => {
+      const random = jest.fn(mockSequence([0.99, 0, 0, 0, 0, 0]))
+
+      const selected = selectCategoryConstraints(4, random)
+
+      expect(selected.filter((entry) => entry.includes(constraintModifiers[0]))).toHaveLength(1)
+    })
   })
 
   // The shim below is what getModelContext actually samples until the weighted draw is wired in.
@@ -220,6 +238,7 @@ describe('constraint-selection', () => {
   // tier 1 and put a rare pattern in ~84% of games instead of ~49%. Nothing else in the suite
   // would catch that, because the games tests pin Math.random to 0 and therefore always select
   // index 0, which is identical in both pools.
+
   describe('categoryConstraints compatibility shim', () => {
     it('should preserve the original 4x/2x/1x tier weighting', () => {
       const count = (constraint: string) => categoryConstraints.filter((entry) => entry === constraint).length
