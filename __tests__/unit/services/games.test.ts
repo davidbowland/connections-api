@@ -1,5 +1,12 @@
 import { connectionsData, prompt } from '../__mocks__'
-import { alwaysDisallowedCategories } from '@assets/constraints'
+import {
+  alwaysDisallowedCategories,
+  constraintModifiers,
+  tier1CategoryConstraints,
+  tier2CategoryConstraints,
+  tier3CategoryConstraints,
+  wildcardConstraint,
+} from '@assets/constraints'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
 import { createGame, gameTool } from '@services/games'
@@ -51,12 +58,19 @@ describe('games', () => {
       mockMathRandom.mockReturnValueOnce(1)
       const result = await createGame('2025-01-01', mockMathRandom)
 
-      const categoryExpect = expect.stringContaining('Specific category of things/items')
+      // Every roll after the forced word-constraint miss is 0, so selectCategoryConstraints takes
+      // the wildcard slot (0 < WILDCARD_SLOT_CHANCE), applies the first modifier to the first
+      // ordinary slot, and fills the rest with distinct tier 1 patterns.
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
         gameTool,
         expect.objectContaining({
-          categoryConstraints: expect.arrayContaining([categoryExpect, categoryExpect, categoryExpect, categoryExpect]),
+          categoryConstraints: [
+            wildcardConstraint,
+            `${tier1CategoryConstraints[0]} ${constraintModifiers[0]}`,
+            tier1CategoryConstraints[1],
+            tier1CategoryConstraints[2],
+          ],
           disallowedCategories: alwaysDisallowedCategories,
           inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
           inspirationNouns: expect.arrayContaining(['time', 'execution']),
@@ -72,6 +86,49 @@ describe('games', () => {
       )
       expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData)
       expect(result).toEqual(connectionsData)
+    })
+
+    it('should request exactly four category constraints', async () => {
+      mockMathRandom.mockReturnValueOnce(1)
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
+      expect(context.categoryConstraints).toHaveLength(4)
+    })
+
+    // Regression guard for the flat-pool shim getModelContext used to sample: every emitted slot
+    // must trace back to a tier array or to one of the special slot texts, and the slots must be
+    // distinct. A uniform draw over a concatenated pool would satisfy neither the wildcard nor the
+    // modifier assertion below.
+    it('should draw every category constraint from the weighted tier pools', async () => {
+      mockMathRandom.mockReturnValueOnce(1)
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
+      const knownPatterns = [
+        wildcardConstraint,
+        ...tier1CategoryConstraints,
+        ...tier2CategoryConstraints,
+        ...tier3CategoryConstraints,
+      ]
+      const recognized = (context.categoryConstraints as string[]).filter((constraint) =>
+        knownPatterns.some((pattern) => constraint.startsWith(pattern)),
+      )
+
+      expect(recognized).toEqual(context.categoryConstraints)
+      expect(new Set(context.categoryConstraints as string[]).size).toEqual(4)
+    })
+
+    it('should emit the wildcard and modifier slots the weighted selection produces', async () => {
+      mockMathRandom.mockReturnValueOnce(1)
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
+      expect(context.categoryConstraints[0]).toEqual(wildcardConstraint)
+      expect(context.categoryConstraints[1]).toEqual(`${tier1CategoryConstraints[0]} ${constraintModifiers[0]}`)
     })
 
     it('should pass always-disallowed categories plus every category from game history', async () => {

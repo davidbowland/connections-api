@@ -1,10 +1,6 @@
 import { adjectives } from '../assets/adjectives'
 import { chargedWords } from '../assets/blocklist'
-import {
-  alwaysDisallowedCategories,
-  categoryConstraints as categoryConstraintChoices,
-  wordConstraints as wordConstraintsChoices,
-} from '../assets/constraints'
+import { alwaysDisallowedCategories, wordConstraints as wordConstraintsChoices } from '../assets/constraints'
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
 import {
@@ -15,11 +11,18 @@ import {
   wordConstraintChance,
 } from '../config'
 import { CategoryObject, ConnectionsData, GameId, ToolSchema } from '../types'
+import { selectCategoryConstraints } from '../utils/constraint-selection'
 import { getDateConstraint } from '../utils/constraints'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getAllGames, getPromptById, setGameById } from './dynamodb'
 import { verifyAndFixGame } from './verification'
+
+// A word constraint can ask for five categories ("always generate 5 categories rather than 4"),
+// but that constraint is mutually exclusive with category constraints -- the word-constraint branch
+// of getModelContext returns before any category constraint is drawn. This path is therefore always
+// the four-category one.
+const CATEGORY_SLOT_COUNT = 4
 
 export const gameTool: ToolSchema = {
   description: 'Submit the generated Connections game.',
@@ -44,26 +47,22 @@ export const gameTool: ToolSchema = {
   name: 'submit_game',
 }
 
+// Samples without replacement, so callers must pass a copy -- it swaps drawn entries to the tail of
+// the array it is given. The duplicate-allowing mode this used to carry existed only for the flat
+// category-constraint pool; selectCategoryConstraints owns that draw now.
 const getRandomSample = <T>(
   array: T[],
   count: number,
-  {
-    withDuplicates = false,
-    length,
-    random = Math.random,
-  }: { withDuplicates?: boolean; length?: number; random?: () => number } = {},
+  { length, random = Math.random }: { length?: number; random?: () => number } = {},
 ): T[] => {
   const max = length ?? array.length
   const index = Math.floor(random() * max)
   const value = array[index]
   if (count === 1) {
     return [value]
-  } else if (withDuplicates) {
-    return [value, ...getRandomSample(array, count - 1, { withDuplicates: true, length: max, random })]
-  } else {
-    array[index] = array[max - 1]
-    return [value, ...getRandomSample(array, count - 1, { length: max - 1, random })]
   }
+  array[index] = array[max - 1]
+  return [value, ...getRandomSample(array, count - 1, { length: max - 1, random })]
 }
 
 const getModelContext = (date: Date, disallowedCategories: string[], random = Math.random): Record<string, any> => {
@@ -105,10 +104,7 @@ const getModelContext = (date: Date, disallowedCategories: string[], random = Ma
       wordConstraints,
     }
   } else {
-    const categoryConstraints = getRandomSample([...categoryConstraintChoices], 4, {
-      withDuplicates: true,
-      random,
-    })
+    const categoryConstraints = selectCategoryConstraints(CATEGORY_SLOT_COUNT, random)
     return {
       categoryConstraints,
       disallowedCategories,
