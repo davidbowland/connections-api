@@ -273,5 +273,47 @@ describe('games', () => {
 
       await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated words are not unique')
     })
+
+    it('should throw when a category word is a charged term', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        categories: {
+          Cat1: { hint: 'Category 1 hint', words: ['DAMN', 'WORD2', 'WORD3', 'WORD4'] },
+          Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          Cat4: { hint: 'Category 4 hint', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },
+        },
+        wordList: [],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a charged term')
+    })
+
+    it('should throw when a category name contains a charged term', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        categories: {
+          'Damn good things': { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+          Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          Cat4: { hint: 'Category 4 hint', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },
+        },
+        wordList: [],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a charged term')
+    })
+
+    it('should not reject words that merely contain a charged term as a substring', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        categories: {
+          Cat1: { hint: 'Category 1 hint', words: ['ASSESS', 'COCKTAIL', 'SCUNTHORPE', 'CLASSIC'] },
+          Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          Cat4: { hint: 'Category 4 hint', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },
+        },
+        wordList: [],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+    })
   })
 })
