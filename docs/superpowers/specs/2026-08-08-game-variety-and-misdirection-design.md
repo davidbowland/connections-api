@@ -206,15 +206,73 @@ project's security guidance, and leave the prompt instruction soft.
 
 ### 2.4 Bound `disallowedCategories`
 
-Keep the **1000 most recent categories** rather than all categories ever. Games
-are keyed by date, so sort by `GameId` descending and accumulate categories
-until the limit is reached in `createGame` (`src/services/games.ts:171`).
+The ban list is doing two jobs, and only one of them needs the model. Split it.
 
-At roughly four categories per game this covers about 250 games — eight months
-at one game per day — and costs approximately 8,500 input tokens per
-generation (~$0.04).
+**Model-visible list: the 500 most recent categories.** Games are keyed by date,
+so sort by `GameId` descending and accumulate categories until the limit is
+reached in `createGame` (`src/services/games.ts:171`). This exists to prevent
+*semantic* restatement ("Ways to say yes" vs "Synonyms for affirmative"), which
+only a model can catch and where recency matters most. Roughly 4,300 input
+tokens per generation.
 
 `alwaysDisallowedCategories` is unaffected and always included.
+
+**Everything older** is covered by §2.5, at no token cost.
+
+### 2.5 Code-side repeat rejection
+
+Reject exact and near-exact repeats in `validateGame` against the *entire*
+history, not just the model-visible window. Two deterministic layers, no
+similarity thresholds.
+
+**Layer 1 — normalized exact.** Lowercase, collapse whitespace, strip
+punctuation and leading articles, normalize blank runs (`____`, `–––`) to a
+single `___` sentinel. Catches casing and spacing drift.
+
+**Layer 2 — stemmed token set.** Drop stopwords, apply a light stemmer
+(trailing `s`/`es`), compare as a set. `"Homophones of body parts"` and
+`"Body part homophones"` both reduce to `{homophone, body, part}`. This is the
+paraphrase class that actually recurs: reordering, pluralization, "X of Y" ↔
+"Y X".
+
+Two constraints that are easy to get wrong:
+
+- **Blanks are positional and token sets destroy that.** `"___ BALL"` and
+  `"BALL ___"` both reduce to `{ball}` but are unrelated categories. Any name
+  containing a blank marker skips Layer 2 and uses Layer 1 only, with the
+  blank's position preserved in the key.
+- **The stopword list must not eat the mechanic.** `after`, `before`, `first`,
+  `last`, `second`, `ending`, `starting`, `containing`, `plus`, `minus` are
+  content words here. Strip them and `"Words after SWEET"` matches
+  `"Words before SWEET"`.
+
+**Rejected approach: character-level similarity** (Levenshtein, trigram Dice,
+Jaccard on n-grams). `"Types of tomatoes"` and `"Types of potatoes"` are edit
+distance 2 and score high on trigram overlap while being entirely unrelated.
+Short names drawn from a shared domain make character similarity actively
+hostile. Embeddings would handle it but add a service dependency and a tuned
+threshold to solve what §2.4 already covers.
+
+**Zero false positives is the requirement.** A false match silently discards a
+good category and burns a generation attempt with no visible cause. Both layers
+are exact comparisons on derived keys for that reason; everything genuinely
+fuzzy stays with the model, where a mistake is recoverable.
+
+Shape:
+
+```ts
+const canonicalize = (name: string): string    // Layer 1
+const tokenKey = (name: string): string | null // Layer 2; null when name has a blank
+```
+
+Both are pure string functions with no clock and no randomness. Two `Set`s are
+built once per `createGame` from full history; a generated category is a repeat
+if either key hits. On a hit `validateGame` throws and
+`maxGameGenerationAttempts` retries, matching the existing validators.
+
+Expected coverage: Layer 1 catches most literal repeats, Layer 2 most of the
+remaining paraphrases. True semantic restatement survives both by design — that
+is §2.4's job.
 
 ---
 
@@ -231,9 +289,16 @@ Per `CLAUDE.md`, everything must be deterministic.
   tier-3 cap holds; modifier never lands on the wildcard slot.
 - `validateGame` gets cases for decoy count, decoy category spread, and
   blocklist rejection.
-- The `disallowedCategories` cap is tested against a fixture exceeding 1000
+- The `disallowedCategories` cap is tested against a fixture exceeding 500
   categories, asserting both the count and that the retained ones are the
   newest.
+- `canonicalize` and `tokenKey` are pure functions and get direct table-driven
+  tests, including the cases that must **not** match: `"___ BALL"` vs
+  `"BALL ___"`, `"Words after SWEET"` vs `"Words before SWEET"`, and
+  `"Types of tomatoes"` vs `"Types of potatoes"`.
+- Repeat rejection is tested against history older than the 500-category
+  model-visible window, confirming the code layer covers what the prompt no
+  longer sees.
 
 ## Deployment
 
