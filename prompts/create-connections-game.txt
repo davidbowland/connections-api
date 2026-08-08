@@ -86,7 +86,7 @@ KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather 
 - Focus on surprising connections that make solvers think 'I never would have thought of that'
 - For spelling categories with embedded patterns, ensure ALL words contain the identical substring (eg "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE") and don't all appear in the same place ("DAY" always at the end of "EVERDAY" and "SOMEDAY")
   - Ensure the embedded pattern is itself a word of at least 4, preferably 5 or more letters, OR the embedded letters change each time (eg "PEAR" in "SPEAR" and "PLUM" in "PLUMBER" are both fruits, or categories "ENDING IN COLORS" or "STARTING WITH SYNONYMS FOR 'EAT'")
-  - If any category relies on word spelling, double-check that the spelling constraints are followed. Then, triple-check
+  - If any category relies on word spelling, double-check that the spelling constraints are followed
   - ONLY create spelling categories if instructed by constraints. NEVER create spelling categories unless told to do so
 - If the category is a word either before or after, think about whether each word actually BEGINS or ENDS with correct word (eg "____ DRAW" matches "QUICKDRAW" but NOT "DRAWSTRING")
 </category_guidelines>
