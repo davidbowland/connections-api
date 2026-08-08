@@ -417,7 +417,6 @@ export const adjectives: string[] = [
   'hazy',
   'husky',
   'cuddly',
-  'crap',
   'juicy',
   'gruesome',
   'dainty',

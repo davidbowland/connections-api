@@ -145,8 +145,12 @@ const TOKEN_SPLIT = /[^A-Z0-9]+/
 
 const tokenize = (value: string): string[] => value.toUpperCase().split(TOKEN_SPLIT).filter(Boolean)
 
+// Hints are checked alongside names and words because get-game-by-id returns the whole Category
+// object, hints included, so they are player-visible model prose -- and the verifier is allowed to
+// rewrite them wholesale. embeddedSubstrings are deliberately excluded: they are substrings by
+// construction, so whole-token matching against them is meaningless.
 export const findChargedTerm = (categories: CategoryObject): string | undefined => {
-  const candidates = Object.entries(categories).flatMap(([name, category]) => [name, ...category.words])
+  const candidates = Object.entries(categories).flatMap(([name, category]) => [name, category.hint, ...category.words])
   return candidates.flatMap(tokenize).find((token) => chargedWords.has(token))
 }
 

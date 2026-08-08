@@ -5,6 +5,7 @@ import eventJson from '@events/create-game.json'
 import { createGameHandler } from '@handlers/create-game'
 import * as dynamodb from '@services/dynamodb'
 import * as games from '@services/games'
+import * as logging from '@utils/logging'
 
 const mockSend = jest.fn()
 jest.mock('@aws-sdk/client-lambda', () => ({
@@ -17,6 +18,7 @@ jest.mock('@services/dynamodb')
 jest.mock('@services/games')
 jest.mock('@utils/logging', () => ({
   log: jest.fn(),
+  logError: jest.fn(),
 }))
 
 const scheduledEvent = {
@@ -116,6 +118,21 @@ describe('create-game', () => {
 
       expect(games.createGame).toHaveBeenCalledTimes(1)
       expect(mockSend).not.toHaveBeenCalled()
+    })
+
+    it('should log the terminal give-up at error level so the alarm subscription matches', async () => {
+      jest.mocked(games).createGame.mockRejectedValueOnce(new Error('Creation failed'))
+
+      await createGameHandler({
+        gameId: tomorrow,
+        attempt: 3,
+        generationStartedAt: GENERATION_STARTED_AT,
+      })
+
+      expect(logging.logError).toHaveBeenCalledWith(
+        'Game creation failed at max attempts, giving up',
+        expect.objectContaining({ gameId: tomorrow }),
+      )
     })
 
     it('should use resetGameGenerationStarted on attempt 2', async () => {
