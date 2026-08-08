@@ -92,9 +92,17 @@ export const categoryConstraintTiers: TierDefinition[] = [
   { constraints: tier3CategoryConstraints, probability: 0.06, tier: 3 },
 ]
 
-// Removed in Task 6 once getModelContext uses the weighted draw.
+// Temporary shim: getModelContext still samples this flat pool uniformly. It reproduces the
+// ORIGINAL 4x/2x/1x repetition on purpose — a plain concat would give tier 3 the same per-entry
+// weight as tier 1 and put a rare pattern in 84% of games instead of 49%, which is the opposite
+// of what the tier probabilities above are for. Delete this once getModelContext calls the
+// weighted draw; until then this file must stay behavior-preserving.
 export const categoryConstraints: string[] = [
   ...tier1CategoryConstraints,
+  ...tier1CategoryConstraints,
+  ...tier1CategoryConstraints,
+  ...tier1CategoryConstraints,
+  ...tier2CategoryConstraints,
   ...tier2CategoryConstraints,
   ...tier3CategoryConstraints,
 ]

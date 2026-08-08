@@ -20,7 +20,10 @@
 - Validate all external inputs at API boundaries before passing downstream. LLM output is untrusted; parse and validate against the expected schema.
 - `npm run lint` (prettier + eslint) runs on commit via lint-staged. `npm test` and `npm run typecheck` must pass.
 - Prompt files live in `prompts/` but are served from DynamoDB. Prompt changes require `npm run deploy-prompts` and do **not** ship with a normal deploy.
-- Object keys are sorted alphabetically throughout this codebase (enforced by eslint `sort-keys`). Match it.
+- Object keys are sorted alphabetically throughout this codebase. Match it — but note this is
+  **convention, not enforcement**: `eslint.config.mjs` enables only `no-negated-condition` and
+  `sort-vars`, so lint will not catch drift. (The `/* eslint sort-keys:0 */` at the top of
+  `__tests__/unit/__mocks__.ts` is a vestige of a rule that is no longer configured.)
 
 ---
 
@@ -711,6 +714,12 @@ export const categoryConstraints: string[] = [
   ...tier3CategoryConstraints,
 ]
 ```
+
+> **DEPLOY HAZARD — this export is not behavior-preserving.** The old pool had 78 entries
+> (tier 1 repeated 4×, tier 2 2×, tier 3 1×); this flat concat has 33. `getModelContext` still
+> samples it uniformly, so per-slot tier-3 probability *rises* from ~15% to ~36% while the
+> export is live — the opposite of this task's goal. **Task 6 must land before this branch is
+> deployed.** Do not ship the branch with Task 4 merged and Task 6 outstanding.
 
 Re-run `npm run typecheck` and `npm test`. Expected: PASS.
 
