@@ -32,8 +32,8 @@ export const wordConstraints: string[] = [
   'always generate 5 categories rather than 4',
 ]
 
-// Tier 1: Common patterns - good misdirection, appear frequently (weight: 4x)
-const tier1CategoryConstraints: string[] = [
+// Tier 1: Common patterns - good misdirection, appear frequently (probability: 0.70)
+export const tier1CategoryConstraints: string[] = [
   'Specific category of things/items — avoid pure semantic fields like "types of drinks" or "kitchen appliances"; prefer categories with lateral misdirection (e.g., "Punctuation marks", "Olympic events", "Monopoly tokens")',
   'Things sharing a property, or attributes of one specific thing (e.g., "Things that are stripy", "Things that are pink", "Foamy things", "Attributes of a frog", "Describes tires")',
   'Things found in/seen in a specific context (e.g., "Seen at airport security", "Words on Monopoly squares")',
@@ -48,8 +48,8 @@ const tier1CategoryConstraints: string[] = [
   'Pop culture concepts, but not more than one name unless they are also common words (e.g. "Rocky Horror Picture Show: ROCKY, HORROR, PICTURE, SHOW" or "Members of The Breakfast Club: BRAIN, ATHLETE, BASKET CASE, PRINCESS")',
 ]
 
-// Tier 2: Uncommon patterns - interesting but could become predictable (weight: 2x)
-const tier2CategoryConstraints: string[] = [
+// Tier 2: Uncommon patterns - interesting but could become predictable (probability: 0.24)
+export const tier2CategoryConstraints: string[] = [
   'Synonyms for something (e.g., "Euphemisms for death", "Ways to say yes", "Slang for money")',
   'Compound word components (e.g., "First words in compounds with BALL", "Second words in compounds with FIRE")',
   'Ending/starting with [category] (e.g., "Ending in colors: INFRARED, MARIGOLD" where each color appears ONLY ONCE)',
@@ -61,8 +61,8 @@ const tier2CategoryConstraints: string[] = [
   'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH", "Verbs that are also nouns: RUN, PLAY, BREAK")',
 ]
 
-// Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
-const tier3CategoryConstraints: string[] = [
+// Tier 3: Rare patterns - very specific, should appear infrequently (probability: 0.06, at most one per game)
+export const tier3CategoryConstraints: string[] = [
   'Homophones of a category (e.g., "Homophones of tools", "Homophones of numbers")',
   'Words spelled backwards are [category] (e.g., "Backwards animals: FLOW, GOD, TAB")',
   '[Category] plus a letter (e.g., "Organ plus letter: COLONY, HEARTH, LUNGE")',
@@ -77,12 +77,24 @@ const tier3CategoryConstraints: string[] = [
   'Eponyms — common words derived from real people\'s names, grouped by domain (e.g., "Named after military figures: CARDIGAN, SHRAPNEL, WELLINGTON, BOWIE" or "Named after scientists: WATT, FAHRENHEIT, DIESEL, BUNSEN"). Always pick a consistent domain — never mix domains in one category.',
 ]
 
+export interface TierDefinition {
+  constraints: string[]
+  probability: number
+  tier: 1 | 2 | 3
+}
+
+// Probability is per-tier, not per-entry. Adding a new tier-3 pattern therefore makes that
+// pattern more likely without making rare patterns collectively more common.
+// Tier 3 at 0.06 puts a rare pattern in roughly 22% of four-slot games (1 - 0.94^4).
+export const categoryConstraintTiers: TierDefinition[] = [
+  { constraints: tier1CategoryConstraints, probability: 0.7, tier: 1 },
+  { constraints: tier2CategoryConstraints, probability: 0.24, tier: 2 },
+  { constraints: tier3CategoryConstraints, probability: 0.06, tier: 3 },
+]
+
+// Removed in Task 6 once getModelContext uses the weighted draw.
 export const categoryConstraints: string[] = [
   ...tier1CategoryConstraints,
-  ...tier1CategoryConstraints,
-  ...tier1CategoryConstraints,
-  ...tier1CategoryConstraints,
-  ...tier2CategoryConstraints,
   ...tier2CategoryConstraints,
   ...tier3CategoryConstraints,
 ]
