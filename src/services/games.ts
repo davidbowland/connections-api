@@ -1,4 +1,5 @@
 import { adjectives } from '../assets/adjectives'
+import { chargedWords } from '../assets/blocklist'
 import {
   alwaysDisallowedCategories,
   categoryConstraints as categoryConstraintChoices,
@@ -140,6 +141,15 @@ const isEmbeddedSubstringsValid = (words: string[], embeddedSubstrings?: string[
   return words.every((word) => embeddedSubstrings.some((substring) => word.includes(substring)))
 }
 
+const TOKEN_SPLIT = /[^A-Z0-9]+/
+
+const tokenize = (value: string): string[] => value.toUpperCase().split(TOKEN_SPLIT).filter(Boolean)
+
+export const findChargedTerm = (categories: CategoryObject): string | undefined => {
+  const candidates = Object.entries(categories).flatMap(([name, category]) => [name, ...category.words])
+  return candidates.flatMap(tokenize).find((token) => chargedWords.has(token))
+}
+
 export const validateGame = (categories: CategoryObject): string[] => {
   const wordList = Object.values(categories).flatMap((cat) => cat.words.map((w) => w.toUpperCase()))
   if (new Set(wordList).size !== wordList.length) {
@@ -163,6 +173,13 @@ export const validateGame = (categories: CategoryObject): string[] => {
     })
     throw new Error('Generated invalid embedded substrings')
   }
+
+  const chargedTerm = findChargedTerm(categories)
+  if (chargedTerm) {
+    log('Generated a charged term', { chargedTerm })
+    throw new Error(`Generated a charged term: ${chargedTerm}`)
+  }
+
   return wordList
 }
 
