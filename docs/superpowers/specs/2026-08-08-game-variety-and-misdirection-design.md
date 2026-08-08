@@ -206,10 +206,13 @@ project's security guidance, and leave the prompt instruction soft.
 
 ### 2.4 Bound `disallowedCategories`
 
-Keep categories from the most recent **548 games** (approximately eighteen
-months at one game per day) rather than all games ever. Games are keyed by date,
-so sort by `GameId` descending and take the first 548 in
-`createGame` (`src/services/games.ts:171`).
+Keep the **1000 most recent categories** rather than all categories ever. Games
+are keyed by date, so sort by `GameId` descending and accumulate categories
+until the limit is reached in `createGame` (`src/services/games.ts:171`).
+
+At roughly four categories per game this covers about 250 games — eight months
+at one game per day — and costs approximately 8,500 input tokens per
+generation (~$0.04).
 
 `alwaysDisallowedCategories` is unaffected and always included.
 
@@ -228,8 +231,9 @@ Per `CLAUDE.md`, everything must be deterministic.
   tier-3 cap holds; modifier never lands on the wildcard slot.
 - `validateGame` gets cases for decoy count, decoy category spread, and
   blocklist rejection.
-- The `disallowedCategories` cap is tested against a fixture of more than 548
-  games, asserting both the count and that the retained ones are the newest.
+- The `disallowedCategories` cap is tested against a fixture exceeding 1000
+  categories, asserting both the count and that the retained ones are the
+  newest.
 
 ## Deployment
 
