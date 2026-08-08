@@ -307,9 +307,22 @@ Prompts live in DynamoDB, not the repo. Prompt changes require
 
 ## Sequencing
 
-Phase 1 is self-contained and carries most of the expected improvement. Phase 2
-touches the tool schema and both prompts, and should land after Phase 1 output
-has been observed for long enough to tune the three probabilities.
+Group by coupling rather than by phase number.
+
+**Ship together:** Phase 1 (§1.1–1.8), the charged-word blocklist (§2.3), and
+the repeat-detection split (§2.4–2.5). The two Phase 2 items here are
+independent of constraint selection — they touch `validateGame` and the history
+plumbing, need no tuning, and carry no interaction risk.
+
+**Hold:** the trap matrix (§2.1–2.2), until the above has produced observable
+output. Two reasons. Phase 1 changes which categories are *requested* while the
+trap matrix changes what must be *produced per category*; landing both at once
+makes any regression unattributable. And the decoy requirement interacts with
+the new slots in ways worth measuring first — a twin-mechanic game satisfies
+3–4 decoys trivially, a wildcard game may not — so the count and the
+≥3-category spread should be set against real output rather than guessed.
+
+The three probabilities in §1.7 are tuned during the hold period.
 
 ## Already landed
 
