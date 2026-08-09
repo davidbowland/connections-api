@@ -620,6 +620,19 @@ describe('games', () => {
       await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
     })
 
+    it('should pass the decoys to the verifier as a separate argument', async () => {
+      const decoys = [
+        { looksLike: 'Cat2', word: 'WORD1' },
+        { looksLike: 'Cat3', word: 'WORD5' },
+        { looksLike: 'Cat1', word: 'WORD9' },
+      ]
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys } as any)
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(jest.mocked(verification).verifyAndFixGame.mock.calls[0][2]).toEqual(decoys)
+    })
+
     it('should not persist decoys on the stored game', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
 
