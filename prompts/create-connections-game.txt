@@ -26,7 +26,8 @@
   - Two categories MAY share the same STRUCTURAL PATTERN as long as they use different instances of it (two "words that can follow ___" categories built on different words is good and creates useful ambiguity). This is required when a constraint is marked TWIN.
   - disallowedCategories lists the most recent previously-used categories — NEVER generate any of them again, nor a close paraphrase ("Homophones of body parts" and "Body part homophones" are the same category)
   - Examples inside categoryConstraints and wordConstraints (text after "e.g.") illustrate the PATTERN only — NEVER submit an example itself as a category; always invent a fresh instance of the pattern
-  - Categories should be highly specific, and surprising, funny, or cleverly framed (eg "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER")
+  - Categories should be highly specific, and surprising, funny, or cleverly framed (eg "Things that are stripy", "Rappers without Lil", "Words after SWEET")
+  - Wordplay gimmicks (backwards spellings, anagrams, hidden words, plus/minus a letter) belong in a game ONLY when a categoryConstraint asks for one. Do not reach for them otherwise.
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
   - Words can contain spaces or hyphens, as long as they're one concept (eg "FIRE EXTINGUISHER", "CUP HOLDER", "RINKY-DINK")

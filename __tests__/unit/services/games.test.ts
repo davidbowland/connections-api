@@ -145,7 +145,7 @@ describe('games', () => {
       expect(context.categoryConstraints[1]).toEqual(`${tier1CategoryConstraints[0]} ${constraintModifiers[0]}`)
     })
 
-    it('should pass always-disallowed categories plus every category from game history', async () => {
+    it('should pass always-disallowed categories plus the recent categories from game history', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce({
         '2024-12-31': {
           categories: {
@@ -493,6 +493,20 @@ describe('games', () => {
       expect(context.disallowedCategories).not.toContain('Boast')
     })
 
+    it('should reject two categories in the same game that key to the same name', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        categories: {
+          'Green things': { hint: 'h', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+          'Things that are green': { hint: 'h', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'h', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          Cat4: { hint: 'h', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },
+        },
+        wordList: [],
+      } as any)
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a repeated category')
+    })
+
     it('should reject a repeat that is still inside the model-visible window', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Boast', ...paddingCategoryNames(10)]))
 
@@ -662,7 +676,7 @@ describe('games', () => {
       expect(Object.keys(result)).not.toContain('decoys')
     })
 
-    it('should not pass decoys to the verifier', async () => {
+    it('should not merge decoys into the game object handed to the verifier', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
 
       await createGame('2025-01-01', mockMathRandom)

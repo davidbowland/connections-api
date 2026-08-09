@@ -187,11 +187,27 @@ export const buildCategoryHistory = (names: string[]): CategoryHistory => ({
   token: new Set(names.map(tokenKey).filter((key): key is string => key !== null)),
 })
 
-const findRepeatedCategory = (categories: CategoryObject, history: CategoryHistory): string | undefined =>
-  Object.keys(categories).find((name) => {
+// Checks the grid against itself as well as against history. Two categories in one game that share
+// a key are the same category by this module's own definition -- "Green things" and "Things that are
+// green" both key to "green things" -- and without the self-check that pair is legal today and fatal
+// tomorrow, once one of them is in history.
+const findRepeatedCategory = (categories: CategoryObject, history: CategoryHistory): string | undefined => {
+  const seenCanonical = new Set<string>()
+  const seenToken = new Set<string>()
+  return Object.keys(categories).find((name) => {
+    const canonical = canonicalize(name)
     const token = tokenKey(name)
-    return history.canonical.has(canonicalize(name)) || (token !== null && history.token.has(token))
+    const repeated =
+      history.canonical.has(canonical) ||
+      seenCanonical.has(canonical) ||
+      (token !== null && (history.token.has(token) || seenToken.has(token)))
+    seenCanonical.add(canonical)
+    if (token !== null) {
+      seenToken.add(token)
+    }
+    return repeated
   })
+}
 
 // "Some words should look like they belong to another category" is the single most important line
 // in the generation prompt and the least enforceable one. Making the model name its own traps in
@@ -206,9 +222,7 @@ export const validateDecoys = (categories: CategoryObject, decoys: Decoy[]): voi
     log('Generated too few decoys', { decoyCount: decoys.length })
     throw new Error(`Generated too few decoys: ${decoys.length}`)
   }
-  // No upper bound is enforced here. The schema declares maxItems as guidance, but a game with
-  // more decoys than asked for is MORE misdirection-rich, not less -- discarding it would burn a
-  // generation attempt to punish the model for exceeding the goal. Every entry is still validated.
+  // No upper bound; see MIN_DECOYS above. Every entry is validated regardless of how many arrive.
 
   const categoryNames = new Set(Object.keys(categories))
   const owningCategory = new Map<string, string>()

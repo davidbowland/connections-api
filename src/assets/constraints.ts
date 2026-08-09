@@ -58,7 +58,7 @@ export const tier2CategoryConstraints: string[] = [
   'Words that can follow a common word (e.g., "Words after SWEET", "Words that can follow FIRE")',
   'Words that can precede a common word (e.g., "Words before HOUSE", "Words that can precede BALL")',
   'Words that become new words with a common prefix (e.g., "Words that become new words with UN___", "Add RE___ to make new words", "OUT___ words")',
-  'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH", "Verbs that are also nouns: RUN, PLAY, BREAK")',
+  'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH")',
 ]
 
 // Tier 3: Rare patterns - very specific, should appear infrequently (probability: 0.06, at most one per game)

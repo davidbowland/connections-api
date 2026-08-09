@@ -57,6 +57,9 @@ Return one of three verdicts:
   - Games with wordConstraints specified CANNOT FAIL, only fix or pass
 
 When returning a `fix` verdict, always return the **full corrected list** for each affected entry, not a diff.
+The limits are enforced in code and a verdict that exceeds them is discarded along with the whole
+game: at most 2 changed words in any one category, at most 4 changed words overall, at most 1 full
+category replacement. Count your changed words before answering.
 </verdict-rules>
 <format>
 Call the `submit_verdict` tool with input matching one of these shapes:
@@ -145,7 +148,7 @@ Input game:
   }
 }
 Correct output:
-{"verdict":"fix","reason":"BAILIFF and JUDGE together immediately betray the Courtroom roles category.","fixes":{"Courtroom roles":{"words":["BAILIFF","BAR","BENCH","STAND"]}}}
+{"verdict":"fix","reason":"BAILIFF and JUDGE together immediately betray the Courtroom roles category; BAR and BENCH carry second meanings.","fixes":{"Courtroom roles":{"words":["BAILIFF","BAR","BENCH","CLERK"]}}}
 </examples>
 <context>
 ${context}

@@ -59,11 +59,11 @@ export const drawConstraints = (count: number, random: () => number, exclude: st
   return drawn
 }
 
-// Every special roll is consumed unconditionally and up front, in this fixed order:
+// The six special rolls are consumed unconditionally and up front, in this fixed order:
 //   1. wildcard  2. twin  3. twin pattern  4. modifier  5. modifier slot index  6. modifier choice
-// drawConstraints then takes two rolls per remaining slot. Consumption therefore depends only on
-// the slot count, never on which branch was taken, so a caller (or a test) can reason about the
-// sequence without simulating the branches.
+// That PREFIX is branch-independent. The total is not: drawConstraints takes two rolls per slot it
+// still has to fill, and the wildcard and twin slots fill themselves. For count=4 the totals are
+// 14 (no specials), 12 (wildcard), 10 (twin).
 export const selectCategoryConstraints = (count: number, random: () => number): string[] => {
   const wildcardRoll = random()
   const twinRoll = random()
@@ -92,7 +92,9 @@ export const selectCategoryConstraints = (count: number, random: () => number): 
   const excluded = useTwin ? [twinPattern] : []
   selected.push(...drawConstraints(count - selected.length, random, excluded).map(({ constraint }) => constraint))
 
-  if (modifierRoll >= modifierChance) {
+  // Written as `< chance` to match the wildcard and twin guards: an unset env var makes the
+  // comparison false and the feature silently off, rather than silently on for every game.
+  if (!(modifierRoll < modifierChance)) {
     return selected
   }
 
