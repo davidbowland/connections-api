@@ -291,13 +291,14 @@ export const createGame = async (gameId: GameId, random = Math.random): Promise<
   const pastCategories = Object.entries(pastGames)
     .sort(([left], [right]) => right.localeCompare(left))
     .flatMap(([, game]) => Object.keys(game.categories))
-  // Only the model-visible list is bounded. Its job is to stop semantic restatement, which only the
-  // model can judge and where recency matters most, so it pays tokens for the newest names only.
+  // The code-level check and the model-visible list are built from the SAME names, deliberately.
+  // Rejecting a repeat the model was never shown is a trap: the model cannot avoid what it was not
+  // told about, and the generation dies after the fact with no way for it to have done better.
+  // Sharing one window means a rejection only ever fires for a name the model was handed and told
+  // not to paraphrase, which makes the code layer a backstop for slips rather than a minefield.
+  // The cost is that a category may recur after roughly disallowedCategoryLimit/4 games.
   const disallowedCategories = [...alwaysDisallowedCategories, ...pastCategories.slice(0, disallowedCategoryLimit)]
-  // The code-level history covers the FULL archive, not just the model-visible window. Exact and
-  // reordered repeats are caught deterministically here at no token cost, so there is no reason to
-  // truncate it.
-  const categoryHistory = buildCategoryHistory([...alwaysDisallowedCategories, ...pastCategories])
+  const categoryHistory = buildCategoryHistory(disallowedCategories)
   const modelContext = getModelContext(new Date(gameId), disallowedCategories, random)
   log('Creating game with context', { modelContext })
 

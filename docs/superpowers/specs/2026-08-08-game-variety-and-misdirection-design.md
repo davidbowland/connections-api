@@ -208,7 +208,7 @@ project's security guidance, and leave the prompt instruction soft.
 
 The ban list is doing two jobs, and only one of them needs the model. Split it.
 
-**Model-visible list: the 500 most recent categories.** Games are keyed by date,
+**One window, shared by both mechanisms: the 500 most recent categories.** Games are keyed by date,
 so sort by `GameId` descending and accumulate categories until the limit is
 reached in `createGame` (`src/services/games.ts:171`). This exists to prevent
 *semantic* restatement ("Ways to say yes" vs "Synonyms for affirmative"), which
@@ -217,13 +217,23 @@ tokens per generation.
 
 `alwaysDisallowedCategories` is unaffected and always included.
 
-**Everything older** is covered by §2.5, at no token cost.
+**Everything older is covered by neither**, deliberately. See §2.5.
 
 ### 2.5 Code-side repeat rejection
 
-Reject exact and near-exact repeats in `validateGame` against the *entire*
-history, not just the model-visible window. Two deterministic layers, no
+Reject exact and near-exact repeats in `validateGame` against **the same window
+the model is shown** — not the entire archive. Two deterministic layers, no
 similarity thresholds.
+
+**Why the windows must match.** An earlier draft checked the full archive while
+showing the model only the recent 500. That makes every older name a trap: the
+model cannot avoid what it was not told about, so the generation dies after the
+fact with no way for it to have done better. The owner rejected exactly this
+shape of post-generation failure once before (2026-07-18) in favour of
+prompt-level steering. Sharing one window keeps the code layer honest — a
+rejection only ever fires for a name the model was handed and explicitly told
+not to paraphrase, making it a backstop for slips rather than a minefield. The
+cost is that a category may recur after roughly 125 games.
 
 **Layer 1 — normalized exact.** Lowercase, collapse whitespace, strip
 punctuation and leading articles, normalize blank runs (`____`, `–––`) to a

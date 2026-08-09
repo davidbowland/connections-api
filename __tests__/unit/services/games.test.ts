@@ -480,14 +480,26 @@ describe('games', () => {
       )
     })
 
-    // The whole point of the split: the prompt list is truncated, the code-level Set is not.
-    it('should still reject a repeat that is older than the model-visible window', async () => {
+    // The code-level check and the prompt list share one window on purpose. Rejecting a name the
+    // model was never shown is a trap -- it cannot avoid what it was not told about, and the
+    // generation dies with no way for it to have done better. Falling out of the window means
+    // falling out of BOTH, so a rejection always corresponds to a warning the model was given.
+    it('should not reject a repeat that has aged out of the model-visible window', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Boast', ...paddingCategoryNames(599)]))
+
+      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+
+      const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
+      expect(context.disallowedCategories).not.toContain('Boast')
+    })
+
+    it('should reject a repeat that is still inside the model-visible window', async () => {
+      jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Boast', ...paddingCategoryNames(10)]))
 
       await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a repeated category: Boast')
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
-      expect(context.disallowedCategories).not.toContain('Boast')
+      expect(context.disallowedCategories).toContain('Boast')
     })
 
     const decoyGame = {
