@@ -1415,6 +1415,28 @@ git commit -m "Have the verifier audit generated decoy claims"
 
 ---
 
+## Deployment order — READ BEFORE DEPLOYING
+
+Prompts live in DynamoDB and ship via `npm run deploy-prompts`, separately from the Lambda. This
+change set makes the two halves mutually dependent, so **order matters**:
+
+**Deploy prompts FIRST, then the code.**
+
+- *Prompts first* (correct): the old code's tool schema has no `decoys` and no
+  `additionalProperties: false`, so ajv passes the extra field through. `setGameById` would write
+  `decoys` into a few stored rows until the code deploys. Cosmetic; the API projects `categories`
+  only, so no player sees it.
+- *Code first* (harmful): the new schema marks `decoys` **required** and ajv validates every model
+  payload, but the old prompt in DynamoDB never mentions decoys and its examples omit them. If the
+  model does not supply them from the tool description alone, every generation fails all retries —
+  **no game that day, or any following day**, until prompts deploy. The failure is near-silent:
+  players poll a 202 and the only signal is the `logError` line.
+
+`deploy-prompts` also carries the model changes, because the model ID lives in each prompt file's
+header: generation `claude-opus-4-8` → `claude-opus-5`, verification `claude-sonnet-5` →
+`claude-opus-5`. No test exercises a real model ID (`invokeModel` is mocked everywhere), so a bad
+inference-profile ID is a 100% silent outage. Confirm both resolve in the target account first.
+
 ## Post-implementation
 
 - [ ] Run `npm test` and confirm coverage thresholds in `jest.config.ts` still pass.
