@@ -23,8 +23,21 @@ jest.mock('@services/verification')
 describe('games', () => {
   const mockMathRandom = jest.fn().mockReturnValue(0)
 
+  // The tool schema makes decoys required, so the shape the model actually returns is the shared
+  // fixture plus decoys. Kept local rather than added to the shared connectionsData because decoys
+  // are never part of a stored game -- the assertions that the stored value equals the bare
+  // connectionsData are what prove they get dropped.
+  const generatedGame = {
+    ...connectionsData,
+    decoys: [
+      { looksLike: 'Cereal mascots', word: 'CROW' },
+      { looksLike: 'Ways to denote a citation', word: 'COUNT' },
+      { looksLike: 'Boast', word: 'DAGGER' },
+    ],
+  }
+
   beforeAll(() => {
-    jest.mocked(bedrock).invokeModel.mockResolvedValue(connectionsData)
+    jest.mocked(bedrock).invokeModel.mockResolvedValue(generatedGame)
     jest.mocked(dynamodb).getAllGames.mockResolvedValue({})
     jest.mocked(dynamodb).getPromptById.mockResolvedValue(prompt)
     jest.mocked(dynamodb).setGameById.mockResolvedValue({} as any)
@@ -206,6 +219,11 @@ describe('games', () => {
             words: ['MONEY', 'PHONE', 'STONE', 'ALONE'],
           },
         },
+        decoys: [
+          { looksLike: 'Cat2', word: 'WORD1' },
+          { looksLike: 'Cat3', word: 'WORD5' },
+          { looksLike: 'Cat1', word: 'WORD9' },
+        ],
         wordList: [],
       })
 
@@ -368,6 +386,11 @@ describe('games', () => {
           Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
           Cat4: { hint: 'Category 4 hint', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },
         },
+        decoys: [
+          { looksLike: 'Cat2', word: 'ASSESS' },
+          { looksLike: 'Cat3', word: 'WORD5' },
+          { looksLike: 'Cat1', word: 'WORD9' },
+        ],
         wordList: [],
       })
 
@@ -465,6 +488,160 @@ describe('games', () => {
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
       expect(context.disallowedCategories).not.toContain('Boast')
+    })
+
+    const decoyGame = {
+      categories: {
+        Cat1: { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+        Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+        Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+        Cat4: { hint: 'Category 4 hint', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },
+      },
+      wordList: [],
+    }
+
+    // Owners are Cat1, Cat2, Cat3 and the targets are Cat2, Cat3, Cat1, so the union over both
+    // endpoints is three categories.
+    const spreadDecoys = [
+      { looksLike: 'Cat2', word: 'WORD1' },
+      { looksLike: 'Cat3', word: 'WORD5' },
+      { looksLike: 'Cat1', word: 'WORD9' },
+    ]
+
+    it('should require decoys in the submit_game schema', () => {
+      expect(gameTool.input_schema.required).toContain('decoys')
+      expect(gameTool.input_schema.properties.decoys).toEqual(
+        expect.objectContaining({ maxItems: 5, minItems: 3, type: 'array' }),
+      )
+    })
+
+    it('should accept a game with three well-spread decoys', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+    })
+
+    it('should throw when the model omits decoys entirely', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(decoyGame)
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated too few decoys: 0')
+    })
+
+    it('should throw when there are too few decoys', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        ...decoyGame,
+        decoys: [
+          { looksLike: 'Cat2', word: 'WORD1' },
+          { looksLike: 'Cat3', word: 'WORD5' },
+        ],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated too few decoys: 2')
+    })
+
+    it('should throw when there are too many decoys', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        ...decoyGame,
+        decoys: [
+          ...spreadDecoys,
+          { looksLike: 'Cat4', word: 'WORD2' },
+          { looksLike: 'Cat1', word: 'WORD6' },
+          { looksLike: 'Cat2', word: 'WORD10' },
+        ],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated too many decoys: 6')
+    })
+
+    // The whole point of the spread rule: three decoys that only ever touch Cat1 and Cat2 leave
+    // Cat3 and Cat4 completely unambiguous.
+    it('should throw when decoys are concentrated in one pair of categories', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        ...decoyGame,
+        decoys: [
+          { looksLike: 'Cat2', word: 'WORD1' },
+          { looksLike: 'Cat2', word: 'WORD2' },
+          { looksLike: 'Cat1', word: 'WORD5' },
+        ],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Decoys must span at least 3 categories')
+    })
+
+    it('should throw when a decoy names a word that is not in the grid', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        ...decoyGame,
+        decoys: [
+          { looksLike: 'Cat2', word: 'NOTHERE' },
+          { looksLike: 'Cat3', word: 'WORD5' },
+          { looksLike: 'Cat1', word: 'WORD9' },
+        ],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Decoy references unknown word: NOTHERE')
+    })
+
+    it('should throw when a decoy names a category that is not in the grid', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        ...decoyGame,
+        decoys: [
+          { looksLike: 'Cat9', word: 'WORD1' },
+          { looksLike: 'Cat3', word: 'WORD5' },
+          { looksLike: 'Cat1', word: 'WORD9' },
+        ],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Decoy references unknown category: Cat9')
+    })
+
+    it('should throw when a decoy points at its own category', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        ...decoyGame,
+        decoys: [
+          { looksLike: 'Cat1', word: 'WORD1' },
+          { looksLike: 'Cat3', word: 'WORD5' },
+          { looksLike: 'Cat1', word: 'WORD9' },
+        ],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Decoy points at its own category: WORD1')
+    })
+
+    it('should match decoy words case-insensitively against the grid', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        ...decoyGame,
+        decoys: [
+          { looksLike: 'Cat2', word: 'word1' },
+          { looksLike: 'Cat3', word: 'word5' },
+          { looksLike: 'Cat1', word: 'word9' },
+        ],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+    })
+
+    it('should not persist decoys on the stored game', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(Object.keys(jest.mocked(dynamodb).setGameById.mock.calls[0][1])).not.toContain('decoys')
+    })
+
+    it('should not return decoys from createGame', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
+
+      const result = await createGame('2025-01-01', mockMathRandom)
+
+      expect(Object.keys(result)).not.toContain('decoys')
+    })
+
+    it('should not pass decoys to the verifier', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(Object.keys(jest.mocked(verification).verifyAndFixGame.mock.calls[0][0])).not.toContain('decoys')
     })
   })
 })

@@ -11,7 +11,7 @@ import {
   llmPromptId,
   wordConstraintChance,
 } from '../config'
-import { CategoryHistory, CategoryObject, ConnectionsData, GameId, ToolSchema } from '../types'
+import { CategoryHistory, CategoryObject, ConnectionsData, Decoy, GameId, ToolSchema } from '../types'
 import { canonicalize, tokenKey } from '../utils/category-keys'
 import { selectCategoryConstraints } from '../utils/constraint-selection'
 import { getDateConstraint } from '../utils/constraints'
@@ -26,8 +26,21 @@ import { verifyAndFixGame } from './verification'
 // the four-category one.
 const CATEGORY_SLOT_COUNT = 4
 
+// The tool schema declares the same bounds, but nothing enforces a tool schema on the way out of
+// the model -- minItems/maxItems are advisory, so the range is re-checked in validateDecoys.
+const MAX_DECOYS = 5
+const MIN_DECOYS = 3
+// Counted over BOTH endpoints of every decoy (owning category and looksLike). Owners alone would
+// let the model satisfy the rule with three decoys that all point at one category.
+const MIN_DECOY_CATEGORY_SPAN = 3
+
+// The model returns decoys alongside the game. They are a generation-time forcing device, not game
+// data, so ConnectionsData deliberately has no room for them.
+type GeneratedGame = ConnectionsData & { decoys?: Decoy[] }
+
 export const gameTool: ToolSchema = {
-  description: 'Submit the generated Connections game.',
+  description:
+    'Submit the generated Connections game. `decoys` names words that plausibly belong to a different category in the same grid; supply 3 to 5, spanning at least 3 categories.',
   input_schema: {
     properties: {
       categories: {
@@ -42,8 +55,21 @@ export const gameTool: ToolSchema = {
         },
         type: 'object',
       },
+      decoys: {
+        items: {
+          properties: {
+            looksLike: { type: 'string' },
+            word: { type: 'string' },
+          },
+          required: ['word', 'looksLike'],
+          type: 'object',
+        },
+        maxItems: MAX_DECOYS,
+        minItems: MIN_DECOYS,
+        type: 'array',
+      },
     },
-    required: ['categories'],
+    required: ['categories', 'decoys'],
     type: 'object',
   },
   name: 'submit_game',
@@ -166,6 +192,59 @@ const findRepeatedCategory = (categories: CategoryObject, history: CategoryHisto
     return history.canonical.has(canonicalize(name)) || (token !== null && history.token.has(token))
   })
 
+// "Some words should look like they belong to another category" is the single most important line
+// in the generation prompt and the least enforceable one. Making the model name its own traps in
+// the tool call turns the request into a commitment that can be checked. Structural only: a decoy
+// that is well-formed here can still be a claim that does not hold, which is the verifier's job.
+//
+// Words are compared uppercased because transformWordsToUpperCase has already normalized the grid.
+// Category names are compared exactly -- they are echoed back from the same tool call, so the model
+// has no reason to re-case them.
+export const validateDecoys = (categories: CategoryObject, decoys: Decoy[]): void => {
+  if (decoys.length < MIN_DECOYS) {
+    log('Generated too few decoys', { decoyCount: decoys.length })
+    throw new Error(`Generated too few decoys: ${decoys.length}`)
+  }
+  if (decoys.length > MAX_DECOYS) {
+    log('Generated too many decoys', { decoyCount: decoys.length })
+    throw new Error(`Generated too many decoys: ${decoys.length}`)
+  }
+
+  const categoryNames = new Set(Object.keys(categories))
+  const owningCategory = new Map<string, string>()
+  Object.entries(categories).forEach(([name, category]) => {
+    category.words.forEach((word) => owningCategory.set(word.toUpperCase(), name))
+  })
+
+  // Both endpoints of every decoy, not just the owners -- see MIN_DECOY_CATEGORY_SPAN.
+  const touched = new Set<string>()
+  decoys.forEach(({ looksLike, word }) => {
+    const owner = owningCategory.get(word.toUpperCase())
+    if (owner === undefined) {
+      log('Decoy references unknown word', { word })
+      throw new Error(`Decoy references unknown word: ${word}`)
+    }
+    // Set membership rather than `in`, which would accept inherited keys like `constructor`.
+    if (!categoryNames.has(looksLike)) {
+      log('Decoy references unknown category', { looksLike })
+      throw new Error(`Decoy references unknown category: ${looksLike}`)
+    }
+    if (looksLike === owner) {
+      log('Decoy points at its own category', { looksLike, word })
+      throw new Error(`Decoy points at its own category: ${word}`)
+    }
+    touched.add(owner)
+    touched.add(looksLike)
+  })
+
+  // Without this the model satisfies the count by loading every trap into one pair of categories
+  // and leaving the other two clean -- the exact failure this is meant to prevent.
+  if (touched.size < MIN_DECOY_CATEGORY_SPAN) {
+    log('Decoys must span more categories', { touched: [...touched] })
+    throw new Error(`Decoys must span at least ${MIN_DECOY_CATEGORY_SPAN} categories`)
+  }
+}
+
 export const validateGame = (categories: CategoryObject, history?: CategoryHistory): string[] => {
   const wordList = Object.values(categories).flatMap((cat) => cat.words.map((w) => w.toUpperCase()))
   if (new Set(wordList).size !== wordList.length) {
@@ -223,9 +302,15 @@ export const createGame = async (gameId: GameId, random = Math.random): Promise<
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)
-  const returnedData: ConnectionsData = await invokeModel(prompt, gameTool, modelContext)
-  const connectionsData = transformWordsToUpperCase(returnedData)
+  // Decoys are split off the model response here and never re-attached: verification, storage, and
+  // the API response are all downstream of `returnedGame`, so they cannot leak by construction.
+  // Dropping them also stops them going stale when the verifier replaces a category outright.
+  const { decoys, ...returnedGame }: GeneratedGame = await invokeModel(prompt, gameTool, modelContext)
+  const connectionsData = transformWordsToUpperCase(returnedGame)
   validateGame(connectionsData.categories, categoryHistory)
+  // `decoys` is required by the tool schema, so a response without it is a real error, not a
+  // response to be waved through.
+  validateDecoys(connectionsData.categories, decoys ?? [])
 
   // Checked again after verification: the verifier is allowed to replace a category outright, and
   // its replacement can itself be a repeat.
