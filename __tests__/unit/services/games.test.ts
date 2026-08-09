@@ -510,9 +510,10 @@ describe('games', () => {
 
     it('should require decoys in the submit_game schema', () => {
       expect(gameTool.input_schema.required).toContain('decoys')
-      expect(gameTool.input_schema.properties.decoys).toEqual(
-        expect.objectContaining({ maxItems: 5, minItems: 3, type: 'array' }),
-      )
+      expect(gameTool.input_schema.properties.decoys).toEqual(expect.objectContaining({ minItems: 3, type: 'array' }))
+      // Deliberately no maxItems: ajv validates this schema against every model payload, so a
+      // ceiling here would discard a game for carrying MORE misdirection than asked for.
+      expect(gameTool.input_schema.properties.decoys.maxItems).toBeUndefined()
     })
 
     it('should accept a game with three well-spread decoys', async () => {

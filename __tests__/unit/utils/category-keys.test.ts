@@ -96,7 +96,7 @@ describe('category-keys', () => {
       ['Words after A', 'a after words'],
       ['OF THE', 'of the'],
       // ...but the same words in lowercase are ordinary stopwords
-      ['Words after by', 'after words'],
+      ['Words after by', 'after by words'],
       ['Words after the', 'after words'],
       // A hyphenated word splits into tokens rather than becoming a blank
       ['Black-and-white things', 'black things white'],

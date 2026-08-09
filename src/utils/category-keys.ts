@@ -19,27 +19,12 @@
 
 // Words that carry the category's mechanic and must never be stripped: removing them would
 // collapse "Words after SWEET" and "Words before SWEET" into the same key.
-const STOPWORDS = new Set([
-  'a',
-  'an',
-  'and',
-  'are',
-  'as',
-  'at',
-  'be',
-  'by',
-  'for',
-  'from',
-  'in',
-  'is',
-  'of',
-  'on',
-  'or',
-  'that',
-  'the',
-  'to',
-  'with',
-])
+// Prepositions are NOT stopwords here. In category names they carry the mechanic exactly the way
+// "after"/"before" do -- "Words from Spain" (loanwords) and "Words in Spain" (things located there)
+// are different categories, and stripping the preposition merged them. "of" is the one exception:
+// it is not substitutable in this domain ("Types of cheese" and "Cheese types" really are the same
+// category), and keeping it out of the key is what lets a pure reordering still match.
+const STOPWORDS = new Set(['a', 'an', 'and', 'are', 'be', 'is', 'of', 'or', 'that', 'the'])
 
 const BLANK_SENTINEL = '___'
 

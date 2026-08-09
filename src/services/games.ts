@@ -26,10 +26,12 @@ import { verifyAndFixGame } from './verification'
 // the four-category one.
 const CATEGORY_SLOT_COUNT = 4
 
-// Nothing enforces a tool schema on the way out of the model, so the lower bound is re-checked in
-// validateDecoys. MAX_DECOYS is schema guidance only and deliberately not enforced there.
+// bedrock.ts compiles this tool's input_schema with ajv and validates every model payload against
+// it, so minItems here is a real gate, not advisory -- validateDecoys re-checks it only as
+// defence in depth. Deliberately NO maxItems: a game with more decoys than asked for is more
+// misdirection-rich, not less, and rejecting it would burn a generation attempt to punish the
+// model for exceeding the goal. The tool description still asks for 3-5.
 const MIN_DECOYS = 3
-const MAX_DECOYS = 5
 // Counted over BOTH endpoints of every decoy (owning category and looksLike). Owners alone would
 // let the model satisfy the rule with three decoys that all point at one category.
 const MIN_DECOY_CATEGORY_SPAN = 3
@@ -64,7 +66,6 @@ export const gameTool: ToolSchema = {
           required: ['word', 'looksLike'],
           type: 'object',
         },
-        maxItems: MAX_DECOYS,
         minItems: MIN_DECOYS,
         type: 'array',
       },
