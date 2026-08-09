@@ -78,8 +78,12 @@ export const tier3CategoryConstraints: string[] = [
 ]
 
 // Occupies a single slot and asks the model to invent a pattern the tier lists do not cover.
+// Scoped to "the other constraints in this list" rather than an open-ended novelty check: the model
+// also receives 500+ disallowedCategories, and an unbounded "is this a close variant of anything?"
+// check is a search with no terminating state -- which is how this slot exhausted its token budget.
+// The disallowed list is already enforced by the prompt itself, so it is not re-litigated here.
 export const wildcardConstraint =
-  'Invent a category pattern that does not appear elsewhere in this list and is not a close variant of one. Describe the pattern plainly in the category name.'
+  'Invent a category pattern of your own instead of reaching for a familiar one. It must not restate any of the other constraints in this list. Describe the pattern plainly in the category name, and choose words that could plausibly belong to another category in this game.'
 
 // Appended to the pattern shared by the two twin slots. Two categories on one pattern force the
 // solver to separate instances rather than spot the pattern once and be done.
@@ -87,12 +91,20 @@ export const twinSuffix =
   ' — TWIN: another category in this game uses this same pattern. Use a DIFFERENT instance of it, and choose words that could plausibly belong to either instance.'
 
 // Stacked onto one already-drawn slot to push a familiar pattern somewhere less predictable.
+//
+// Every modifier here stacks a WORD PROPERTY (also a verb, also a proper noun, shares a surface
+// trait). None stacks a second CATEGORY PATTERN. That distinction is deliberate: a word property
+// gives each word a second reading, which is the pull that drags a solver toward the wrong group.
+// A second category pattern is invisible to the solver -- the category name either omits it (it did
+// nothing) or states it (a convoluted hint, not a trap) -- and it shrinks the candidate pool the
+// constructor needs to find words with real cross-category readings. That is confusion, not
+// misdirection, and the intersection search it demands is expensive enough to exhaust max_tokens.
 export const constraintModifiers: string[] = [
   'Additionally, every word in this category must also be a common verb.',
   'Additionally, narrow this category to a single specific decade, place, or named source.',
   'Additionally, invert the usual form of this pattern — build the category around what fails to fit it.',
   'Additionally, every word in this category must also share one unrelated surface property (all compound words, all two syllables, all containing a double letter).',
-  'Additionally, combine this pattern with a second unrelated pattern so that each word satisfies both at once.',
+  'Additionally, choose words for this category so that at least two of them would also look at home in one of the other categories in this game. The second reading must be real, not a stretch.',
   'Additionally, restrict this category to words that are also proper nouns in a different context.',
 ]
 
