@@ -7,6 +7,7 @@ import {
   wildcardConstraint,
 } from '../assets/constraints'
 import { modifierChance, twinMechanicChance, wildcardSlotChance } from '../config'
+import { log } from './logging'
 
 export interface DrawnConstraint {
   constraint: string
@@ -90,13 +91,8 @@ export const selectCategoryConstraints = (count: number, random: () => number): 
   // Keep the twin's base pattern out of the ordinary draw: a third slot on the same pattern gives
   // three sibling categories, two marked TWIN and one not, which reads as a generation bug.
   const excluded = useTwin ? [twinPattern] : []
-  selected.push(...drawConstraints(count - selected.length, random, excluded).map(({ constraint }) => constraint))
-
-  // Written as `< chance` to match the wildcard and twin guards: an unset env var makes the
-  // comparison false and the feature silently off, rather than silently on for every game.
-  if (!(modifierRoll < modifierChance)) {
-    return selected
-  }
+  const drawn = drawConstraints(count - selected.length, random, excluded)
+  selected.push(...drawn.map(({ constraint }) => constraint))
 
   // Skip the special slots. The wildcard is already an open instruction to invent a pattern, so
   // layering a modifier on it compounds ambiguity instead of adding variety. The twin pair must
@@ -104,11 +100,40 @@ export const selectCategoryConstraints = (count: number, random: () => number): 
   // matched instances of one pattern carrying different instructions, which defeats the point.
   const firstModifiable = useWildcard ? 1 : useTwin ? 2 : 0
   const modifiableCount = count - firstModifiable
-  // A twin in a 2-slot game leaves nothing modifiable; skip rather than index out of range.
-  if (modifiableCount < 1) {
-    return selected
-  }
-  const target = firstModifiable + pickIndex(modifierIndexRoll, modifiableCount)
-  const modifier = constraintModifiers[pickIndex(modifierChoiceRoll, constraintModifiers.length)]
-  return selected.map((constraint, index) => (index === target ? `${constraint} ${modifier}` : constraint))
+  // Written as `< chance` to match the wildcard and twin guards: an unset env var makes the
+  // comparison false and the feature silently off, rather than silently on for every game. The
+  // second half of the guard covers a twin in a 2-slot game, which leaves nothing modifiable --
+  // skip rather than index out of range.
+  const useModifier = modifierRoll < modifierChance && modifiableCount >= 1
+  const modifierSlot = useModifier ? firstModifiable + pickIndex(modifierIndexRoll, modifiableCount) : undefined
+  const modifier = useModifier
+    ? constraintModifiers[pickIndex(modifierChoiceRoll, constraintModifiers.length)]
+    : undefined
+  const constraints = selected.map((constraint, index) =>
+    index === modifierSlot ? `${constraint} ${modifier}` : constraint,
+  )
+
+  // One line per game carrying every roll, the threshold it was compared against, and what came out
+  // of it. Rolls without their thresholds are unreadable a month later (the thresholds are env vars
+  // and get tuned), and thresholds without the rolls make near-misses invisible -- so both. The
+  // drawn tiers are here because tier is otherwise unrecoverable from the constraint text, and the
+  // tier mix is what tells us whether the weighted draw is behaving.
+  log('Selected category constraints', {
+    constraints,
+    drawnTiers: drawn.map(({ tier }) => tier),
+    modifier,
+    modifierChance,
+    modifierRoll,
+    modifierSlot,
+    twinMechanicChance,
+    twinPattern: useTwin ? twinPattern : undefined,
+    twinRoll,
+    useModifier,
+    useTwin,
+    useWildcard,
+    wildcardRoll,
+    wildcardSlotChance,
+  })
+
+  return constraints
 }

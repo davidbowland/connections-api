@@ -1,6 +1,10 @@
 import { adjectives } from '../assets/adjectives'
 import { chargedWords } from '../assets/blocklist'
-import { alwaysDisallowedCategories, wordConstraints as wordConstraintsChoices } from '../assets/constraints'
+import {
+  alwaysDisallowedCategories,
+  wildcardConstraint,
+  wordConstraints as wordConstraintsChoices,
+} from '../assets/constraints'
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
 import {
@@ -105,7 +109,12 @@ const getModelContext = (date: Date, disallowedCategories: string[], random = Ma
     random,
   })
 
+  // `branch` names the path taken so the three mutually exclusive constraint modes are greppable
+  // without re-deriving them from the roll. The wildcard/twin/modifier chances are deliberately NOT
+  // here: they are only consulted on the category branch, and selectCategoryConstraints logs each
+  // one next to the roll it was compared against on the very next line.
   log('Constraint chance', {
+    branch: holidayConstraints ? 'holiday' : useWordConstraint ? 'word' : 'category',
     holidayConstraints,
     useWordConstraint,
     wordConstraintChance,
@@ -299,6 +308,12 @@ export const validateGame = (categories: CategoryObject, history?: CategoryHisto
   return wordList
 }
 
+// Names and hints only. The words are already logged in full by the verifier context and by the
+// handler's success line; what this is for is reading a game's categories at a glance next to the
+// constraints that asked for them.
+const summarizeCategories = (categories: CategoryObject): string[] =>
+  Object.entries(categories).map(([name, { hint }]) => `${name}: ${hint}`)
+
 export const createGame = async (gameId: GameId, random = Math.random): Promise<ConnectionsData> => {
   const pastGames = await getAllGames()
   // GameIds are ISO dates, so a descending string sort is newest-first.
@@ -317,26 +332,56 @@ export const createGame = async (gameId: GameId, random = Math.random): Promise<
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)
-  // Decoys are split off the model response here and never re-attached: verification, storage, and
-  // the API response are all downstream of `returnedGame`, so they cannot leak by construction.
-  // Dropping them also stops them going stale when the verifier replaces a category outright.
-  const { decoys, ...returnedGame }: GeneratedGame = await invokeModel(prompt, gameTool, modelContext)
-  const connectionsData = transformWordsToUpperCase(returnedGame)
-  validateGame(connectionsData.categories, categoryHistory)
-  // `decoys` is required by the tool schema, so a response without it is a real error, not a
-  // response to be waved through.
-  validateDecoys(connectionsData.categories, decoys ?? [])
+  try {
+    // Decoys are split off the model response here and never re-attached: verification, storage, and
+    // the API response are all downstream of `returnedGame`, so they cannot leak by construction.
+    // Dropping them also stops them going stale when the verifier replaces a category outright.
+    const { decoys, ...returnedGame }: GeneratedGame = await invokeModel(prompt, gameTool, modelContext)
+    const connectionsData = transformWordsToUpperCase(returnedGame)
+    validateGame(connectionsData.categories, categoryHistory)
+    // `decoys` is required by the tool schema, so a response without it is a real error, not a
+    // response to be waved through.
+    validateDecoys(connectionsData.categories, decoys ?? [])
 
-  // Checked again after verification: the verifier is allowed to replace a category outright, and
-  // its replacement can itself be a repeat.
-  //
-  // Decoys go to the verifier as a SEPARATE argument, never merged into connectionsData -- the
-  // verifier audits whether each claim actually holds, which is the one thing validateDecoys
-  // cannot. Re-attaching them here would undo the destructure above and leak them to storage.
-  const verifiedGame = await verifyAndFixGame(connectionsData, modelContext, decoys)
-  const finalWordList = validateGame(verifiedGame.categories, categoryHistory)
+    // Checked again after verification: the verifier is allowed to replace a category outright, and
+    // its replacement can itself be a repeat.
+    //
+    // Decoys go to the verifier as a SEPARATE argument, never merged into connectionsData -- the
+    // verifier audits whether each claim actually holds, which is the one thing validateDecoys
+    // cannot. Re-attaching them here would undo the destructure above and leak them to storage.
+    const verifiedGame = await verifyAndFixGame(connectionsData, modelContext, decoys)
+    const finalWordList = validateGame(verifiedGame.categories, categoryHistory)
 
-  const dataWithWordList = { ...verifiedGame, wordList: finalWordList }
-  await setGameById(gameId, dataWithWordList)
-  return dataWithWordList
+    // The one line that JOINS constraints to outcome. Every other log in the generation path carries
+    // one half of it: the context log has the constraints, the verifier and handler logs have the
+    // grid. Judging a constraint -- does the wildcard slot invent patterns worth promoting into the
+    // tier lists, does a modifier produce incoherent categories -- means reading both together, so
+    // they go on one line. `wildcardSlot` is a boolean rather than left implicit in the constraint
+    // text because the spec's promote-good-patterns loop is a query for exactly those games.
+    log('Generated game', {
+      categories: summarizeCategories(verifiedGame.categories),
+      categoryConstraints: modelContext.categoryConstraints,
+      decoyCount: decoys?.length,
+      gameId,
+      generatedCategories: summarizeCategories(connectionsData.categories),
+      verifierChangedGame: JSON.stringify(connectionsData.categories) !== JSON.stringify(verifiedGame.categories),
+      wildcardSlot: (modelContext.categoryConstraints ?? []).includes(wildcardConstraint),
+      wordConstraints: modelContext.wordConstraints,
+    })
+
+    const dataWithWordList = { ...verifiedGame, wordList: finalWordList }
+    await setGameById(gameId, dataWithWordList)
+    return dataWithWordList
+  } catch (error: unknown) {
+    // The rejection reasons log themselves, but none of them knows what was asked for. Attributing
+    // failures to constraints is the other half of judging them, and a retry runs in a separate
+    // Lambda invocation, so the constraints cannot be assumed to be one requestId away.
+    log('Game generation failed', {
+      categoryConstraints: modelContext.categoryConstraints,
+      gameId,
+      message: (error as Error | null)?.message,
+      wordConstraints: modelContext.wordConstraints,
+    })
+    throw error
+  }
 }

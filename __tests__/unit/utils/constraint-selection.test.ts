@@ -7,6 +7,9 @@ import {
   wildcardConstraint,
 } from '@assets/constraints'
 import { drawConstraints, selectCategoryConstraints } from '@utils/constraint-selection'
+import { log } from '@utils/logging'
+
+jest.mock('@utils/logging')
 
 const mockSequence = (values: number[]) => {
   let index = 0
@@ -237,6 +240,78 @@ describe('constraint-selection', () => {
       const selected = selectCategoryConstraints(4, random)
 
       expect(selected.filter((entry) => entry.includes(constraintModifiers[0]))).toHaveLength(1)
+    })
+
+    it('should log every roll next to the threshold it was compared against', () => {
+      const selected = selectCategoryConstraints(4, noSpecials())
+
+      expect(log).toHaveBeenCalledWith(
+        'Selected category constraints',
+        expect.objectContaining({
+          constraints: selected,
+          drawnTiers: [1, 1, 1, 1],
+          modifierChance: 0.15,
+          modifierRoll: 0.99,
+          twinMechanicChance: 0.12,
+          twinRoll: 0.99,
+          useModifier: false,
+          useTwin: false,
+          useWildcard: false,
+          wildcardRoll: 0.99,
+          wildcardSlotChance: 0.2,
+        }),
+      )
+    })
+
+    it('should log the wildcard slot when it fires', () => {
+      selectCategoryConstraints(4, wildcardOnly())
+
+      expect(log).toHaveBeenCalledWith(
+        'Selected category constraints',
+        expect.objectContaining({
+          constraints: expect.arrayContaining([wildcardConstraint]),
+          useWildcard: true,
+          wildcardRoll: 0,
+        }),
+      )
+    })
+
+    it('should log the twin base pattern when the twin fires', () => {
+      selectCategoryConstraints(4, twinOnly())
+
+      expect(log).toHaveBeenCalledWith(
+        'Selected category constraints',
+        expect.objectContaining({
+          twinPattern: tier2CategoryConstraints[0],
+          useTwin: true,
+        }),
+      )
+    })
+
+    it('should log the modifier and the slot it landed on', () => {
+      const random = jest.fn(mockSequence([0.99, 0.99, 0, 0, 0, 0]))
+
+      selectCategoryConstraints(4, random)
+
+      expect(log).toHaveBeenCalledWith(
+        'Selected category constraints',
+        expect.objectContaining({
+          modifier: constraintModifiers[0],
+          modifierSlot: 0,
+          useModifier: true,
+        }),
+      )
+    })
+
+    it('should log the drawn tiers so the weighted draw can be audited', () => {
+      const random = jest.fn().mockReturnValue(0.99)
+
+      selectCategoryConstraints(4, random)
+
+      expect(log).toHaveBeenCalledWith(
+        'Selected category constraints',
+        expect.objectContaining({ drawnTiers: [3, 2, 2, 2] }),
+      )
     })
   })
 })

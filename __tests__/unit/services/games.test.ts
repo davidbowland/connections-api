@@ -13,6 +13,7 @@ import * as dynamodb from '@services/dynamodb'
 import { createGame, gameTool } from '@services/games'
 import * as verification from '@services/verification'
 import * as constraints from '@utils/constraints'
+import { log } from '@utils/logging'
 
 jest.mock('@services/bedrock')
 jest.mock('@services/dynamodb')
@@ -682,6 +683,100 @@ describe('games', () => {
       await createGame('2025-01-01', mockMathRandom)
 
       expect(Object.keys(jest.mocked(verification).verifyAndFixGame.mock.calls[0][0])).not.toContain('decoys')
+    })
+
+    it('should name the constraint branch the word-constraint roll selected', async () => {
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(log).toHaveBeenCalledWith('Constraint chance', expect.objectContaining({ branch: 'word' }))
+    })
+
+    it('should name the category branch when the word-constraint roll misses', async () => {
+      mockMathRandom.mockReturnValueOnce(1)
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(log).toHaveBeenCalledWith('Constraint chance', expect.objectContaining({ branch: 'category' }))
+    })
+
+    it('should name the holiday branch when the date carries a constraint', async () => {
+      jest.mocked(constraints).getDateConstraint.mockReturnValueOnce('all words must be festive')
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(log).toHaveBeenCalledWith('Constraint chance', expect.objectContaining({ branch: 'holiday' }))
+    })
+
+    it('should log the generated categories next to the constraints that produced them', async () => {
+      mockMathRandom.mockReturnValueOnce(1)
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(log).toHaveBeenCalledWith(
+        'Generated game',
+        expect.objectContaining({
+          categories: [
+            'Boast: Boast hint',
+            'Arc-shaped things: Arc-shaped things hint',
+            'Cereal mascots: Cereal mascots hint',
+            'Ways to denote a citation: Ways to denote a citation hint',
+          ],
+          categoryConstraints: expect.arrayContaining([wildcardConstraint]),
+          decoyCount: 3,
+          gameId: '2025-01-01',
+          verifierChangedGame: false,
+          wildcardSlot: true,
+        }),
+      )
+    })
+
+    it('should log the word constraint rather than a wildcard slot on the word branch', async () => {
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(log).toHaveBeenCalledWith(
+        'Generated game',
+        expect.objectContaining({
+          categoryConstraints: undefined,
+          wildcardSlot: false,
+          wordConstraints: expect.stringContaining('all words must be 4 letters'),
+        }),
+      )
+    })
+
+    it('should report the pre-verification categories and that the verifier changed them', async () => {
+      jest.mocked(verification).verifyAndFixGame.mockResolvedValueOnce({
+        categories: {
+          ...connectionsData.categories,
+          Boast: { hint: 'Replaced hint', words: ['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT'] },
+        },
+      })
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      expect(log).toHaveBeenCalledWith(
+        'Generated game',
+        expect.objectContaining({
+          categories: expect.arrayContaining(['Boast: Replaced hint']),
+          generatedCategories: expect.arrayContaining(['Boast: Boast hint']),
+          verifierChangedGame: true,
+        }),
+      )
+    })
+
+    it('should log the constraints in play when generation fails', async () => {
+      mockMathRandom.mockReturnValueOnce(1)
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(decoyGame)
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow()
+
+      expect(log).toHaveBeenCalledWith(
+        'Game generation failed',
+        expect.objectContaining({
+          categoryConstraints: expect.arrayContaining([wildcardConstraint]),
+          gameId: '2025-01-01',
+          message: 'Generated too few decoys: 0',
+        }),
+      )
     })
   })
 })
