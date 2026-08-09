@@ -539,7 +539,7 @@ describe('games', () => {
       await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated too few decoys: 2')
     })
 
-    it('should throw when there are too many decoys', async () => {
+    it('should accept more decoys than the schema suggests rather than discarding the game', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
         ...decoyGame,
         decoys: [
@@ -550,7 +550,7 @@ describe('games', () => {
         ],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated too many decoys: 6')
+      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
     })
 
     // The whole point of the spread rule: three decoys that only ever touch Cat1 and Cat2 leave

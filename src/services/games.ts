@@ -26,10 +26,10 @@ import { verifyAndFixGame } from './verification'
 // the four-category one.
 const CATEGORY_SLOT_COUNT = 4
 
-// The tool schema declares the same bounds, but nothing enforces a tool schema on the way out of
-// the model -- minItems/maxItems are advisory, so the range is re-checked in validateDecoys.
-const MAX_DECOYS = 5
+// Nothing enforces a tool schema on the way out of the model, so the lower bound is re-checked in
+// validateDecoys. MAX_DECOYS is schema guidance only and deliberately not enforced there.
 const MIN_DECOYS = 3
+const MAX_DECOYS = 5
 // Counted over BOTH endpoints of every decoy (owning category and looksLike). Owners alone would
 // let the model satisfy the rule with three decoys that all point at one category.
 const MIN_DECOY_CATEGORY_SPAN = 3
@@ -205,10 +205,9 @@ export const validateDecoys = (categories: CategoryObject, decoys: Decoy[]): voi
     log('Generated too few decoys', { decoyCount: decoys.length })
     throw new Error(`Generated too few decoys: ${decoys.length}`)
   }
-  if (decoys.length > MAX_DECOYS) {
-    log('Generated too many decoys', { decoyCount: decoys.length })
-    throw new Error(`Generated too many decoys: ${decoys.length}`)
-  }
+  // No upper bound is enforced here. The schema declares maxItems as guidance, but a game with
+  // more decoys than asked for is MORE misdirection-rich, not less -- discarding it would burn a
+  // generation attempt to punish the model for exceeding the goal. Every entry is still validated.
 
   const categoryNames = new Set(Object.keys(categories))
   const owningCategory = new Map<string, string>()
