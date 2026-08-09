@@ -15,7 +15,10 @@ export interface DrawnConstraint {
 
 // Math.floor(roll * length) yields length itself when roll is exactly 1. Math.random never returns
 // 1, but every generator here is injected, so clamp rather than trust the caller.
-const pickIndex = (roll: number, length: number): number => Math.min(length - 1, Math.floor(roll * length))
+// Clamped at both ends. Math.random never returns 1 or a negative, but every entry point here
+// takes an injected generator, and an out-of-range roll would otherwise index past the array and
+// send `undefined` to the model as a constraint rather than failing loudly.
+const pickIndex = (roll: number, length: number): number => Math.max(0, Math.min(length - 1, Math.floor(roll * length)))
 
 const pickTier = (tiers: TierDefinition[], roll: number): TierDefinition => {
   const total = tiers.reduce((sum, tier) => sum + tier.probability, 0)

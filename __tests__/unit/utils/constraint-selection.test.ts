@@ -60,6 +60,14 @@ describe('constraint-selection', () => {
       expect(drawn.map(({ tier }) => tier)).toEqual([3, 2, 2, 2])
     })
 
+    it('should stay in range for an injected generator that returns out-of-range rolls', () => {
+      const outOfRange = jest.fn(mockSequence([-1, -0.5, 2, 1, -3, 1.5, 0, 0]))
+
+      const drawn = drawConstraints(4, outOfRange)
+
+      expect(drawn.every(({ constraint }) => typeof constraint === 'string')).toEqual(true)
+    })
+
     it('should draw distinct constraints even when every roll is identical', () => {
       const random = jest.fn().mockReturnValue(0)
 
