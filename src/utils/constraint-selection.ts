@@ -13,8 +13,6 @@ export interface DrawnConstraint {
   tier: 1 | 2 | 3
 }
 
-// Math.floor(roll * length) yields length itself when roll is exactly 1. Math.random never returns
-// 1, but every generator here is injected, so clamp rather than trust the caller.
 // Clamped at both ends. Math.random never returns 1 or a negative, but every entry point here
 // takes an injected generator, and an out-of-range roll would otherwise index past the array and
 // send `undefined` to the model as a constraint rather than failing loudly.
