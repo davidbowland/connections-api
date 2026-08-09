@@ -313,7 +313,11 @@ export const createGame = async (gameId: GameId, random = Math.random): Promise<
 
   // Checked again after verification: the verifier is allowed to replace a category outright, and
   // its replacement can itself be a repeat.
-  const verifiedGame = await verifyAndFixGame(connectionsData, modelContext)
+  //
+  // Decoys go to the verifier as a SEPARATE argument, never merged into connectionsData -- the
+  // verifier audits whether each claim actually holds, which is the one thing validateDecoys
+  // cannot. Re-attaching them here would undo the destructure above and leak them to storage.
+  const verifiedGame = await verifyAndFixGame(connectionsData, modelContext, decoys)
   const finalWordList = validateGame(verifiedGame.categories, categoryHistory)
 
   const dataWithWordList = { ...verifiedGame, wordList: finalWordList }

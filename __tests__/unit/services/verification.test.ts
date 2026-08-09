@@ -2,7 +2,7 @@ import { game, prompt } from '../__mocks__'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
 import { verdictTool, verifyAndFixGame } from '@services/verification'
-import { VerificationResult } from '@types'
+import { Decoy, VerificationResult } from '@types'
 
 jest.mock('@services/bedrock')
 jest.mock('@services/dynamodb')
@@ -260,6 +260,66 @@ describe('verification', () => {
       expect(returned.categories['Boast'].words).toEqual(game.categories['Boast'].words)
       expect(returned.categories['Arc-shaped things'].hint).toBe('Do you see a curvy theme?')
       expect(returned.categories['Arc-shaped things'].words).toEqual(game.categories['Arc-shaped things'].words)
+    })
+
+    // Decoys are read-only audit material for the verifier. They arrive as their own argument and
+    // must never be folded into the game object -- see the destructure in createGame.
+    describe('decoys', () => {
+      const decoys: Decoy[] = [
+        { looksLike: 'Arc-shaped things', word: 'CROW' },
+        { looksLike: 'Boast', word: 'ROOSTER' },
+        { looksLike: 'Cereal mascots', word: 'BANANA' },
+      ]
+
+      const getVerifierContext = (): Record<string, any> => jest.mocked(bedrock).invokeModel.mock.calls[0][2]
+
+      it('should pass decoys to the verifier as context', async () => {
+        const result: VerificationResult = { verdict: 'pass', reason: 'All good' }
+        jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
+
+        await verifyAndFixGame(game, {}, decoys)
+
+        expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, verdictTool, expect.objectContaining({ decoys }))
+      })
+
+      // Object.keys rather than expect.not.objectContaining, which passes when the key is present
+      // with an undefined value -- the verifier prompt branches on the key existing at all.
+      it('should omit the decoys key entirely when none are supplied', async () => {
+        const result: VerificationResult = { verdict: 'pass', reason: 'All good' }
+        jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
+
+        await verifyAndFixGame(game, {})
+
+        expect(Object.keys(getVerifierContext())).not.toContain('decoys')
+      })
+
+      it('should omit the decoys key entirely when an empty array is supplied', async () => {
+        const result: VerificationResult = { verdict: 'pass', reason: 'All good' }
+        jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
+
+        await verifyAndFixGame(game, {}, [])
+
+        expect(Object.keys(getVerifierContext())).not.toContain('decoys')
+      })
+
+      it('should not merge decoys into the game object handed to the verifier', async () => {
+        const result: VerificationResult = { verdict: 'pass', reason: 'All good' }
+        jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
+
+        await verifyAndFixGame(game, {}, decoys)
+
+        expect(Object.keys(getVerifierContext().game)).not.toContain('decoys')
+        expect(getVerifierContext().game).toEqual(game)
+      })
+
+      it('should return the game unchanged when decoys are supplied', async () => {
+        const result: VerificationResult = { verdict: 'pass', reason: 'All good' }
+        jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(result)
+
+        const returned = await verifyAndFixGame(game, {}, decoys)
+
+        expect(returned).toBe(game)
+      })
     })
   })
 })
