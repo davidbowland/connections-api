@@ -14,6 +14,7 @@ process.env.LLM_PROMPT_ID = 'create-connections-game'
 
 // Games
 
+process.env.DISALLOWED_CATEGORY_LIMIT = '500'
 process.env.GAME_GENERATION_TIMEOUT = '900'
 process.env.INSPIRATION_ADJECTIVES_COUNT = '2'
 process.env.INSPIRATION_NOUNS_COUNT = '2'

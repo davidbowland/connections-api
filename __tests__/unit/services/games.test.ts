@@ -7,6 +7,7 @@ import {
   tier3CategoryConstraints,
   wildcardConstraint,
 } from '@assets/constraints'
+import { disallowedCategoryLimit } from '@config'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
 import { createGame, gameTool } from '@services/games'
@@ -371,6 +372,99 @@ describe('games', () => {
       })
 
       await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+    })
+
+    // GameIds are ISO dates and the model-visible window is a descending string sort, so index 0
+    // is the OLDEST entry -- the first one to drop out of that window as history grows.
+    const historicalGameId = (index: number): string =>
+      new Date(Date.UTC(2020, 0, 1) + index * 86_400_000).toISOString().slice(0, 10)
+
+    const buildGameHistory = (names: string[]): Record<string, any> =>
+      Object.fromEntries(
+        names.map((name, index) => [
+          historicalGameId(index),
+          { categories: { [name]: { hint: 'hint', words: ['A', 'B', 'C', 'D'] } }, wordList: [] },
+        ]),
+      )
+
+    // Distinct from every mocked game category and from alwaysDisallowedCategories, so padding the
+    // history with these never changes whether a test's real fixture matches.
+    const paddingCategoryNames = (count: number): string[] =>
+      Array.from({ length: count }, (_, index) => `Historical category ${index}`)
+
+    it('should throw when a generated category exactly repeats one from history', async () => {
+      jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Boast!']))
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a repeated category: Boast')
+    })
+
+    it('should throw when a generated category is a reordered paraphrase of one from history', async () => {
+      jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Mascots of cereal']))
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+        'Generated a repeated category: Cereal mascots',
+      )
+    })
+
+    it('should throw when a generated category repeats an always-disallowed category', async () => {
+      jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
+        categories: {
+          Cat1: { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+          Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          'Spice Girls': { hint: 'Category 4 hint', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },
+        },
+        wordList: [],
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+        'Generated a repeated category: Spice Girls',
+      )
+    })
+
+    it('should throw when the verifier introduces a repeated category', async () => {
+      jest.mocked(verification).verifyAndFixGame.mockResolvedValueOnce({
+        categories: {
+          Cat1: { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+          Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
+          Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
+          'Homophones of body parts': { hint: 'Category 4 hint', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },
+        },
+      })
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+        'Generated a repeated category: Homophones of body parts',
+      )
+    })
+
+    it('should cap the model-visible disallowed categories at the always-disallowed list plus the limit', async () => {
+      jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(paddingCategoryNames(600)))
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
+      expect(context.disallowedCategories).toHaveLength(alwaysDisallowedCategories.length + disallowedCategoryLimit)
+    })
+
+    it('should always send the always-disallowed categories even when history overflows the limit', async () => {
+      jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(paddingCategoryNames(600)))
+
+      await createGame('2025-01-01', mockMathRandom)
+
+      const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
+      expect(context.disallowedCategories.slice(0, alwaysDisallowedCategories.length)).toEqual(
+        alwaysDisallowedCategories,
+      )
+    })
+
+    // The whole point of the split: the prompt list is truncated, the code-level Set is not.
+    it('should still reject a repeat that is older than the model-visible window', async () => {
+      jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Boast', ...paddingCategoryNames(599)]))
+
+      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a repeated category: Boast')
+
+      const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
+      expect(context.disallowedCategories).not.toContain('Boast')
     })
   })
 })

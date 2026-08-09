@@ -24,6 +24,15 @@ export interface CategoryObject {
   [key: string]: Category
 }
 
+// Repeat-detection keys for every category ever generated, built by buildCategoryHistory. The two
+// sets are separate because they catch different things: `canonical` catches exact and
+// punctuation-only restatements (including blank-bearing names, which have no token key), while
+// `token` catches pure reorderings.
+export interface CategoryHistory {
+  canonical: Set<string>
+  token: Set<string>
+}
+
 // Verification
 
 export interface VerificationResult {

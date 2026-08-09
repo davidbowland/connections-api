@@ -14,6 +14,7 @@ export const llmVerifyPromptId = process.env.LLM_VERIFY_PROMPT_ID as string
 
 // Games
 
+export const disallowedCategoryLimit = parseInt(process.env.DISALLOWED_CATEGORY_LIMIT as string, 10)
 export const inspirationAdjectivesCount = parseInt(process.env.INSPIRATION_ADJECTIVES_COUNT as string, 10)
 export const inspirationNounsCount = parseInt(process.env.INSPIRATION_NOUNS_COUNT as string, 10)
 export const inspirationVerbsCount = parseInt(process.env.INSPIRATION_VERBS_COUNT as string, 10)

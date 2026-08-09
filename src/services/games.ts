@@ -4,13 +4,15 @@ import { alwaysDisallowedCategories, wordConstraints as wordConstraintsChoices }
 import { nouns } from '../assets/nouns'
 import { verbs } from '../assets/verbs'
 import {
+  disallowedCategoryLimit,
   inspirationAdjectivesCount,
   inspirationNounsCount,
   inspirationVerbsCount,
   llmPromptId,
   wordConstraintChance,
 } from '../config'
-import { CategoryObject, ConnectionsData, GameId, ToolSchema } from '../types'
+import { CategoryHistory, CategoryObject, ConnectionsData, GameId, ToolSchema } from '../types'
+import { canonicalize, tokenKey } from '../utils/category-keys'
 import { selectCategoryConstraints } from '../utils/constraint-selection'
 import { getDateConstraint } from '../utils/constraints'
 import { log } from '../utils/logging'
@@ -150,7 +152,21 @@ export const findChargedTerm = (categories: CategoryObject): string | undefined 
   return candidates.flatMap(tokenize).find((token) => chargedWords.has(token))
 }
 
-export const validateGame = (categories: CategoryObject): string[] => {
+// A null token key means the name is blank-bearing or all-stopwords and has no order-independent
+// identity; those must be filtered out rather than stored, because a single null in the set would
+// match every other keyless name forever.
+export const buildCategoryHistory = (names: string[]): CategoryHistory => ({
+  canonical: new Set(names.map(canonicalize)),
+  token: new Set(names.map(tokenKey).filter((key): key is string => key !== null)),
+})
+
+const findRepeatedCategory = (categories: CategoryObject, history: CategoryHistory): string | undefined =>
+  Object.keys(categories).find((name) => {
+    const token = tokenKey(name)
+    return history.canonical.has(canonicalize(name)) || (token !== null && history.token.has(token))
+  })
+
+export const validateGame = (categories: CategoryObject, history?: CategoryHistory): string[] => {
   const wordList = Object.values(categories).flatMap((cat) => cat.words.map((w) => w.toUpperCase()))
   if (new Set(wordList).size !== wordList.length) {
     log('Generated words are not unique', { wordList })
@@ -180,25 +196,41 @@ export const validateGame = (categories: CategoryObject): string[] => {
     throw new Error(`Generated a charged term: ${chargedTerm}`)
   }
 
+  // Optional so the rest of validateGame stays testable in isolation; createGame always supplies it.
+  const repeated = history && findRepeatedCategory(categories, history)
+  if (repeated) {
+    log('Generated a repeated category', { repeated })
+    throw new Error(`Generated a repeated category: ${repeated}`)
+  }
+
   return wordList
 }
 
 export const createGame = async (gameId: GameId, random = Math.random): Promise<ConnectionsData> => {
   const pastGames = await getAllGames()
-  const disallowedCategories = [
-    ...alwaysDisallowedCategories,
-    ...Object.values(pastGames).flatMap((game) => Object.keys(game.categories)),
-  ]
+  // GameIds are ISO dates, so a descending string sort is newest-first.
+  const pastCategories = Object.entries(pastGames)
+    .sort(([left], [right]) => right.localeCompare(left))
+    .flatMap(([, game]) => Object.keys(game.categories))
+  // Only the model-visible list is bounded. Its job is to stop semantic restatement, which only the
+  // model can judge and where recency matters most, so it pays tokens for the newest names only.
+  const disallowedCategories = [...alwaysDisallowedCategories, ...pastCategories.slice(0, disallowedCategoryLimit)]
+  // The code-level history covers the FULL archive, not just the model-visible window. Exact and
+  // reordered repeats are caught deterministically here at no token cost, so there is no reason to
+  // truncate it.
+  const categoryHistory = buildCategoryHistory([...alwaysDisallowedCategories, ...pastCategories])
   const modelContext = getModelContext(new Date(gameId), disallowedCategories, random)
   log('Creating game with context', { modelContext })
 
   const prompt = await getPromptById(llmPromptId)
   const returnedData: ConnectionsData = await invokeModel(prompt, gameTool, modelContext)
   const connectionsData = transformWordsToUpperCase(returnedData)
-  validateGame(connectionsData.categories)
+  validateGame(connectionsData.categories, categoryHistory)
 
+  // Checked again after verification: the verifier is allowed to replace a category outright, and
+  // its replacement can itself be a repeat.
   const verifiedGame = await verifyAndFixGame(connectionsData, modelContext)
-  const finalWordList = validateGame(verifiedGame.categories)
+  const finalWordList = validateGame(verifiedGame.categories, categoryHistory)
 
   const dataWithWordList = { ...verifiedGame, wordList: finalWordList }
   await setGameById(gameId, dataWithWordList)

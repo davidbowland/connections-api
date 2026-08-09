@@ -240,6 +240,7 @@ Resources:
       Environment:
         Variables:
           DEBUG_LOGGING: 'false'
+          DISALLOWED_CATEGORY_LIMIT: 500
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
           DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
           GAME_GENERATION_TIMEOUT: !FindInMap [EnvironmentMap, !Ref Environment, createGameTimeout]
