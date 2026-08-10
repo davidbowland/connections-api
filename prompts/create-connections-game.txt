@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":24000,"model":"us.anthropic.claude-opus-4-8","thinkingEffort":"high"}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":32000,"model":"us.anthropic.claude-opus-5","thinkingEffort":"high"}
 
 <instructions>
 <game_overview>
@@ -13,16 +13,21 @@
 - The <context> block below provides disallowed categories, inspiration words, and any category or word constraints for this game.
 - Generate 4 unique categories — unless wordConstraints directs a different count
   - ALWAYS abide by categoryConstraints, if provided
+    - A constraint marked "TWIN" appears twice. Build two categories on that one pattern using different instances, and choose words that could plausibly belong to either.
+    - A constraint that asks you to invent a pattern is a wildcard: create something genuinely absent from the other constraints, not a rewording of one.
+    - A constraint containing a sentence beginning "Additionally," carries an extra restriction that the category MUST also satisfy. That restriction may run to several sentences — every sentence from "Additionally," to the end of the constraint is part of it, including any that limit or qualify it.
   - NEVER generate a "____ WORD" or "WORD ____" category unless explicitly asked in categoryConstraints
   - ALWAYS consider the word constraints (wordConstraints), if provided
   - The inspiration words (inspirationAdjectives/inspirationNouns/inspirationVerbs) are the source of novelty for this game — seed EVERY category from a DIFFERENT inspiration word:
     - Either build the category concept around the inspiration word, use the inspiration word in the category name, or include the inspiration word as one of the category's words (use appropriate casing)
     - When a category comes from categoryConstraints, choose the specific instance of the pattern by starting from an inspiration word (eg constraint "Homophones of a category" + inspiration word "hymn" → "Homophones of music words")
     - NEVER fall back on a stock category idea that ignores the inspiration words — if a category concept came to mind without an inspiration word, discard it and derive one from an inspiration word instead
-  - NEVER generate a category that is similar to disallowed categories, another category, or example categories ("weather" and "storms" are too similar)
-  - disallowedCategories lists every category from every previous game — NEVER generate any of them again, nor a close paraphrase ("Homophones of body parts" and "Body part homophones" are the same category)
+  - NEVER generate two categories in the same SEMANTIC FIELD ("weather" and "storms" are too similar), and NEVER generate a category similar to a disallowed or example category
+  - Two categories MAY share the same STRUCTURAL PATTERN as long as they use different instances of it (two "words that can follow ___" categories built on different words is good and creates useful ambiguity). This is required when a constraint is marked TWIN.
+  - disallowedCategories lists the most recent previously-used categories — NEVER generate any of them again, nor a close paraphrase ("Homophones of body parts" and "Body part homophones" are the same category)
   - Examples inside categoryConstraints and wordConstraints (text after "e.g.") illustrate the PATTERN only — NEVER submit an example itself as a category; always invent a fresh instance of the pattern
-  - Categories should be highly specific, and surprising, funny, or cleverly framed (eg "BACKWARDS ANIMALS", "SECOND WORDS IN TITLES OF ABBA HITS", "ORGAN PLUS A LETTER")
+  - Categories should be highly specific, and surprising, funny, or cleverly framed (eg "Things that are stripy", "Rappers without Lil", "Words after SWEET")
+  - Wordplay gimmicks (backwards spellings, anagrams, hidden words, plus/minus a letter) belong in a game ONLY when a categoryConstraint asks for one. Do not reach for them otherwise.
 - Generate 7 unique words for each category, then pick the best 4 based on:
   - NO CATEGORIES CAN SHARE A WORD
   - Words can contain spaces or hyphens, as long as they're one concept (eg "FIRE EXTINGUISHER", "CUP HOLDER", "RINKY-DINK")
@@ -36,6 +41,10 @@
   - NEVER include words from the category
   - All words must be uppercase
 - Generate a hint for each category (see <hint_rules> section — that is the authoritative source for all hint requirements)
+- Identify the decoys: pick 3-5 words that a solver could plausibly place in a DIFFERENT category of this same game, and name that other category
+  - The decoys must involve at least 3 of the categories, so the misdirection is spread across the grid rather than concentrated in one pair
+  - A decoy must name a real, defensible second reading of that word — not a stretch invented to satisfy the count
+  - If you cannot find 3 honest decoys, the grid has too little overlap: revise the words until you can
 </steps>
 <hint_rules>
 A hint is a SHORT question that nudges the solver toward the category's key concept.
@@ -86,12 +95,13 @@ KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather 
 - Focus on surprising connections that make solvers think 'I never would have thought of that'
 - For spelling categories with embedded patterns, ensure ALL words contain the identical substring (eg "ONE" appears in "MONEY", "PHONE", "STONE", "ALONE") and are not identical ("ONE" doesn't appear in "ONE") and don't all appear in the same place ("DAY" always at the end of "EVERDAY" and "SOMEDAY")
   - Ensure the embedded pattern is itself a word of at least 4, preferably 5 or more letters, OR the embedded letters change each time (eg "PEAR" in "SPEAR" and "PLUM" in "PLUMBER" are both fruits, or categories "ENDING IN COLORS" or "STARTING WITH SYNONYMS FOR 'EAT'")
-  - If any category relies on word spelling, double-check that the spelling constraints are followed. Then, triple-check
+  - If any category relies on word spelling, double-check that the spelling constraints are followed
   - ONLY create spelling categories if instructed by constraints. NEVER create spelling categories unless told to do so
 - If the category is a word either before or after, think about whether each word actually BEGINS or ENDS with correct word (eg "____ DRAW" matches "QUICKDRAW" but NOT "DRAWSTRING")
 </category_guidelines>
 <format>
 Call the `submit_game` tool with your result:
+- decoys -- a list of objects, each with `word` (a word in the game) and `looksLike` (the name of a DIFFERENT category in this game that the word could plausibly belong to)
 - categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings where every word must contain at least one of the listed substrings (empty array if not a spelling category)
 </format>
 <context>
@@ -122,7 +132,12 @@ ${context}
       "words": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"],
       "embeddedSubstrings": []
     }
-  }
+  },
+  "decoys": [
+    { "word": "SLIP", "looksLike": "Items in a sewing kit" },
+    { "word": "DAGGER", "looksLike": "Items in a sewing kit" },
+    { "word": "BUTTON", "looksLike": "Arc-shaped things" }
+  ]
 }
 </example_output>
 <example_output>
@@ -148,6 +163,11 @@ ${context}
       "words": ["HONEST", "NETWORK", "LISTEN", "COMPONENT"],
       "embeddedSubstrings": ["ONE", "TWO", "TEN"]
     }
-  }
+  },
+  "decoys": [
+    { "word": "HONEST", "looksLike": "Presidential nicknames" },
+    { "word": "TEDDY", "looksLike": "Military clothing descriptors" },
+    { "word": "SNAKE", "looksLike": "Military clothing descriptors" }
+  ]
 }
 </example_output>

@@ -32,8 +32,8 @@ export const wordConstraints: string[] = [
   'always generate 5 categories rather than 4',
 ]
 
-// Tier 1: Common patterns - good misdirection, appear frequently (weight: 4x)
-const tier1CategoryConstraints: string[] = [
+// Tier 1: Common patterns - good misdirection, appear frequently (probability: 0.70)
+export const tier1CategoryConstraints: string[] = [
   'Specific category of things/items — avoid pure semantic fields like "types of drinks" or "kitchen appliances"; prefer categories with lateral misdirection (e.g., "Punctuation marks", "Olympic events", "Monopoly tokens")',
   'Things sharing a property, or attributes of one specific thing (e.g., "Things that are stripy", "Things that are pink", "Foamy things", "Attributes of a frog", "Describes tires")',
   'Things found in/seen in a specific context (e.g., "Seen at airport security", "Words on Monopoly squares")',
@@ -48,8 +48,8 @@ const tier1CategoryConstraints: string[] = [
   'Pop culture concepts, but not more than one name unless they are also common words (e.g. "Rocky Horror Picture Show: ROCKY, HORROR, PICTURE, SHOW" or "Members of The Breakfast Club: BRAIN, ATHLETE, BASKET CASE, PRINCESS")',
 ]
 
-// Tier 2: Uncommon patterns - interesting but could become predictable (weight: 2x)
-const tier2CategoryConstraints: string[] = [
+// Tier 2: Uncommon patterns - interesting but could become predictable (probability: 0.24)
+export const tier2CategoryConstraints: string[] = [
   'Synonyms for something (e.g., "Euphemisms for death", "Ways to say yes", "Slang for money")',
   'Compound word components (e.g., "First words in compounds with BALL", "Second words in compounds with FIRE")',
   'Ending/starting with [category] (e.g., "Ending in colors: INFRARED, MARIGOLD" where each color appears ONLY ONCE)',
@@ -58,11 +58,11 @@ const tier2CategoryConstraints: string[] = [
   'Words that can follow a common word (e.g., "Words after SWEET", "Words that can follow FIRE")',
   'Words that can precede a common word (e.g., "Words before HOUSE", "Words that can precede BALL")',
   'Words that become new words with a common prefix (e.g., "Words that become new words with UN___", "Add RE___ to make new words", "OUT___ words")',
-  'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH", "Verbs that are also nouns: RUN, PLAY, BREAK")',
+  'Words that double as a different part of speech (e.g., "Nouns that are also verbs: DUCK, PARK, MATCH")',
 ]
 
-// Tier 3: Rare patterns - very specific, should appear infrequently (weight: 1x)
-const tier3CategoryConstraints: string[] = [
+// Tier 3: Rare patterns - very specific, should appear infrequently (probability: 0.06, at most one per game)
+export const tier3CategoryConstraints: string[] = [
   'Homophones of a category (e.g., "Homophones of tools", "Homophones of numbers")',
   'Words spelled backwards are [category] (e.g., "Backwards animals: FLOW, GOD, TAB")',
   '[Category] plus a letter (e.g., "Organ plus letter: COLONY, HEARTH, LUNGE")',
@@ -77,14 +77,58 @@ const tier3CategoryConstraints: string[] = [
   'Eponyms — common words derived from real people\'s names, grouped by domain (e.g., "Named after military figures: CARDIGAN, SHRAPNEL, WELLINGTON, BOWIE" or "Named after scientists: WATT, FAHRENHEIT, DIESEL, BUNSEN"). Always pick a consistent domain — never mix domains in one category.',
 ]
 
-export const categoryConstraints: string[] = [
-  ...tier1CategoryConstraints,
-  ...tier1CategoryConstraints,
-  ...tier1CategoryConstraints,
-  ...tier1CategoryConstraints,
-  ...tier2CategoryConstraints,
-  ...tier2CategoryConstraints,
-  ...tier3CategoryConstraints,
+// Occupies a single slot and asks the model to invent a pattern the tier lists do not cover.
+// Scoped to "the other constraints in this list" rather than an open-ended novelty check: the model
+// also receives 500+ disallowedCategories, and an unbounded "is this a close variant of anything?"
+// check is a search with no terminating state -- which is how this slot exhausted its token budget.
+// The disallowed list is already enforced by the prompt itself, so it is not re-litigated here.
+export const wildcardConstraint =
+  'Invent a category pattern of your own instead of reaching for a familiar one. It must not restate any of the other constraints in this list. Describe the pattern plainly in the category name, and choose words that could plausibly belong to another category in this game.'
+
+// Appended to the pattern shared by the two twin slots. Two categories on one pattern force the
+// solver to separate instances rather than spot the pattern once and be done.
+export const twinSuffix =
+  ' — TWIN: another category in this game uses this same pattern. Use a DIFFERENT instance of it, and choose words that could plausibly belong to either instance.'
+
+// Stacked onto one already-drawn slot: three misdirection amplifiers and one tell-removal entry
+// (the last). Do not read that as a quota to top back up, and do not add variety entries here --
+// variety is the wildcard slot's job and the tier draw's. This list exists to make a grid harder to
+// read, not more varied.
+//
+// The rule every entry obeys: a modifier may add WRONG groupings, never a second right one. Any
+// property a modifier imposes POSITIVELY must be visible on words OUTSIDE this category too, or must
+// point one word AT another category. A property holding for exactly these four words is a second
+// answer key, however clever it is: the solver scans the grid for it, finds exactly those four, and
+// is done. The tell-removal entry imposes no positive property, so it passes trivially.
+//
+// This is why wordConstraints may say "all words must have double letters" and a modifier may not.
+// wordConstraints applies to all 16 words, where the trait has no discriminating power. Applied to 4,
+// the identical trait IS the answer. Three entries were dropped for failing that test: also a common
+// verb, also a proper noun, shares one unrelated surface property. Two more passed it and were
+// dropped anyway -- narrow to a decade, place, or named source, a restatement of
+// create-connections-game.txt:23,29; and invert the pattern, whose "build the category around what
+// fails to fit it" asks for a pattern's complement. For most tier patterns that complement is
+// unbounded ("words that do NOT follow SWEET"), leaving a category with no unique answer set.
+export const constraintModifiers: string[] = [
+  'Additionally, one word that belongs to a DIFFERENT category in this game must also be a genuine fit for this category, so a solver who spots this group sees five candidates and has to drop one. The fifth fit must be real, not a stretch — and that word must still belong more firmly to its own category.',
+  'Additionally, three of these four words must also fit one obvious, well-known grouping that is NOT a category in this game, and a word from a DIFFERENT category must fit that false grouping too — so a solver who spots it can assemble four words and be wrong. That outside word must still belong more firmly to its own category. Never list this false grouping as a decoy.',
+  'Additionally, choose words for this category so that at least two of them would also look at home in one of the other categories in this game. The second reading must be real, not a stretch.',
+  'Additionally, the four words must not look like a set on the surface — vary whatever this pattern leaves free (length, part of speech, register) so that nothing but the category itself groups them.',
+]
+
+export interface TierDefinition {
+  constraints: string[]
+  probability: number
+  tier: 1 | 2 | 3
+}
+
+// Probability is per-tier, not per-entry. Adding a new tier-3 pattern therefore makes that
+// pattern more likely without making rare patterns collectively more common.
+// Tier 3 at 0.06 puts a rare pattern in roughly 22% of four-slot games (1 - 0.94^4).
+export const categoryConstraintTiers: TierDefinition[] = [
+  { constraints: tier1CategoryConstraints, probability: 0.7, tier: 1 },
+  { constraints: tier2CategoryConstraints, probability: 0.24, tier: 2 },
+  { constraints: tier3CategoryConstraints, probability: 0.06, tier: 3 },
 ]
 
 export const fixedDateCategoryConstraints: Record<string, string> = {

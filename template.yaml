@@ -240,6 +240,7 @@ Resources:
       Environment:
         Variables:
           DEBUG_LOGGING: 'false'
+          DISALLOWED_CATEGORY_LIMIT: 500
           DYNAMODB_GAMES_TABLE_NAME: !Ref GamesTable
           DYNAMODB_PROMPTS_TABLE_NAME: !Ref PromptsTable
           GAME_GENERATION_TIMEOUT: !FindInMap [EnvironmentMap, !Ref Environment, createGameTimeout]
@@ -249,6 +250,9 @@ Resources:
           LLM_PROMPT_ID: create-connections-game
           LLM_VERIFY_PROMPT_ID: verify-connections-game
           MAX_GAME_GENERATION_ATTEMPTS: !FindInMap [EnvironmentMap, !Ref Environment, maxGameGenerationAttempts]
+          MODIFIER_CHANCE: 0.15
+          TWIN_MECHANIC_CHANCE: 0.12
+          WILDCARD_SLOT_CHANCE: 0.2
           WORD_CONSTRAINT_CHANCE: 0.12
       Events:
         Schedule:

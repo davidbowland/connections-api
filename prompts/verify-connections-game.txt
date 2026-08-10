@@ -1,4 +1,4 @@
-# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":8000,"model":"us.anthropic.claude-sonnet-5","thinkingEffort":"medium"}
+# {"anthropicVersion":"bedrock-2023-05-31","maxTokens":8000,"model":"us.anthropic.claude-opus-5","thinkingEffort":"medium"}
 
 <instructions>
 <context>
@@ -8,6 +8,7 @@ The game data is provided as JSON with the following keys:
 - "game": the connections game to verify
 - "categoryConstraints": the constraint strings used during generation
 - "wordConstraints": word-level constraints used during generation
+- "decoys": optional — words the generator claims are plausible members of a second category, if any
 </context>
 <checks>
 Examine each category in the game and check for the following issues:
@@ -44,6 +45,8 @@ Examine each category in the game and check for the following issues:
   - "This category is about feeling hot." ← a statement, not a question
 
   Hints should be about the contents of a category, not the style.
+
+7. **Decoy claims** - When the input includes `decoys`, each entry claims that `word` plausibly belongs to the category named in `looksLike` as well as to its own category. Verify each claim: the word must genuinely be something a solver could place in that other category. Flag any decoy whose claim does not hold — the game asserted misdirection that is not actually there. Treat a bogus decoy as a word-level problem: return a `fix` that replaces the offending word in its own category with one that genuinely could also sit in the `looksLike` category. Do not return `decoys` in your verdict — they are context only, and the fixes shape does not change.
 </checks>
 <verdict-rules>
 Return one of three verdicts:
@@ -54,6 +57,9 @@ Return one of three verdicts:
   - Games with wordConstraints specified CANNOT FAIL, only fix or pass
 
 When returning a `fix` verdict, always return the **full corrected list** for each affected entry, not a diff.
+The limits are enforced in code and a verdict that exceeds them is discarded along with the whole
+game: at most 2 changed words in any one category, at most 4 changed words overall, at most 1 full
+category replacement. Count your changed words before answering.
 </verdict-rules>
 <format>
 Call the `submit_verdict` tool with input matching one of these shapes:
@@ -142,7 +148,7 @@ Input game:
   }
 }
 Correct output:
-{"verdict":"fix","reason":"BAILIFF and JUDGE together immediately betray the Courtroom roles category.","fixes":{"Courtroom roles":{"words":["BAILIFF","BAR","BENCH","STAND"]}}}
+{"verdict":"fix","reason":"BAILIFF and JUDGE together immediately betray the Courtroom roles category; BAR and BENCH carry second meanings.","fixes":{"Courtroom roles":{"words":["BAILIFF","BAR","BENCH","CLERK"]}}}
 </examples>
 <context>
 ${context}

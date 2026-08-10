@@ -24,6 +24,23 @@ export interface CategoryObject {
   [key: string]: Category
 }
 
+// Repeat-detection keys for every category ever generated, built by buildCategoryHistory. The two
+// sets are separate because they catch different things: `canonical` catches exact and
+// punctuation-only restatements (including blank-bearing names, which have no token key), while
+// `token` catches pure reorderings.
+export interface CategoryHistory {
+  canonical: Set<string>
+  token: Set<string>
+}
+
+// A word the generator claims plausibly belongs to `looksLike` -- a DIFFERENT category in the same
+// grid -- as well as to its own. Decoys exist only to make the model commit to cross-category
+// misdirection while it is generating; they are validated and dropped, never stored or returned.
+export interface Decoy {
+  looksLike: string
+  word: string
+}
+
 // Verification
 
 export interface VerificationResult {

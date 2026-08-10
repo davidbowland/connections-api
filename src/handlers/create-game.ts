@@ -4,7 +4,7 @@ import { ScheduledEvent } from 'aws-lambda'
 import { maxGameGenerationAttempts } from '../config'
 import { resetGameGenerationStarted, setGameGenerationStarted } from '../services/dynamodb'
 import { createGame } from '../services/games'
-import { log } from '../utils/logging'
+import { log, logError } from '../utils/logging'
 
 interface CreateGameEvent {
   gameId?: string
@@ -62,7 +62,10 @@ export const createGameHandler = async (event: ScheduledEvent | CreateGameEvent)
         log('Failed to invoke self for retry', { attempt, gameId, invokeError })
       }
     } else {
-      log('Game creation failed at max attempts, giving up', { attempt, error, gameId })
+      // logError, not log: the CloudWatch subscription filters on level="ERROR", and this
+      // handler otherwise swallows the failure and returns normally -- no Lambda error metric,
+      // no alarm, and players poll a 202 until the generation lock expires.
+      logError('Game creation failed at max attempts, giving up', { attempt, error, gameId })
     }
   }
 }

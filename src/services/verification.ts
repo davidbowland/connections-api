@@ -1,5 +1,5 @@
 import { llmVerifyPromptId } from '../config'
-import { CategoryObject, ConnectionsGame, ToolSchema, VerificationResult } from '../types'
+import { CategoryObject, ConnectionsGame, Decoy, ToolSchema, VerificationResult } from '../types'
 import { log } from '../utils/logging'
 import { invokeModel } from './bedrock'
 import { getPromptById } from './dynamodb'
@@ -101,19 +101,30 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
   return { ...game, categories }
 }
 
-const getVerifierContext = (game: ConnectionsGame, modelContext: Record<string, any>): Record<string, any> => {
+// Decoys ride alongside the game rather than inside it. validateDecoys can only check that a decoy
+// is well-formed; whether the claim is TRUE is a judgement call, so the verifier gets the claims as
+// read-only context and audits them. The key is spread in only when there is something to audit --
+// an always-present `decoys: undefined` would defeat the prompt's "when the input includes decoys"
+// branch, and merging them into `game` would put them back on the path to storage.
+const getVerifierContext = (
+  game: ConnectionsGame,
+  modelContext: Record<string, any>,
+  decoys?: Decoy[],
+): Record<string, any> => {
   return {
     game,
     categoryConstraints: modelContext.categoryConstraints,
     wordConstraints: modelContext.wordConstraints,
+    ...(decoys && decoys.length > 0 ? { decoys } : {}),
   }
 }
 
 export const verifyAndFixGame = async (
   game: ConnectionsGame,
   modelContext: Record<string, any>,
+  decoys?: Decoy[],
 ): Promise<ConnectionsGame> => {
-  const verifierContext = getVerifierContext(game, modelContext)
+  const verifierContext = getVerifierContext(game, modelContext, decoys)
   log('Invoking verify prompt', { verifierContext })
   const prompt = await getPromptById(llmVerifyPromptId)
   const result: VerificationResult = await invokeModel(prompt, verdictTool, verifierContext)

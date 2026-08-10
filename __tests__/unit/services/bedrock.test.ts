@@ -192,6 +192,46 @@ describe('bedrock', () => {
       )
     })
 
+    it('should log token usage and stop reason on a successful invocation', async () => {
+      await invokeModel(prompt, toolSchema)
+
+      expect(log).toHaveBeenCalledWith('Model invocation complete', {
+        inputTokens: 3_398,
+        model: 'the-thinking-ai:1.0',
+        outputTokens: 99,
+        stopReason: 'tool_use',
+        toolName: 'submit_data',
+      })
+    })
+
+    // The production failure this logging exists for: thinking consumed the whole max_tokens budget,
+    // so no tool_use block was ever emitted. Usage must be logged BEFORE extraction throws, or the
+    // one run that most needs a token count is the one run that reports none.
+    it('should log token usage when the response carries no usable block', async () => {
+      mockSend.mockResolvedValueOnce({
+        ...invokeModelResponse,
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            ...invokeModelResponseData,
+            content: [{ thinking: 'Ran out of room before answering', type: 'thinking' }],
+            stop_reason: 'max_tokens',
+          }),
+        ),
+      })
+
+      await expect(invokeModel(prompt, toolSchema)).rejects.toThrow(
+        `Model response contained no ${toolSchema.name} tool call`,
+      )
+
+      expect(log).toHaveBeenCalledWith('Model invocation complete', {
+        inputTokens: 3_398,
+        model: 'the-thinking-ai:1.0',
+        outputTokens: 99,
+        stopReason: 'max_tokens',
+        toolName: 'submit_data',
+      })
+    })
+
     it('should throw when the fallback text block does not contain parseable JSON', async () => {
       mockSend.mockResolvedValueOnce({
         ...invokeModelResponse,

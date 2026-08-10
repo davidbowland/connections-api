@@ -94,6 +94,24 @@ const extractJson = (input: string): string => {
   return cleaned.match(/{.*}/s)?.[0] ?? cleaned
 }
 
+// Thinking and the tool call share one max_tokens budget, so a run that spends the whole budget
+// thinking returns no tool_use block at all. Logged on every invocation rather than only on failure:
+// a failure count says nothing without knowing how much headroom a healthy game leaves, and that
+// headroom is what tells us whether the effort level can come down.
+const logModelUsage = (
+  modelResponse: { stop_reason?: string; usage?: { input_tokens?: number; output_tokens?: number } },
+  tool: ToolSchema,
+  model: string,
+): void => {
+  log('Model invocation complete', {
+    inputTokens: modelResponse.usage?.input_tokens,
+    model,
+    outputTokens: modelResponse.usage?.output_tokens,
+    stopReason: modelResponse.stop_reason,
+    toolName: tool.name,
+  })
+}
+
 const extractModelPayload = (
   modelResponse: {
     content: { type: string; input?: unknown; name?: string; text?: string }[]
@@ -174,6 +192,8 @@ export const invokeModel = async <T>(prompt: Prompt, tool: ToolSchema, context?:
 
   const response = await sendToBedrock(command, prompt.config.model)
   const modelResponse = decodeResponseBody(response.body, prompt.config.model)
+  // Before extraction, not after: extraction throws on the exact runs whose token counts matter most.
+  logModelUsage(modelResponse, tool, prompt.config.model)
   const payload = extractModelPayload(modelResponse, tool, prompt.config.model)
   return validateResponse(tool, payload)
 }
