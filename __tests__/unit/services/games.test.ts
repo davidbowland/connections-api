@@ -1,4 +1,5 @@
 import { connectionsData, prompt } from '../__mocks__'
+import { adjectives } from '@assets/adjectives'
 import {
   alwaysDisallowedCategories,
   constraintModifiers,
@@ -7,6 +8,8 @@ import {
   tier3CategoryConstraints,
   wildcardConstraint,
 } from '@assets/constraints'
+import { nouns } from '@assets/nouns'
+import { verbs } from '@assets/verbs'
 import { disallowedCategoryLimit } from '@config'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
@@ -87,9 +90,14 @@ describe('games', () => {
             tier1CategoryConstraints[2],
           ],
           disallowedCategories: alwaysDisallowedCategories,
-          inspirationAdjectives: expect.arrayContaining(['good', 'balmy']),
-          inspirationNouns: expect.arrayContaining(['time', 'execution']),
-          inspirationVerbs: expect.arrayContaining(['be', 'shiver']),
+          // Derived from the lists rather than hardcoded. With random mocked to 0, getRandomSample
+          // returns array[0] and then the entry it swapped in from the tail -- so asserting the
+          // first and last words proves the sampler reaches into the list AND performs the
+          // swap-to-tail. Hardcoding the words instead would break this service test on every
+          // regeneration of an asset file it has nothing to do with.
+          inspirationAdjectives: expect.arrayContaining([adjectives[0], adjectives[adjectives.length - 1]]),
+          inspirationNouns: expect.arrayContaining([nouns[0], nouns[nouns.length - 1]]),
+          inspirationVerbs: expect.arrayContaining([verbs[0], verbs[verbs.length - 1]]),
         }),
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
