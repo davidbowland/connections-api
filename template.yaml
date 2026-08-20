@@ -27,7 +27,14 @@ Mappings:
       project: connections
       promptsTable: connections-api-prompts
       rerollPasswordPath: /connections-api/reroll-password
-      scheduledGameCreationEnabled: true
+      # A State string, NOT an Enabled boolean, and the difference is not cosmetic. SAM types
+      # Enabled as a bool but leaves supports_intrinsics on, so a !FindInMap reaches
+      # `events_rule.State = "ENABLED" if self.Enabled else "DISABLED"` still wrapped as a dict --
+      # which is truthy in Python. Every environment therefore came out ENABLED no matter what
+      # this mapping said, and the test stack had been generating a game every night against
+      # Bedrock while this line read `false`. State is a pass-through property, so CloudFormation
+      # resolves the intrinsic itself and the value here is the value that ships.
+      scheduledGameCreationState: ENABLED
       zoneId: Z072422417XWM8PIXXSFA
     test:
       certificate: 6a48cba7-feb9-4de5-8cbf-d383140fcdef
@@ -40,7 +47,7 @@ Mappings:
       project: connections-test
       promptsTable: connections-api-prompts-test
       rerollPasswordPath: /connections-api-test/reroll-password
-      scheduledGameCreationEnabled: false
+      scheduledGameCreationState: DISABLED
       zoneId: Z01312547RGU1BYKIJXY
 
 Resources:
@@ -260,7 +267,7 @@ Resources:
           Properties:
             Schedule: 'cron(33 3 ? * * *)'
             Description: Create daily game between 3-4am UTC (UTC+14 is max)
-            Enabled: !FindInMap [EnvironmentMap, !Ref Environment, scheduledGameCreationEnabled]
+            State: !FindInMap [EnvironmentMap, !Ref Environment, scheduledGameCreationState]
       Tags:
         'created-by': 'connections-api'
         'created-for': 'connections'
