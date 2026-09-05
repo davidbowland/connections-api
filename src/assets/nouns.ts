@@ -1387,7 +1387,6 @@ export const nouns: string[] = [
   'horsehair',
   'horsehide',
   'horseradish',
-  'horseshit',
   'horseshoe',
   'hose',
   'hospital',

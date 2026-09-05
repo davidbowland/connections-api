@@ -430,7 +430,6 @@ export const adjectives: string[] = [
   'frosty',
   'frothy',
   'frozen',
-  'fucking',
   'full',
   'funereal',
   'fungal',

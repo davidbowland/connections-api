@@ -212,7 +212,25 @@ const admittedByLoweredThresholds = [
   'uterine',
 ]
 
-const crude = ['ass', 'butt', 'buttock', 'buttocks', 'cock', 'crotch', 'pussycat', 'wiener']
+const crude = [
+  'ass',
+  'butt',
+  'buttock',
+  'buttocks',
+  'cock',
+  'crotch',
+  // Both clear the blocklist filter above -- neither is one of the 21 base forms, and this repo has
+  // no wider union for that filter to read -- so both were sitting in the committed lists and being
+  // sampled into the corpus prompt. Found 2026-09-05 while checking whether the filter screened
+  // against the same list the OUTPUT gate does. Here it does: findChargedTerm reads chargedWords
+  // too, so these two were not merely poor seeds, they were words nothing in this repo would have
+  // stopped on the way to a player. Excluding them fixes the seed list; whether blocklist.ts itself
+  // should carry them is a separate call with its own test surface.
+  'fucking',
+  'horseshit',
+  'pussycat',
+  'wiener',
+]
 
 // Graphic violence. Weapons themselves stay -- see SCOPE above.
 const violence = ['bludgeon', 'carjack', 'crucify', 'kidnap', 'maim', 'mutilate', 'strangle', 'suffocate']
