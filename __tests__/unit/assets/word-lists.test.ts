@@ -59,11 +59,24 @@ describe('word lists', () => {
       expect(list).toEqual(list.toSorted())
     })
 
-    // Derived from SPECS rather than restated, so a cap change cannot drift between script and test.
-    it.each(SPECS.map((spec) => [spec.name, byName[spec.name], spec.cap] as const))(
-      'holds the full %s cap',
-      (_name, list, cap) => {
-        expect(list).toHaveLength(cap)
+    /*
+     * Derived from SPECS rather than restated, so the numbers cannot drift between script and test.
+     *
+     * THE FLOOR, NOT THE CAP, and the two stopped being the same number on 2026-09-05. This asserted
+     * `toHaveLength(spec.cap)` back when every pool overflowed its cap, so the list length WAS the
+     * cap and the assertion read as exact. The lists now take everything the filters admit -- the
+     * cap was throwing away 1193 nouns of identical quality -- so an exact length would have to be
+     * updated by hand every time a word joins excluded-seeds.ts, which is a test that fails for
+     * being right.
+     *
+     * The floor is what the check was always FOR: scripts/data/README.md documents a CRLF footgun
+     * that makes all three lists come out empty, and an empty list feeds [undefined x 10] into the
+     * model context rather than failing anything.
+     */
+    it.each(SPECS.map((spec) => [spec.name, byName[spec.name], spec.floor] as const))(
+      'holds at least the %s floor',
+      (_name, list, floor) => {
+        expect(list.length).toBeGreaterThanOrEqual(floor)
       },
     )
   })

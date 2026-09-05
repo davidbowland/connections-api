@@ -53,6 +53,17 @@ const MIN_LENGTH = 3
 // the eligible pool, because the denylist is expected to grow and an equality-to-cap check turns
 // every future exclusion into a build failure.
 export interface ListSpec {
+  // The minimum a healthy build produces. SEPARATED FROM `cap` on 2026-09-05, because the two were
+  // the same number only while every pool overflowed its cap -- the check below read
+  // `words.length < spec.cap`, which is a FLOOR test wearing the cap's name and silently stopped
+  // being one the moment a list was allowed to take everything eligible.
+  //
+  // It is not decoration. scripts/data/README.md documents a CRLF footgun that makes all three
+  // lists come out EMPTY, and an empty list feeds [undefined x 10] into the model context rather
+  // than failing the build. Set well under the measured yield: it exists to catch a collapse, not
+  // to pin a count, and a floor that tracks the exact yield fails the build every time someone adds
+  // a word to excluded-seeds.ts.
+  floor: number
   cap: number
   name: string
   partOfSpeech: string
@@ -61,9 +72,44 @@ export interface ListSpec {
 }
 
 export const SPECS: ListSpec[] = [
-  { cap: 2000, name: 'nouns', partOfSpeech: 'Noun', requireVerbal: false, threshold: 4.5 },
-  { cap: 500, name: 'verbs', partOfSpeech: 'Verb', requireVerbal: true, threshold: 3.0 },
-  { cap: 500, name: 'adjectives', partOfSpeech: 'Adjective', requireVerbal: false, threshold: 3.5 },
+  // MEASURED 2026-09-05, not chosen. These lists are the only thing keeping two days of generated
+  // content apart, and the model maps a seed to a theme very nearly one-for-one -- so the collision
+  // rate of a pool IS the repetition rate of the game downstream. Over a seven-day span the old
+  // sizes gave, per pair of days, a 4.9% chance of sharing a noun, 4.9% an adjective and 12.2% a
+  // verb: about one repeated noun and two-and-a-half repeated verbs a week.
+  //
+  // NOUNS ARE A FREE WIN and the threshold does not move: 3193 words clear 4.5, so the CAP was
+  // throwing away 1193 words of identical quality. It is gone rather than raised, because a cap set
+  // below what the filter admits is a number with nothing behind it.
+  //
+  // VERBS AND ADJECTIVES COST CONCRETENESS, which is the honest trade. 3.0 -> 2.5 takes verbs
+  // 595 -> 840 and admits crave, dazzle, grapple, whittle -- and also oppose, repay, heighten, which
+  // are weak seeds. 3.5 -> 3.0 takes adjectives 616 -> 1316 and admits seafaring, clammy, gangly,
+  // durable. The adjective floor is where the clinical anatomy lives; see excluded-seeds.ts.
+  {
+    cap: Number.MAX_SAFE_INTEGER,
+    floor: 2500,
+    name: 'nouns',
+    partOfSpeech: 'Noun',
+    requireVerbal: false,
+    threshold: 4.5,
+  },
+  {
+    cap: Number.MAX_SAFE_INTEGER,
+    floor: 700,
+    name: 'verbs',
+    partOfSpeech: 'Verb',
+    requireVerbal: true,
+    threshold: 2.5,
+  },
+  {
+    cap: Number.MAX_SAFE_INTEGER,
+    floor: 1000,
+    name: 'adjectives',
+    partOfSpeech: 'Adjective',
+    requireVerbal: false,
+    threshold: 3.0,
+  },
 ]
 
 // Concreteness bands the cap draws from proportionally, per the spec's derivation step 11.
@@ -269,8 +315,8 @@ export const main = (): void => {
   // makes all three lists come out empty, and an empty list would feed [undefined x 10] into the
   // model context instead of failing the build.
   for (const { spec, words } of lists) {
-    if (words.length < spec.cap) {
-      throw new Error(`${spec.name} yielded ${words.length}, short of the ${spec.cap} cap`)
+    if (words.length < spec.floor) {
+      throw new Error(`${spec.name} yielded ${words.length}, under its floor of ${spec.floor}`)
     }
   }
 

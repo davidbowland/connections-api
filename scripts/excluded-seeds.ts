@@ -138,8 +138,80 @@ const undress = [
 
 const drugs = ['cannabis', 'ganja', 'hashish', 'heroin', 'marijuana', 'meth', 'narcotics', 'opium', 'valium']
 
+// Alcohol, added 2026-09-05 by decision rather than by discovery. The SCOPE note above says
+// "recreational drugs" and never mentions drink, and thirteen alcohol words were shipping in
+// nouns.ts on that silence -- alcohol, beer, bourbon, tequila, vodka, whiskey, wine, and the places
+// you drink them. A seed steers generation, and "Things behind a bar" is a category this game should
+// not be building itself toward.
+//
+// THREE ARE DELIBERATELY ABSENT and stay in the lists: cider (usually non-alcoholic in American
+// English), flask (laboratory, thermos, hip) and corkscrew (a tool, and a dive). They are exactly
+// the "ambiguous words with an innocent dominant sense" the scope note keeps OUT of this file, and
+// carving them out on the strength of a second sense is the rule that would also take weed and pot.
+const alcohol = [
+  'alcohol',
+  'alcoholic',
+  'ale',
+  'beer',
+  'bourbon',
+  'brandy',
+  'brewery',
+  'cocktail',
+  'distillery',
+  'drunk',
+  'drunken',
+  'inebriated',
+  'intoxicated',
+  'lager',
+  'liquor',
+  'moonshine',
+  'pub',
+  'rum',
+  'saloon',
+  'tavern',
+  'tequila',
+  'vodka',
+  'whiskey',
+  'whisky',
+  'wine',
+]
+
 // Innocent words whose dominant association is not. pussycat is a cat and butt is the end of a
 // rifle, but neither is worth handing to a generator that runs unattended every night.
+// ADMITTED BY THE 2026-09-05 THRESHOLD CHANGE, and found by re-scanning rather than by shipping.
+// The verb floor went 3.0 -> 2.5 and the adjective floor 3.5 -> 3.0, and this file's own warning is
+// that a change to a threshold, a cap or the selection algorithm needs a re-scan -- it even names
+// `oriental` as sitting one tuning change outside the old cutoff. It does now clear 3.0.
+//
+// Adjectives are the risk-dense list and that is structural rather than bad luck: demonyms arrive
+// tagged Adjective, and so does clinical anatomy, which the concreteness rating scores highly
+// precisely because it names physical things.
+// Admitted by UNCAPPING rather than by a threshold: `people` rates 4.82 -- the dataset scores it
+// concrete because people are physical -- and was previously cut by the 2000-word noun cap, which
+// was doing quality work nobody had asked it to do. It is a category HEAD, not a seed: "People" as
+// an inspiration word produces the theme "People", which is every theme and therefore none.
+// word-lists.test.ts pins the frequency-ranked abstract heads as a class and is what caught it.
+const weakHeads = ['people']
+
+const admittedByLoweredThresholds = [
+  'anal',
+  'caress',
+  'colonialist',
+  'corseted',
+  'neuter',
+  'oriental',
+  'ovarian',
+  'penile',
+  'phallic',
+  'rectal',
+  'scrotal',
+  'spermicidal',
+  'transsexual',
+  'undressed',
+  'urinary',
+  'uterine',
+]
+
 const crude = ['ass', 'butt', 'buttock', 'buttocks', 'cock', 'crotch', 'pussycat', 'wiener']
 
 // Graphic violence. Weapons themselves stay -- see SCOPE above.
@@ -216,6 +288,8 @@ const notAdjectives = [
 ]
 
 export const excludedSeeds = new Set([
+  ...admittedByLoweredThresholds,
+  ...alcohol,
   ...crude,
   ...demeaning,
   ...drugs,
@@ -223,6 +297,7 @@ export const excludedSeeds = new Set([
   ...notAdjectives,
   ...notVerbs,
   ...properAndEthnic,
+  ...weakHeads,
   ...sexual,
   ...undress,
   ...violence,
