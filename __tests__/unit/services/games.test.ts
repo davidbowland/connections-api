@@ -376,7 +376,7 @@ describe('games', () => {
     it('should throw when a category name contains a charged term', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({
         categories: {
-          'Bastard behaviour': { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
+          'Bastard behavior': { hint: 'Category 1 hint', words: ['WORD1', 'WORD2', 'WORD3', 'WORD4'] },
           Cat2: { hint: 'Category 2 hint', words: ['WORD5', 'WORD6', 'WORD7', 'WORD8'] },
           Cat3: { hint: 'Category 3 hint', words: ['WORD9', 'WORD10', 'WORD11', 'WORD12'] },
           Cat4: { hint: 'Category 4 hint', words: ['WORD13', 'WORD14', 'WORD15', 'WORD16'] },

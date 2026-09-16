@@ -8,6 +8,7 @@
 - Each category has 4 associated words
 - No categories or words should be offensive or indecent
 - No categories or words should be duplicated
+- ALWAYS use American English spelling in every category name, word, and hint (COLOR not COLOUR, GRAY not GREY, CENTER not CENTRE, ANALOG not ANALOGUE, DEFENSE not DEFENCE, -IZE not -ISE, -ED not -LLED). The only exception is a proper noun or title officially spelled the British way (eg "Labour Party")
 </game_overview>
 <steps>
 - The <context> block below provides disallowed categories, inspiration words, and any category or word constraints for this game.

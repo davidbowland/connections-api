@@ -32,7 +32,7 @@ const CATEGORY_SLOT_COUNT = 4
 
 // bedrock.ts compiles this tool's input_schema with ajv and validates every model payload against
 // it, so minItems here is a real gate, not advisory -- validateDecoys re-checks it only as
-// defence in depth. Deliberately NO maxItems: a game with more decoys than asked for is more
+// defense in depth. Deliberately NO maxItems: a game with more decoys than asked for is more
 // misdirection-rich, not less, and rejecting it would burn a generation attempt to punish the
 // model for exceeding the goal. The tool description still asks for 3-5.
 const MIN_DECOYS = 3

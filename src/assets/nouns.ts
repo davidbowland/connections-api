@@ -1802,7 +1802,6 @@ export const nouns: string[] = [
   'mouse',
   'mousetrap',
   'mousse',
-  'moustache',
   'mouth',
   'mouthpiece',
   'mouthwash',

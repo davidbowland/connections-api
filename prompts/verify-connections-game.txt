@@ -29,7 +29,7 @@ Examine each category in the game and check for the following issues:
   - Contains any word from the category name
   - Describes the category's MECHANIC or STRUCTURE rather than evoking its concept. This includes any hint that uses words like "follow", "precede", "come before", "come after", "share", "common", "connect", "complete", "make a phrase", "make a word", "make an expression", or asks what things "have in common"
   - Could apply interchangeably to any other category of the same type (e.g. a hint that works for ANY "word before ___" category is too generic — a good hint is specific to THIS category's connecting word)
-  - Gives away the answer rather than nudging towards a key word, phrase, or idea
+  - Gives away the answer rather than nudging toward a key word, phrase, or idea
 
   A good hint points at the category concept without revealing the words:
   - "Do you see a color theme?" for "Black-and-white things" (evokes the visual concept)
@@ -47,6 +47,8 @@ Examine each category in the game and check for the following issues:
   Hints should be about the contents of a category, not the style.
 
 7. **Decoy claims** - When the input includes `decoys`, each entry claims that `word` plausibly belongs to the category named in `looksLike` as well as to its own category. Verify each claim: the word must genuinely be something a solver could place in that other category. Flag any decoy whose claim does not hold — the game asserted misdirection that is not actually there. Treat a bogus decoy as a word-level problem: return a `fix` that replaces the offending word in its own category with one that genuinely could also sit in the `looksLike` category. Do not return `decoys` in your verdict — they are context only, and the fixes shape does not change.
+
+8. **American English spelling** - Flag any category name, word, or hint using a British spelling (COLOUR, GREY, CENTRE, ANALOGUE, DEFENCE, ORGANISE, TRAVELLED, MOUSTACHE, etc). Proper nouns and titles officially spelled that way are exempt (e.g. "Labour Party"). Fix a British-spelled word by returning the American spelling, unless the category depends on the British letters (an embedded substring or a letter-pattern category), in which case replace the word outright. Fix a British-spelled hint with a hint fix.
 </checks>
 <verdict-rules>
 Return one of three verdicts:

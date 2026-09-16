@@ -102,7 +102,7 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
 }
 
 // Decoys ride alongside the game rather than inside it. validateDecoys can only check that a decoy
-// is well-formed; whether the claim is TRUE is a judgement call, so the verifier gets the claims as
+// is well-formed; whether the claim is TRUE is a judgment call, so the verifier gets the claims as
 // read-only context and audits them. The key is spread in only when there is something to audit --
 // an always-present `decoys: undefined` would defeat the prompt's "when the input includes decoys"
 // branch, and merging them into `game` would put them back on the path to storage.

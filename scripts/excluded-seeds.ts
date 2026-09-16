@@ -250,6 +250,16 @@ const demeaning = [
   'stutterer',
 ]
 
+// British spellings. The Brysbaert norms are British-collected and carry both variants of a handful
+// of words, and a seed steers generation -- "grey" in the context is how GREY ends up in a grid the
+// prompt now says must be American English. gray and mustache are already in the lists and are what
+// survives here; analogue has no American twin in the dataset, so excluding it drops the word.
+//
+// This is the whole set as of 2026-09-16, found by scanning all three lists for -our/-ise/-re/-ogue
+// /-ae/-oe/-lled and against a word-by-word variant list, not by spot checks. RE-SCAN WHENEVER A
+// THRESHOLD OR CAP CHANGES, for the same reason the note at the top of this file gives.
+const britishSpellings = ['analogue', 'grey', 'moustache']
+
 // Dom_Pos mislabels. The morphological check in build-word-lists.ts catches most Verb-tagged nouns
 // (escargot, clamshell, absinthe) but not irregular past forms or compounds whose -ed/-ing form
 // exists for another reason.
@@ -308,6 +318,7 @@ const notAdjectives = [
 export const excludedSeeds = new Set([
   ...admittedByLoweredThresholds,
   ...alcohol,
+  ...britishSpellings,
   ...crude,
   ...demeaning,
   ...drugs,
