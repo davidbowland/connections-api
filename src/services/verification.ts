@@ -1,6 +1,7 @@
 import { llmVerifyPromptId } from '../config'
 import { CategoryObject, ConnectionsGame, Decoy, ToolSchema, VerificationResult } from '../types'
 import { log } from '../utils/logging'
+import { UsageTracker } from '../utils/usage'
 import { invokeModel } from './bedrock'
 import { getPromptById } from './dynamodb'
 
@@ -123,11 +124,12 @@ export const verifyAndFixGame = async (
   game: ConnectionsGame,
   modelContext: Record<string, any>,
   decoys?: Decoy[],
+  usage?: UsageTracker,
 ): Promise<ConnectionsGame> => {
   const verifierContext = getVerifierContext(game, modelContext, decoys)
   log('Invoking verify prompt', { verifierContext })
   const prompt = await getPromptById(llmVerifyPromptId)
-  const result: VerificationResult = await invokeModel(prompt, verdictTool, verifierContext)
+  const result: VerificationResult = await invokeModel(prompt, verdictTool, verifierContext, usage)
 
   log('Verify prompt result', {
     reason: result.reason,

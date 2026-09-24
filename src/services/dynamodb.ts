@@ -10,7 +10,7 @@ import {
 } from '@aws-sdk/client-dynamodb'
 
 import { dynamodbGamesTableName, dynamodbPromptsTableName, gameGenerationTimeoutMs } from '../config'
-import { ConnectionsData, GameId, Prompt, PromptId } from '../types'
+import { ConnectionsData, GameId, GenerationUsage, Prompt, PromptId } from '../types'
 
 const dynamodb = new DynamoDB({ apiVersion: '2012-08-10' })
 
@@ -81,7 +81,11 @@ export const getAllGames = async (): Promise<Record<GameId, ConnectionsData>> =>
   return result
 }
 
-export const setGameById = async (gameId: GameId, data: ConnectionsData): Promise<PutItemOutput> => {
+export const setGameById = async (
+  gameId: GameId,
+  data: ConnectionsData,
+  usage?: GenerationUsage,
+): Promise<PutItemOutput> => {
   const command = new PutItemCommand({
     Item: {
       Data: {
@@ -90,6 +94,8 @@ export const setGameById = async (gameId: GameId, data: ConnectionsData): Promis
       GameId: {
         S: `${gameId}`,
       },
+      // Stored as JSON text like Data. Never read back by the API, so it cannot leak to players.
+      ...(usage ? { Usage: { S: JSON.stringify(usage) } } : {}),
     },
     TableName: dynamodbGamesTableName,
   })

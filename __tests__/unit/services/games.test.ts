@@ -1,4 +1,4 @@
-import { connectionsData, prompt } from '../__mocks__'
+import { connectionsData, generationUsage, prompt } from '../__mocks__'
 import { adjectives } from '@assets/adjectives'
 import {
   alwaysDisallowedCategories,
@@ -51,7 +51,7 @@ describe('games', () => {
 
   describe('createGame', () => {
     it('should create a game with specialConstraints (wordConstraints)', async () => {
-      const result = await createGame('2025-01-01', mockMathRandom)
+      const result = await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
@@ -60,6 +60,7 @@ describe('games', () => {
           disallowedCategories: alwaysDisallowedCategories,
           wordConstraints: expect.stringContaining('all words must be 4 letters'),
         }),
+        undefined,
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
@@ -67,14 +68,15 @@ describe('games', () => {
         expect.not.objectContaining({
           categoryConstraints: expect.anything(),
         }),
+        undefined,
       )
-      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData)
+      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData, undefined)
       expect(result).toEqual(connectionsData)
     })
 
     it('should create a game with normalConstraints (categoryConstraints)', async () => {
       mockMathRandom.mockReturnValueOnce(1)
-      const result = await createGame('2025-01-01', mockMathRandom)
+      const result = await createGame('2025-01-01', undefined, mockMathRandom)
 
       // Every roll after the forced word-constraint miss is 0, so selectCategoryConstraints takes
       // the wildcard slot (0 < WILDCARD_SLOT_CHANCE), applies the first modifier to the first
@@ -99,6 +101,7 @@ describe('games', () => {
           inspirationNouns: expect.arrayContaining([nouns[0], nouns[nouns.length - 1]]),
           inspirationVerbs: expect.arrayContaining([verbs[0], verbs[verbs.length - 1]]),
         }),
+        undefined,
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
@@ -106,15 +109,16 @@ describe('games', () => {
         expect.not.objectContaining({
           wordConstraints: expect.anything(),
         }),
+        undefined,
       )
-      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData)
+      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData, undefined)
       expect(result).toEqual(connectionsData)
     })
 
     it('should request exactly four category constraints', async () => {
       mockMathRandom.mockReturnValueOnce(1)
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
       expect(context.categoryConstraints).toHaveLength(4)
@@ -127,7 +131,7 @@ describe('games', () => {
     it('should draw every category constraint from the weighted tier pools', async () => {
       mockMathRandom.mockReturnValueOnce(1)
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
       const knownPatterns = [
@@ -147,7 +151,7 @@ describe('games', () => {
     it('should emit the wildcard and modifier slots the weighted selection produces', async () => {
       mockMathRandom.mockReturnValueOnce(1)
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
       expect(context.categoryConstraints[0]).toEqual(wildcardConstraint)
@@ -165,7 +169,7 @@ describe('games', () => {
         },
       })
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
@@ -173,6 +177,7 @@ describe('games', () => {
         expect.objectContaining({
           disallowedCategories: [...alwaysDisallowedCategories, 'Previous Category 1', 'Previous Category 2'],
         }),
+        undefined,
       )
     })
 
@@ -184,7 +189,9 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated words are not unique')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Generated words are not unique',
+      )
     })
 
     it('should throw error when wrong number of categories is generated', async () => {
@@ -197,7 +204,9 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated wrong number of categories')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Generated wrong number of categories',
+      )
     })
 
     it('should throw error when a category has wrong number of words', async () => {
@@ -211,9 +220,25 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
         'Generated a category with the wrong number of words',
       )
+    })
+
+    it('should store and log the usage snapshot and pass the tracker to both model calls', async () => {
+      const tracker = { recordModel: jest.fn(), snapshot: jest.fn().mockReturnValueOnce(generationUsage) }
+
+      await createGame('2025-01-01', tracker, mockMathRandom)
+
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, gameTool, expect.anything(), tracker)
+      expect(verification.verifyAndFixGame).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        tracker,
+      )
+      expect(log).toHaveBeenCalledWith('Game generation usage', { gameId: '2025-01-01', usage: generationUsage })
+      expect(dynamodb.setGameById).toHaveBeenCalledWith('2025-01-01', connectionsData, generationUsage)
     })
 
     it('should create a game with valid embedded substrings', async () => {
@@ -236,13 +261,14 @@ describe('games', () => {
         wordList: [],
       })
 
-      const result = await createGame('2025-01-01', mockMathRandom)
+      const result = await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(dynamodb.setGameById).toHaveBeenCalledWith(
         '2025-01-01',
         expect.objectContaining({
           wordList: expect.arrayContaining(['MONEY', 'PHONE', 'STONE', 'ALONE']),
         }),
+        undefined,
       )
       expect(result).toEqual(
         expect.objectContaining({
@@ -267,7 +293,9 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated invalid embedded substrings')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Generated invalid embedded substrings',
+      )
     })
 
     it('should create a game with holiday constraints when date has holiday', async () => {
@@ -277,7 +305,7 @@ describe('games', () => {
           'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
         )
 
-      const result = await createGame('2025-10-31', mockMathRandom)
+      const result = await createGame('2025-10-31', undefined, mockMathRandom)
 
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-10-31'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
@@ -288,6 +316,7 @@ describe('games', () => {
           wordConstraints:
             'all words must be related to Halloween, but categories are NOT required to be Halloween-related',
         }),
+        undefined,
       )
       expect(result).toEqual(
         expect.objectContaining({
@@ -299,7 +328,7 @@ describe('games', () => {
     it('should fall back to specialConstraints when no holiday constraint exists', async () => {
       jest.mocked(constraints).getDateConstraint.mockReturnValueOnce(undefined)
 
-      const result = await createGame('2025-06-15', mockMathRandom)
+      const result = await createGame('2025-06-15', undefined, mockMathRandom)
 
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-06-15'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
@@ -309,6 +338,7 @@ describe('games', () => {
           disallowedCategories: alwaysDisallowedCategories,
           wordConstraints: expect.stringContaining('all words must be 4 letters'),
         }),
+        undefined,
       )
       expect(result).toEqual(
         expect.objectContaining({
@@ -321,7 +351,7 @@ describe('games', () => {
       jest.mocked(constraints).getDateConstraint.mockReturnValueOnce(undefined)
       mockMathRandom.mockReturnValueOnce(1) // Force normal constraints
 
-      const result = await createGame('2025-06-15', mockMathRandom)
+      const result = await createGame('2025-06-15', undefined, mockMathRandom)
 
       expect(constraints.getDateConstraint).toHaveBeenCalledWith(new Date('2025-06-15'))
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
@@ -331,6 +361,7 @@ describe('games', () => {
           categoryConstraints: expect.any(Array),
           disallowedCategories: alwaysDisallowedCategories,
         }),
+        undefined,
       )
       expect(bedrock.invokeModel).toHaveBeenCalledWith(
         prompt,
@@ -338,6 +369,7 @@ describe('games', () => {
         expect.not.objectContaining({
           wordConstraints: expect.anything(),
         }),
+        undefined,
       )
       expect(result).toEqual(
         expect.objectContaining({
@@ -356,7 +388,9 @@ describe('games', () => {
         },
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated words are not unique')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Generated words are not unique',
+      )
     })
 
     it('should throw when a category word is a charged term', async () => {
@@ -370,7 +404,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a charged term')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow('Generated a charged term')
     })
 
     it('should throw when a category name contains a charged term', async () => {
@@ -384,7 +418,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a charged term')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow('Generated a charged term')
     })
 
     it('should not reject words that merely contain a charged term as a substring', async () => {
@@ -403,7 +437,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).resolves.toBeDefined()
     })
 
     // GameIds are ISO dates and the model-visible window is a descending string sort, so index 0
@@ -427,13 +461,15 @@ describe('games', () => {
     it('should throw when a generated category exactly repeats one from history', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Boast!']))
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a repeated category: Boast')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Generated a repeated category: Boast',
+      )
     })
 
     it('should throw when a generated category is a reordered paraphrase of one from history', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Mascots of cereal']))
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
         'Generated a repeated category: Cereal mascots',
       )
     })
@@ -449,7 +485,7 @@ describe('games', () => {
         wordList: [],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
         'Generated a repeated category: Spice Girls',
       )
     })
@@ -464,7 +500,7 @@ describe('games', () => {
         },
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow(
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
         'Generated a repeated category: Homophones of body parts',
       )
     })
@@ -472,7 +508,7 @@ describe('games', () => {
     it('should cap the model-visible disallowed categories at the always-disallowed list plus the limit', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(paddingCategoryNames(600)))
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
       expect(context.disallowedCategories).toHaveLength(alwaysDisallowedCategories.length + disallowedCategoryLimit)
@@ -481,7 +517,7 @@ describe('games', () => {
     it('should always send the always-disallowed categories even when history overflows the limit', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(paddingCategoryNames(600)))
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
       expect(context.disallowedCategories.slice(0, alwaysDisallowedCategories.length)).toEqual(
@@ -496,7 +532,7 @@ describe('games', () => {
     it('should not reject a repeat that has aged out of the model-visible window', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Boast', ...paddingCategoryNames(599)]))
 
-      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).resolves.toBeDefined()
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
       expect(context.disallowedCategories).not.toContain('Boast')
@@ -513,13 +549,15 @@ describe('games', () => {
         wordList: [],
       } as any)
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a repeated category')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow('Generated a repeated category')
     })
 
     it('should reject a repeat that is still inside the model-visible window', async () => {
       jest.mocked(dynamodb).getAllGames.mockResolvedValueOnce(buildGameHistory(['Boast', ...paddingCategoryNames(10)]))
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated a repeated category: Boast')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Generated a repeated category: Boast',
+      )
 
       const context = jest.mocked(bedrock).invokeModel.mock.calls[0][2] as Record<string, any>
       expect(context.disallowedCategories).toContain('Boast')
@@ -554,13 +592,13 @@ describe('games', () => {
     it('should accept a game with three well-spread decoys', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).resolves.toBeDefined()
     })
 
     it('should throw when the model omits decoys entirely', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(decoyGame)
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated too few decoys: 0')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow('Generated too few decoys: 0')
     })
 
     it('should throw when there are too few decoys', async () => {
@@ -572,7 +610,7 @@ describe('games', () => {
         ],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Generated too few decoys: 2')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow('Generated too few decoys: 2')
     })
 
     it('should accept more decoys than the schema suggests rather than discarding the game', async () => {
@@ -586,7 +624,7 @@ describe('games', () => {
         ],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).resolves.toBeDefined()
     })
 
     // The whole point of the spread rule: three decoys that only ever touch Cat1 and Cat2 leave
@@ -601,7 +639,9 @@ describe('games', () => {
         ],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Decoys must span at least 3 categories')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Decoys must span at least 3 categories',
+      )
     })
 
     it('should throw when a decoy names a word that is not in the grid', async () => {
@@ -614,7 +654,9 @@ describe('games', () => {
         ],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Decoy references unknown word: NOTHERE')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Decoy references unknown word: NOTHERE',
+      )
     })
 
     it('should throw when a decoy names a category that is not in the grid', async () => {
@@ -627,7 +669,9 @@ describe('games', () => {
         ],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Decoy references unknown category: Cat9')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Decoy references unknown category: Cat9',
+      )
     })
 
     it('should throw when a decoy points at its own category', async () => {
@@ -640,7 +684,9 @@ describe('games', () => {
         ],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow('Decoy points at its own category: WORD1')
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow(
+        'Decoy points at its own category: WORD1',
+      )
     })
 
     it('should match decoy words case-insensitively against the grid', async () => {
@@ -653,7 +699,7 @@ describe('games', () => {
         ],
       })
 
-      await expect(createGame('2025-01-01', mockMathRandom)).resolves.toBeDefined()
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).resolves.toBeDefined()
     })
 
     it('should pass the decoys to the verifier as a separate argument', async () => {
@@ -664,7 +710,7 @@ describe('games', () => {
       ]
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys } as any)
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(jest.mocked(verification).verifyAndFixGame.mock.calls[0][2]).toEqual(decoys)
     })
@@ -672,7 +718,7 @@ describe('games', () => {
     it('should not persist decoys on the stored game', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(Object.keys(jest.mocked(dynamodb).setGameById.mock.calls[0][1])).not.toContain('decoys')
     })
@@ -680,7 +726,7 @@ describe('games', () => {
     it('should not return decoys from createGame', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
 
-      const result = await createGame('2025-01-01', mockMathRandom)
+      const result = await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(Object.keys(result)).not.toContain('decoys')
     })
@@ -688,13 +734,13 @@ describe('games', () => {
     it('should not merge decoys into the game object handed to the verifier', async () => {
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce({ ...decoyGame, decoys: spreadDecoys })
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(Object.keys(jest.mocked(verification).verifyAndFixGame.mock.calls[0][0])).not.toContain('decoys')
     })
 
     it('should name the constraint branch the word-constraint roll selected', async () => {
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(log).toHaveBeenCalledWith('Constraint chance', expect.objectContaining({ branch: 'word' }))
     })
@@ -702,7 +748,7 @@ describe('games', () => {
     it('should name the category branch when the word-constraint roll misses', async () => {
       mockMathRandom.mockReturnValueOnce(1)
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(log).toHaveBeenCalledWith('Constraint chance', expect.objectContaining({ branch: 'category' }))
     })
@@ -710,7 +756,7 @@ describe('games', () => {
     it('should name the holiday branch when the date carries a constraint', async () => {
       jest.mocked(constraints).getDateConstraint.mockReturnValueOnce('all words must be festive')
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(log).toHaveBeenCalledWith('Constraint chance', expect.objectContaining({ branch: 'holiday' }))
     })
@@ -718,7 +764,7 @@ describe('games', () => {
     it('should log the generated categories next to the constraints that produced them', async () => {
       mockMathRandom.mockReturnValueOnce(1)
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(log).toHaveBeenCalledWith(
         'Generated game',
@@ -739,7 +785,7 @@ describe('games', () => {
     })
 
     it('should log the word constraint rather than a wildcard slot on the word branch', async () => {
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(log).toHaveBeenCalledWith(
         'Generated game',
@@ -759,7 +805,7 @@ describe('games', () => {
         },
       })
 
-      await createGame('2025-01-01', mockMathRandom)
+      await createGame('2025-01-01', undefined, mockMathRandom)
 
       expect(log).toHaveBeenCalledWith(
         'Generated game',
@@ -775,7 +821,7 @@ describe('games', () => {
       mockMathRandom.mockReturnValueOnce(1)
       jest.mocked(bedrock).invokeModel.mockResolvedValueOnce(decoyGame)
 
-      await expect(createGame('2025-01-01', mockMathRandom)).rejects.toThrow()
+      await expect(createGame('2025-01-01', undefined, mockMathRandom)).rejects.toThrow()
 
       expect(log).toHaveBeenCalledWith(
         'Game generation failed',

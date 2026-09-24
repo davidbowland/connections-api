@@ -196,6 +196,9 @@ describe('bedrock', () => {
       await invokeModel(prompt, toolSchema)
 
       expect(log).toHaveBeenCalledWith('Model invocation complete', {
+        cacheReadInputTokens: 0,
+        cacheWriteInputTokens: 0,
+        costUsd: undefined,
         inputTokens: 3_398,
         model: 'the-thinking-ai:1.0',
         outputTokens: 99,
@@ -224,11 +227,45 @@ describe('bedrock', () => {
       )
 
       expect(log).toHaveBeenCalledWith('Model invocation complete', {
+        cacheReadInputTokens: 0,
+        cacheWriteInputTokens: 0,
+        costUsd: undefined,
         inputTokens: 3_398,
         model: 'the-thinking-ai:1.0',
         outputTokens: 99,
         stopReason: 'max_tokens',
         toolName: 'submit_data',
+      })
+    })
+
+    it('should log the cost of a priced model and record its usage', async () => {
+      const tracker = { recordModel: jest.fn(), snapshot: jest.fn() }
+      const opusPrompt = { ...prompt, config: { ...prompt.config, model: 'us.anthropic.claude-opus-5-5' } }
+
+      await invokeModel(opusPrompt, toolSchema, undefined, tracker)
+
+      expect(log).toHaveBeenCalledWith('Model invocation complete', expect.objectContaining({ costUsd: 0.015572 }))
+      expect(tracker.recordModel).toHaveBeenCalledWith('us.anthropic.claude-opus-5-5', {
+        input_tokens: 3_398,
+        output_tokens: 99,
+      })
+    })
+
+    // A failed extraction still cost money, and the retry carries the tally forward.
+    it('should record usage even when no tool call can be extracted', async () => {
+      const tracker = { recordModel: jest.fn(), snapshot: jest.fn() }
+      mockSend.mockResolvedValueOnce({
+        ...invokeModelResponse,
+        body: new TextEncoder().encode(
+          JSON.stringify({ ...invokeModelResponseData, content: [], stop_reason: 'max_tokens' }),
+        ),
+      })
+
+      await expect(invokeModel(prompt, toolSchema, undefined, tracker)).rejects.toThrow()
+
+      expect(tracker.recordModel).toHaveBeenCalledWith('the-thinking-ai:1.0', {
+        input_tokens: 3_398,
+        output_tokens: 99,
       })
     })
 

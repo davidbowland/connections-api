@@ -1,6 +1,6 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb'
 
-import { connectionsData, gameId, prompt, promptConfig, promptId } from '../__mocks__'
+import { connectionsData, gameId, generationUsage, prompt, promptConfig, promptId } from '../__mocks__'
 import {
   deleteGameById,
   getAllGames,
@@ -148,6 +148,21 @@ describe('dynamodb', () => {
           GameId: {
             S: gameId,
           },
+        },
+        TableName: 'games-table',
+      })
+    })
+  })
+
+  describe('setGameById with usage', () => {
+    it('should store usage as JSON in the Usage attribute', async () => {
+      await setGameById(gameId, connectionsData, generationUsage)
+
+      expect(mockSend).toHaveBeenCalledWith({
+        Item: {
+          Data: { S: JSON.stringify(connectionsData) },
+          GameId: { S: gameId },
+          Usage: { S: JSON.stringify(generationUsage) },
         },
         TableName: 'games-table',
       })

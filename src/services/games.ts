@@ -20,6 +20,7 @@ import { canonicalize, tokenKey } from '../utils/category-keys'
 import { selectCategoryConstraints } from '../utils/constraint-selection'
 import { getDateConstraint } from '../utils/constraints'
 import { log } from '../utils/logging'
+import { UsageTracker } from '../utils/usage'
 import { invokeModel } from './bedrock'
 import { getAllGames, getPromptById, setGameById } from './dynamodb'
 import { verifyAndFixGame } from './verification'
@@ -314,7 +315,11 @@ export const validateGame = (categories: CategoryObject, history?: CategoryHisto
 const summarizeCategories = (categories: CategoryObject): string[] =>
   Object.entries(categories).map(([name, { hint }]) => `${name}: ${hint}`)
 
-export const createGame = async (gameId: GameId, random = Math.random): Promise<ConnectionsData> => {
+export const createGame = async (
+  gameId: GameId,
+  usage?: UsageTracker,
+  random = Math.random,
+): Promise<ConnectionsData> => {
   const pastGames = await getAllGames()
   // GameIds are ISO dates, so a descending string sort is newest-first.
   const pastCategories = Object.entries(pastGames)
@@ -336,7 +341,7 @@ export const createGame = async (gameId: GameId, random = Math.random): Promise<
     // Decoys are split off the model response here and never re-attached: verification, storage, and
     // the API response are all downstream of `returnedGame`, so they cannot leak by construction.
     // Dropping them also stops them going stale when the verifier replaces a category outright.
-    const { decoys, ...returnedGame }: GeneratedGame = await invokeModel(prompt, gameTool, modelContext)
+    const { decoys, ...returnedGame }: GeneratedGame = await invokeModel(prompt, gameTool, modelContext, usage)
     const connectionsData = transformWordsToUpperCase(returnedGame)
     validateGame(connectionsData.categories, categoryHistory)
     // `decoys` is required by the tool schema, so a response without it is a real error, not a
@@ -349,7 +354,7 @@ export const createGame = async (gameId: GameId, random = Math.random): Promise<
     // Decoys go to the verifier as a SEPARATE argument, never merged into connectionsData -- the
     // verifier audits whether each claim actually holds, which is the one thing validateDecoys
     // cannot. Re-attaching them here would undo the destructure above and leak them to storage.
-    const verifiedGame = await verifyAndFixGame(connectionsData, modelContext, decoys)
+    const verifiedGame = await verifyAndFixGame(connectionsData, modelContext, decoys, usage)
     const finalWordList = validateGame(verifiedGame.categories, categoryHistory)
 
     // The one line that JOINS constraints to outcome. Every other log in the generation path carries
@@ -370,7 +375,9 @@ export const createGame = async (gameId: GameId, random = Math.random): Promise<
     })
 
     const dataWithWordList = { ...verifiedGame, wordList: finalWordList }
-    await setGameById(gameId, dataWithWordList)
+    const generationUsage = usage?.snapshot()
+    log('Game generation usage', { gameId, usage: generationUsage })
+    await setGameById(gameId, dataWithWordList, generationUsage)
     return dataWithWordList
   } catch (error: unknown) {
     // The rejection reasons log themselves, but none of them knows what was asked for. Attributing

@@ -4,6 +4,7 @@ import {
   ConnectionsData,
   ConnectionsGame,
   GameId,
+  GenerationUsage,
   Prompt,
   PromptConfig,
   PromptId,
@@ -123,4 +124,25 @@ export const promptId: PromptId = '5253'
 export const prompt: Prompt = {
   config: promptConfig,
   contents: 'You are a helpful assistant. ${data}',
+}
+
+export const generationUsage: GenerationUsage = {
+  attempts: 1,
+  costUsd: { lambda: 0.00005, models: 0.04407, total: 0.04412 },
+  cpuMs: 60,
+  gbSeconds: 3,
+  maxMemoryMb: 256,
+  memoryLimitMb: 1536,
+  tokens: [
+    {
+      costUsd: 0.04407,
+      input: 1_000,
+      inputCacheWrite: 10,
+      inputCached: 100,
+      invocations: 2,
+      model: 'us.anthropic.claude-opus-5-5',
+      output: 2_000,
+    },
+  ],
+  wallClockMs: 2_000,
 }

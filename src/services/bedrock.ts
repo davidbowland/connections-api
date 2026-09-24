@@ -3,6 +3,7 @@ import Ajv from 'ajv'
 
 import { Prompt, ToolSchema } from '../types'
 import { log, logDebug } from '../utils/logging'
+import { modelCostUsd, RawModelUsage, toTokenCounts, UsageTracker } from '../utils/usage'
 
 // SDK default is 3 attempts (exponential backoff, ~100-500ms base). Bumped to 4 for extra
 // resilience against transient Bedrock throttling. The only caller of invokeModel is
@@ -101,11 +102,15 @@ const extractJson = (input: string): string => {
 // a failure count says nothing without knowing how much headroom a healthy game leaves, and that
 // headroom is what tells us whether the effort level can come down.
 const logModelUsage = (
-  modelResponse: { stop_reason?: string; usage?: { input_tokens?: number; output_tokens?: number } },
+  modelResponse: { stop_reason?: string; usage?: RawModelUsage },
   tool: ToolSchema,
   model: string,
 ): void => {
+  const counts = toTokenCounts(modelResponse.usage)
   log('Model invocation complete', {
+    cacheReadInputTokens: counts.inputCached,
+    cacheWriteInputTokens: counts.inputCacheWrite,
+    costUsd: modelCostUsd(model, counts),
     inputTokens: modelResponse.usage?.input_tokens,
     model,
     outputTokens: modelResponse.usage?.output_tokens,
@@ -179,7 +184,12 @@ const validateResponse = <T>(tool: ToolSchema, parsed: unknown): T => {
   return parsed as T
 }
 
-export const invokeModel = async <T>(prompt: Prompt, tool: ToolSchema, context?: Record<string, any>): Promise<T> => {
+export const invokeModel = async <T>(
+  prompt: Prompt,
+  tool: ToolSchema,
+  context?: Record<string, any>,
+  usage?: UsageTracker,
+): Promise<T> => {
   const contents = buildPromptContents(prompt, context)
   logDebug('Invoking model', { contents, prompt, tool })
 
@@ -196,6 +206,7 @@ export const invokeModel = async <T>(prompt: Prompt, tool: ToolSchema, context?:
   const modelResponse = decodeResponseBody(response.body, prompt.config.model)
   // Before extraction, not after: extraction throws on the exact runs whose token counts matter most.
   logModelUsage(modelResponse, tool, prompt.config.model)
+  usage?.recordModel(prompt.config.model, modelResponse.usage)
   const payload = extractModelPayload(modelResponse, tool, prompt.config.model)
   return validateResponse(tool, payload)
 }

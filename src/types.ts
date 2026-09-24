@@ -60,6 +60,34 @@ export interface VerificationResult {
   }
 }
 
+// Usage
+
+// Per-model token totals. inputCached is prompt-cache reads, inputCacheWrite is prompt-cache writes;
+// output tokens are never cached. costUsd is absent for a model with no known pricing.
+export interface ModelTokenUsage {
+  costUsd?: number
+  input: number
+  inputCacheWrite: number
+  inputCached: number
+  invocations: number
+  model: string
+  output: number
+}
+
+// Summed across every Lambda attempt that went into one game. wallClockMs and cpuMs cover handler
+// time only (not cold-start init or the gap between a failed attempt and its retry). maxMemoryMb is
+// the peak RSS of any attempt's process.
+export interface GenerationUsage {
+  attempts: number
+  costUsd: { lambda: number; models: number; total: number }
+  cpuMs: number
+  gbSeconds: number
+  maxMemoryMb: number
+  memoryLimitMb: number
+  tokens: ModelTokenUsage[]
+  wallClockMs: number
+}
+
 // Prompts
 
 export type PromptId = string

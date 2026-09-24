@@ -195,11 +195,16 @@ describe('verification', () => {
 
       await verifyAndFixGame(game, modelContext)
 
-      expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, verdictTool, {
-        categoryConstraints: ['Things with a shared property'],
-        game,
-        wordConstraints: 'all words must be 4 letters',
-      })
+      expect(bedrock.invokeModel).toHaveBeenCalledWith(
+        prompt,
+        verdictTool,
+        {
+          categoryConstraints: ['Things with a shared property'],
+          game,
+          wordConstraints: 'all words must be 4 letters',
+        },
+        undefined,
+      )
     })
 
     it('should apply a hint-only fix without changing words', async () => {
@@ -279,7 +284,12 @@ describe('verification', () => {
 
         await verifyAndFixGame(game, {}, decoys)
 
-        expect(bedrock.invokeModel).toHaveBeenCalledWith(prompt, verdictTool, expect.objectContaining({ decoys }))
+        expect(bedrock.invokeModel).toHaveBeenCalledWith(
+          prompt,
+          verdictTool,
+          expect.objectContaining({ decoys }),
+          undefined,
+        )
       })
 
       // Object.keys rather than expect.not.objectContaining, which passes when the key is present
