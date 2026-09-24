@@ -43,8 +43,10 @@ const buildRequestBody = (prompt: Prompt, tool: ToolSchema, contents: string) =>
   max_tokens: prompt.config.maxTokens,
   messages: [{ content: contents, role: 'user' }],
   output_config: { effort: prompt.config.thinkingEffort },
-  // Forced tool_choice ("tool"/"any") is not supported alongside extended thinking, so we can
-  // only steer the model to call the tool via "auto" and validate that it did so below.
+  // Forced tool_choice ("tool"/"any") is rejected outright on Opus 5.5, so we can only steer the
+  // model to call the tool via "auto" and validate that it did so below. Opus 5.5 also can't turn
+  // thinking off -- effort is the only control. strict tool use is not an option either: it cannot
+  // express the name-keyed additionalProperties maps in gameTool/verdictTool, so Ajv validates instead.
   thinking: { type: 'adaptive' },
   tool_choice: { type: 'auto' },
   tools: [tool],
