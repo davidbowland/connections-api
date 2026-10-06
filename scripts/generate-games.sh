@@ -41,23 +41,38 @@ local_game() {
 }
 
 # One model step. The rendered prompt goes in as the user turn, as it does on Bedrock, and the tool's
-# input_schema becomes the structured-output schema, so the reply is the tool input. Runs from an empty
-# temporary directory with all tools off, so no CLAUDE.md, memory, or project context leaks into what
-# should be a bare model call.
+# input_schema becomes the structured-output schema, so the reply is the tool input. The tool's
+# description travels in the system prompt and the schema, as it does on Bedrock, because it carries
+# instructions the schema cannot (how many decoys, across how many categories).
+#
+# Isolated three ways. An empty temporary directory with all tools off keeps project context out. The
+# --setting-sources, --strict-mcp-config and --disable-slash-commands flags keep the developer's own
+# CLAUDE.md, hooks, skills and MCP servers out; without them every call carries those into what should
+# be a bare model call (--bare would also drop them, but requires an API key). And `env -u` drops the
+# AWS credentials and provider switches, which would otherwise let claude bill Bedrock on the
+# developer role -- the cost this script exists to avoid.
 run_model() {
   local prompt_file="$1" tool_file="$2" output_file="$3"
-  local scratch result
+  local scratch result system_prompt
+  system_prompt="Follow the instructions in the user message. Your reply is the input to the tool it names.
+
+The tool is $(jq -r .name "$tool_file"): $(jq -r .description "$tool_file")"
   scratch=$(mktemp -d)
   result=$(
     cd "$scratch" &&
-      claude -p \
+      env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN -u AWS_PROFILE \
+        -u CLAUDE_CODE_USE_BEDROCK -u CLAUDE_CODE_USE_VERTEX \
+        claude -p \
         --model "$CLAUDE_MODEL" \
         --effort "$CLAUDE_EFFORT" \
         --tools "" \
         --no-session-persistence \
-        --system-prompt "Follow the instructions in the user message. Your reply is the input to the tool it names." \
+        --setting-sources "" \
+        --strict-mcp-config \
+        --disable-slash-commands \
+        --system-prompt "$system_prompt" \
         --output-format json \
-        --json-schema "$(jq -c .input_schema "$tool_file")" \
+        --json-schema "$(jq -c '.input_schema + {description: .description}' "$tool_file")" \
         <"$prompt_file"
   )
   local exit_code=$?

@@ -68,7 +68,7 @@ npm run lint
 
 ### Generating Games Locally
 
-Games can be generated without Bedrock. `scripts/local-game.ts` runs the create-game pipeline's code steps (constraint rolls, validation, upload) with the Lambda's own code, and `scripts/generate-games.sh` drives it, piping the generate and verify prompts through headless Claude Code (`claude -p`) in between. Dates run in order, each with up to 3 attempts. Uploads never overwrite an existing game, and the scheduled and on-demand Lambdas skip any date that already has one.
+Games can be generated without Bedrock. `scripts/local-game.ts` runs the create-game pipeline's code steps (constraint rolls, validation, upload) with the Lambda's own code, and `scripts/generate-games.sh` drives it, piping the generate and verify prompts through headless Claude Code (`claude -p`) in between. Dates run in order, each with up to 3 attempts. Uploads never overwrite an existing game, and the scheduled and on-demand Lambdas skip any date that already has one. Each `claude -p` call runs isolated from your personal Claude Code settings (no CLAUDE.md, hooks, skills, or MCP servers) and without your AWS credentials or `CLAUDE_CODE_USE_BEDROCK`, so it always bills your Claude login, never Bedrock.
 
 It needs a gitignored `.env.local` mirroring CreateGameFunction's environment in `template.yaml`, developer-role credentials in the shell, `jq`, and a logged-in `claude`. Prompts are read from `prompts/`, and each upload's `Usage` is `{"source":"local"}`.
 
