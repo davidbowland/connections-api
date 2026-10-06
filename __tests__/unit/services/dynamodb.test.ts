@@ -8,6 +8,7 @@ import {
   getPromptById,
   resetGameGenerationStarted,
   setGameById,
+  setGameByIdIfAbsent,
   setGameGenerationStarted,
 } from '@services/dynamodb'
 
@@ -166,6 +167,38 @@ describe('dynamodb', () => {
         },
         TableName: 'games-table',
       })
+    })
+  })
+
+  describe('setGameByIdIfAbsent', () => {
+    it('should write the game only when no game data is stored yet', async () => {
+      const result = await setGameByIdIfAbsent(gameId, connectionsData, { source: 'local' })
+
+      expect(mockSend).toHaveBeenCalledWith({
+        ConditionExpression: 'attribute_not_exists(#data)',
+        ExpressionAttributeNames: { '#data': 'Data' },
+        Item: {
+          Data: { S: JSON.stringify(connectionsData) },
+          GameId: { S: gameId },
+          Usage: { S: '{"source":"local"}' },
+        },
+        TableName: 'games-table',
+      })
+      expect(result).toBe(true)
+    })
+
+    it('should return false rather than overwrite when a game is already stored', async () => {
+      mockSend.mockRejectedValueOnce(
+        new ConditionalCheckFailedException({ $metadata: {}, message: 'Condition not met' }),
+      )
+
+      await expect(setGameByIdIfAbsent(gameId, connectionsData)).resolves.toBe(false)
+    })
+
+    it('should rethrow non-conditional-check errors', async () => {
+      mockSend.mockRejectedValueOnce(new Error('DynamoDB unavailable'))
+
+      await expect(setGameByIdIfAbsent(gameId, connectionsData)).rejects.toThrow('DynamoDB unavailable')
     })
   })
 

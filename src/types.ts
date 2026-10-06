@@ -88,6 +88,14 @@ export interface GenerationUsage {
   wallClockMs: number
 }
 
+// A game generated locally by scripts/local-game.ts, where the model steps ran outside Bedrock. There
+// is no Lambda or token cost to record, only where the game came from.
+export interface LocalGenerationUsage {
+  source: 'local'
+}
+
+export type StoredUsage = GenerationUsage | LocalGenerationUsage
+
 // Prompts
 
 export type PromptId = string

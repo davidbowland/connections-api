@@ -36,7 +36,7 @@ const escapeXml = (value: string): string => value.replace(/</g, '&lt;').replace
 
 // A replacer function (not a string) avoids Node interpreting $&/$`/$'-style sequences
 // that might appear in untrusted context values as replacement patterns.
-const buildPromptContents = (prompt: Prompt, context?: Record<string, any>): string =>
+export const buildPromptContents = (prompt: Prompt, context?: Record<string, any>): string =>
   context ? prompt.contents.replace('${context}', () => escapeXml(JSON.stringify(context))) : prompt.contents
 
 const buildRequestBody = (prompt: Prompt, tool: ToolSchema, contents: string) => ({
@@ -161,7 +161,7 @@ const extractModelPayload = (
 
 const VALIDATION_FAILURE_PREVIEW_LENGTH = 500
 
-const validateResponse = <T>(tool: ToolSchema, parsed: unknown): T => {
+export const validateResponse = <T>(tool: ToolSchema, parsed: unknown): T => {
   const validate = getValidator(tool.input_schema)
   if (!validate(parsed)) {
     const errors = ajv.errorsText(validate.errors)

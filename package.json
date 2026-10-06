@@ -21,6 +21,8 @@
     "deploy": "NODE_ENV=production npm ci && ./scripts/deploy.sh",
     "deploy-prompts": "ts-node scripts/deploy-prompts.ts",
     "lint": "prettier --write . && eslint --fix .",
+    "generate-games": "./scripts/generate-games.sh",
+    "local-game": "TZ=UTC node --env-file=.env.local --require ts-node/register scripts/local-game.ts",
     "prepare": "husky || true",
     "start": "./scripts/runLocal.sh",
     "test": "jest --colors",

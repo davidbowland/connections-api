@@ -10,7 +10,7 @@ import {
 } from '@aws-sdk/client-dynamodb'
 
 import { dynamodbGamesTableName, dynamodbPromptsTableName, gameGenerationTimeoutMs } from '../config'
-import { ConnectionsData, GameId, GenerationUsage, Prompt, PromptId } from '../types'
+import { ConnectionsData, GameId, Prompt, PromptId, StoredUsage } from '../types'
 
 const dynamodb = new DynamoDB({ apiVersion: '2012-08-10' })
 
@@ -81,25 +81,56 @@ export const getAllGames = async (): Promise<Record<GameId, ConnectionsData>> =>
   return result
 }
 
+const gameItem = (gameId: GameId, data: ConnectionsData, usage?: StoredUsage) => ({
+  Data: {
+    S: JSON.stringify(data),
+  },
+  GameId: {
+    S: `${gameId}`,
+  },
+  // Stored as JSON text like Data. Never read back by the API, so it cannot leak to players.
+  ...(usage ? { Usage: { S: JSON.stringify(usage) } } : {}),
+})
+
+// Unconditional on purpose. The Lambda only reaches this after acquiring the generation lock, and if
+// a game was uploaded locally in the meantime, overwriting it is preferred to discarding the
+// generation that just finished.
 export const setGameById = async (
   gameId: GameId,
   data: ConnectionsData,
-  usage?: GenerationUsage,
+  usage?: StoredUsage,
 ): Promise<PutItemOutput> => {
   const command = new PutItemCommand({
-    Item: {
-      Data: {
-        S: JSON.stringify(data),
-      },
-      GameId: {
-        S: `${gameId}`,
-      },
-      // Stored as JSON text like Data. Never read back by the API, so it cannot leak to players.
-      ...(usage ? { Usage: { S: JSON.stringify(usage) } } : {}),
-    },
+    Item: gameItem(gameId, data, usage),
     TableName: dynamodbGamesTableName,
   })
   return await dynamodb.send(command)
+}
+
+// For scripts/local-game.ts: never overwrites a stored game, returning false instead. Generating
+// locally is a way to fill dates that have no game, never to replace one.
+export const setGameByIdIfAbsent = async (
+  gameId: GameId,
+  data: ConnectionsData,
+  usage?: StoredUsage,
+): Promise<boolean> => {
+  const command = new PutItemCommand({
+    ConditionExpression: 'attribute_not_exists(#data)',
+    ExpressionAttributeNames: {
+      '#data': 'Data',
+    },
+    Item: gameItem(gameId, data, usage),
+    TableName: dynamodbGamesTableName,
+  })
+  try {
+    await dynamodb.send(command)
+    return true
+  } catch (error: unknown) {
+    if (error instanceof ConditionalCheckFailedException) {
+      return false
+    }
+    throw error
+  }
 }
 
 export const setGameGenerationStarted = async (gameId: GameId, now = Date.now): Promise<number | false> => {

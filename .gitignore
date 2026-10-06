@@ -32,6 +32,10 @@ dist/
 # JetBrains IDE
 .idea/
 
+# Local game generation: per-machine settings and work files
+.env.local
+.local-games/
+
 # Unit test reports
 TEST*.xml
 

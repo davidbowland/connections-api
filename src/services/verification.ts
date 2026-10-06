@@ -107,7 +107,7 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
 // read-only context and audits them. The key is spread in only when there is something to audit --
 // an always-present `decoys: undefined` would defeat the prompt's "when the input includes decoys"
 // branch, and merging them into `game` would put them back on the path to storage.
-const getVerifierContext = (
+export const getVerifierContext = (
   game: ConnectionsGame,
   modelContext: Record<string, any>,
   decoys?: Decoy[],
@@ -131,6 +131,12 @@ export const verifyAndFixGame = async (
   const prompt = await getPromptById(llmVerifyPromptId)
   const result: VerificationResult = await invokeModel(prompt, verdictTool, verifierContext, usage)
 
+  return applyVerdict(game, result)
+}
+
+// Split from the model call so scripts/local-game.ts can apply a verdict produced outside Bedrock with
+// exactly the same rules.
+export const applyVerdict = (game: ConnectionsGame, result: VerificationResult): ConnectionsGame => {
   log('Verify prompt result', {
     reason: result.reason,
     verdict: result.verdict,

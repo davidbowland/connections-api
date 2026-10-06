@@ -66,6 +66,19 @@ Both [Prettier](https://prettier.io/) and [ESLint](https://eslint.org/) are exec
 npm run lint
 ```
 
+### Generating Games Locally
+
+Games can be generated without Bedrock. `scripts/local-game.ts` runs the create-game pipeline's code steps (constraint rolls, validation, upload) with the Lambda's own code, and `scripts/generate-games.sh` drives it, piping the generate and verify prompts through headless Claude Code (`claude -p`) in between. Dates run in order, each with up to 3 attempts. Uploads never overwrite an existing game, and the scheduled and on-demand Lambdas skip any date that already has one.
+
+It needs a gitignored `.env.local` mirroring CreateGameFunction's environment in `template.yaml`, developer-role credentials in the shell, `jq`, and a logged-in `claude`. Prompts are read from `prompts/`, and each upload's `Usage` is `{"source":"local"}`.
+
+```bash
+npm run generate-games -- 2026-10-05..2026-10-12
+CLAUDE_MODEL=sonnet CLAUDE_EFFORT=medium npm run generate-games -- 2026-10-05   # defaults: opus, high
+```
+
+Work files for each date are left in `.local-games/<date>/`. The individual steps can also be run by hand with `npm run local-game -- <prepare|check|finalize> <date>`.
+
 ### Deploying to Production
 
 Deployment runs via GitHub Actions (`.github/workflows/pipeline.yaml`). On a push to `master`, `sam build` bundles each Lambda with esbuild, `sam package` uploads the build artifacts to S3, and `sam deploy` updates the stack — first in the testing account, then in production.

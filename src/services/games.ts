@@ -15,7 +15,7 @@ import {
   llmPromptId,
   wordConstraintChance,
 } from '../config'
-import { CategoryHistory, CategoryObject, ConnectionsData, Decoy, GameId, ToolSchema } from '../types'
+import { CategoryHistory, CategoryObject, ConnectionsData, ConnectionsGame, Decoy, GameId, ToolSchema } from '../types'
 import { canonicalize, tokenKey } from '../utils/category-keys'
 import { selectCategoryConstraints } from '../utils/constraint-selection'
 import { getDateConstraint } from '../utils/constraints'
@@ -43,7 +43,7 @@ const MIN_DECOY_CATEGORY_SPAN = 3
 
 // The model returns decoys alongside the game. They are a generation-time forcing device, not game
 // data, so ConnectionsData deliberately has no room for them.
-type GeneratedGame = ConnectionsData & { decoys?: Decoy[] }
+export type GeneratedGame = ConnectionsData & { decoys?: Decoy[] }
 
 export const gameTool: ToolSchema = {
   description:
@@ -315,12 +315,19 @@ export const validateGame = (categories: CategoryObject, history?: CategoryHisto
 const summarizeCategories = (categories: CategoryObject): string[] =>
   Object.entries(categories).map(([name, { hint }]) => `${name}: ${hint}`)
 
-export const createGame = async (
+export interface GenerationContext {
+  categoryHistory: CategoryHistory
+  modelContext: Record<string, any>
+}
+
+// The pre-model half of generation, shared with scripts/local-game.ts. The category history is fully
+// determined by modelContext.disallowedCategories, so a caller that persists only the model context can
+// rebuild it with buildCategoryHistory.
+export const buildGenerationContext = (
+  pastGames: Record<GameId, ConnectionsData>,
   gameId: GameId,
-  usage?: UsageTracker,
   random = Math.random,
-): Promise<ConnectionsData> => {
-  const pastGames = await getAllGames()
+): GenerationContext => {
   // GameIds are ISO dates, so a descending string sort is newest-first.
   const pastCategories = Object.entries(pastGames)
     .sort(([left], [right]) => right.localeCompare(left))
@@ -335,27 +342,58 @@ export const createGame = async (
   const categoryHistory = buildCategoryHistory(disallowedCategories)
   const modelContext = getModelContext(new Date(gameId), disallowedCategories, random)
   log('Creating game with context', { modelContext })
+  return { categoryHistory, modelContext }
+}
+
+export interface CheckedGame {
+  connectionsData: ConnectionsData
+  decoys?: Decoy[]
+}
+
+// Every check a fresh model response must pass before it goes to the verifier.
+//
+// Decoys are split off the model response here and never re-attached: verification, storage, and
+// the API response are all downstream of `returnedGame`, so they cannot leak by construction.
+// Dropping them also stops them going stale when the verifier replaces a category outright.
+export const checkGeneratedGame = (generated: GeneratedGame, categoryHistory: CategoryHistory): CheckedGame => {
+  const { decoys, ...returnedGame } = generated
+  const connectionsData = transformWordsToUpperCase(returnedGame)
+  validateGame(connectionsData.categories, categoryHistory)
+  // `decoys` is required by the tool schema, so a response without it is a real error, not a
+  // response to be waved through.
+  validateDecoys(connectionsData.categories, decoys ?? [])
+  return { connectionsData, decoys }
+}
+
+// Checked again after verification: the verifier is allowed to replace a category outright, and
+// its replacement can itself be a repeat.
+export const finalizeVerifiedGame = (
+  verifiedGame: ConnectionsGame,
+  categoryHistory: CategoryHistory,
+): ConnectionsData => ({
+  ...verifiedGame,
+  wordList: validateGame(verifiedGame.categories, categoryHistory),
+})
+
+export const createGame = async (
+  gameId: GameId,
+  usage?: UsageTracker,
+  random = Math.random,
+): Promise<ConnectionsData> => {
+  const pastGames = await getAllGames()
+  const { categoryHistory, modelContext } = buildGenerationContext(pastGames, gameId, random)
 
   const prompt = await getPromptById(llmPromptId)
   try {
-    // Decoys are split off the model response here and never re-attached: verification, storage, and
-    // the API response are all downstream of `returnedGame`, so they cannot leak by construction.
-    // Dropping them also stops them going stale when the verifier replaces a category outright.
-    const { decoys, ...returnedGame }: GeneratedGame = await invokeModel(prompt, gameTool, modelContext, usage)
-    const connectionsData = transformWordsToUpperCase(returnedGame)
-    validateGame(connectionsData.categories, categoryHistory)
-    // `decoys` is required by the tool schema, so a response without it is a real error, not a
-    // response to be waved through.
-    validateDecoys(connectionsData.categories, decoys ?? [])
+    const generated: GeneratedGame = await invokeModel(prompt, gameTool, modelContext, usage)
+    const { connectionsData, decoys } = checkGeneratedGame(generated, categoryHistory)
 
-    // Checked again after verification: the verifier is allowed to replace a category outright, and
-    // its replacement can itself be a repeat.
-    //
     // Decoys go to the verifier as a SEPARATE argument, never merged into connectionsData -- the
     // verifier audits whether each claim actually holds, which is the one thing validateDecoys
-    // cannot. Re-attaching them here would undo the destructure above and leak them to storage.
+    // cannot. Re-attaching them here would undo the destructure in checkGeneratedGame and leak them
+    // to storage.
     const verifiedGame = await verifyAndFixGame(connectionsData, modelContext, decoys, usage)
-    const finalWordList = validateGame(verifiedGame.categories, categoryHistory)
+    const dataWithWordList = finalizeVerifiedGame(verifiedGame, categoryHistory)
 
     // The one line that JOINS constraints to outcome. Every other log in the generation path carries
     // one half of it: the context log has the constraints, the verifier and handler logs have the
@@ -374,7 +412,6 @@ export const createGame = async (
       wordConstraints: modelContext.wordConstraints,
     })
 
-    const dataWithWordList = { ...verifiedGame, wordList: finalWordList }
     const generationUsage = usage?.snapshot()
     log('Game generation usage', { gameId, usage: generationUsage })
     await setGameById(gameId, dataWithWordList, generationUsage)
