@@ -1,6 +1,6 @@
 import { invokeModelCategories, invokeModelResponse, invokeModelResponseData, prompt, toolSchema } from '../__mocks__'
 import { invokeModel } from '@services/bedrock'
-import { log } from '@utils/logging'
+import { log, logError } from '@utils/logging'
 
 const mockSend = jest.fn()
 jest.mock('@aws-sdk/client-bedrock-runtime', () => ({
@@ -190,6 +190,36 @@ describe('bedrock', () => {
       await expect(invokeModel(prompt, toolSchema)).rejects.toThrow(
         `Model response contained no ${toolSchema.name} tool call`,
       )
+      // stop_reason is tool_use here, not max_tokens, so this line stays at log. Without
+      // the assertion, dropping the conditional would escalate EVERY extraction failure to
+      // ERROR -- and the fleet's log subscription filters on level="ERROR", so that
+      // regression pages on the ordinary thinking-only case and still passes the suite.
+      expect(logError).not.toHaveBeenCalledWith(
+        'Model response missing tool_use block and text block',
+        expect.anything(),
+      )
+    })
+
+    it('should escalate the missing-block log to error when the response was truncated', async () => {
+      mockSend.mockResolvedValueOnce({
+        ...invokeModelResponse,
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            ...invokeModelResponseData,
+            content: [{ type: 'thinking', thinking: 'Thinking ate the whole budget' }],
+            stop_reason: 'max_tokens',
+          }),
+        ),
+      })
+
+      await expect(invokeModel(prompt, toolSchema)).rejects.toThrow(
+        `Model response contained no ${toolSchema.name} tool call`,
+      )
+      expect(logError).toHaveBeenCalledWith(
+        'Model response missing tool_use block and text block',
+        expect.objectContaining({ blockTypes: ['thinking'], stopReason: 'max_tokens' }),
+      )
+      expect(log).not.toHaveBeenCalledWith('Model response missing tool_use block and text block', expect.anything())
     })
 
     it('should log token usage and stop reason on a successful invocation', async () => {
@@ -203,14 +233,46 @@ describe('bedrock', () => {
         model: 'the-thinking-ai:1.0',
         outputTokens: 99,
         stopReason: 'tool_use',
+        thinkingTokens: 64,
+        toolName: 'submit_data',
+      })
+    })
+
+    // outputTokens alone cannot say whether a run spent its budget answering or thinking, and
+    // thinking is where an adaptive-thinking model's budget actually goes. A model that returns no
+    // breakdown must cost the line one field, never the line.
+    it('should log an undefined thinkingTokens when the response carries no token breakdown', async () => {
+      mockSend.mockResolvedValueOnce({
+        ...invokeModelResponse,
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            ...invokeModelResponseData,
+            usage: { input_tokens: 3_398, output_tokens: 99 },
+          }),
+        ),
+      })
+
+      await invokeModel(prompt, toolSchema)
+
+      expect(log).toHaveBeenCalledWith('Model invocation complete', {
+        cacheReadInputTokens: 0,
+        cacheWriteInputTokens: 0,
+        costUsd: undefined,
+        inputTokens: 3_398,
+        model: 'the-thinking-ai:1.0',
+        outputTokens: 99,
+        stopReason: 'tool_use',
+        thinkingTokens: undefined,
         toolName: 'submit_data',
       })
     })
 
     // The production failure this logging exists for: thinking consumed the whole max_tokens budget,
     // so no tool_use block was ever emitted. Usage must be logged BEFORE extraction throws, or the
-    // one run that most needs a token count is the one run that reports none.
-    it('should log token usage when the response carries no usable block', async () => {
+    // one run that most needs a token count is the one run that reports none. It must also be logged
+    // at ERROR: every subscription filter in the fleet matches level="ERROR", so a truncated
+    // generation logged at `log` is visible in CloudWatch and invisible to alerting.
+    it('should log token usage at error level when the generation was truncated', async () => {
       mockSend.mockResolvedValueOnce({
         ...invokeModelResponse,
         body: new TextEncoder().encode(
@@ -226,7 +288,7 @@ describe('bedrock', () => {
         `Model response contained no ${toolSchema.name} tool call`,
       )
 
-      expect(log).toHaveBeenCalledWith('Model invocation complete', {
+      expect(logError).toHaveBeenCalledWith('Model invocation complete', {
         cacheReadInputTokens: 0,
         cacheWriteInputTokens: 0,
         costUsd: undefined,
@@ -234,8 +296,10 @@ describe('bedrock', () => {
         model: 'the-thinking-ai:1.0',
         outputTokens: 99,
         stopReason: 'max_tokens',
+        thinkingTokens: 64,
         toolName: 'submit_data',
       })
+      expect(log).not.toHaveBeenCalledWith('Model invocation complete', expect.anything())
     })
 
     it('should log the cost of a priced model and record its usage', async () => {
@@ -248,6 +312,7 @@ describe('bedrock', () => {
       expect(tracker.recordModel).toHaveBeenCalledWith('us.anthropic.claude-opus-5-5', {
         input_tokens: 3_398,
         output_tokens: 99,
+        output_tokens_details: { thinking_tokens: 64 },
       })
     })
 
@@ -266,6 +331,7 @@ describe('bedrock', () => {
       expect(tracker.recordModel).toHaveBeenCalledWith('the-thinking-ai:1.0', {
         input_tokens: 3_398,
         output_tokens: 99,
+        output_tokens_details: { thinking_tokens: 64 },
       })
     })
 

@@ -35,8 +35,18 @@ describe('usage', () => {
   describe('createUsageTracker', () => {
     it('should total tokens per model and measure the attempt', () => {
       const tracker = createUsageTracker(1536, undefined, setup())
-      tracker.recordModel(opus55, { cache_read_input_tokens: 100, input_tokens: 600, output_tokens: 1_500 })
-      tracker.recordModel(opus55, { cache_creation_input_tokens: 10, input_tokens: 400, output_tokens: 500 })
+      tracker.recordModel(opus55, {
+        cache_read_input_tokens: 100,
+        input_tokens: 600,
+        output_tokens: 1_500,
+        output_tokens_details: { thinking_tokens: 900 },
+      })
+      tracker.recordModel(opus55, {
+        cache_creation_input_tokens: 10,
+        input_tokens: 400,
+        output_tokens: 500,
+        output_tokens_details: { thinking_tokens: 300 },
+      })
 
       expect(tracker.snapshot()).toEqual({
         attempts: 1,
@@ -54,6 +64,7 @@ describe('usage', () => {
             invocations: 2,
             model: opus55,
             output: 2_000,
+            outputThinking: 1_200,
           },
         ],
         wallClockMs: 2_000,
@@ -77,11 +88,13 @@ describe('usage', () => {
             invocations: 1,
             model: opus55,
             output: 100,
+            outputThinking: 40,
           },
         ],
         wallClockMs: 1_000,
       }
       const tracker = createUsageTracker(1536, prior, setup())
+      tracker.recordModel(opus55, { input_tokens: 0, output_tokens: 0, output_tokens_details: { thinking_tokens: 10 } })
       tracker.recordModel('us.anthropic.claude-opus-5', { input_tokens: 1_000, output_tokens: 1_000 })
 
       expect(tracker.snapshot()).toEqual(
@@ -92,7 +105,7 @@ describe('usage', () => {
           gbSeconds: 4.5,
           maxMemoryMb: 300,
           tokens: [
-            expect.objectContaining({ costUsd: 0.004, invocations: 1, model: opus55 }),
+            expect.objectContaining({ costUsd: 0.004, invocations: 2, model: opus55, outputThinking: 50 }),
             expect.objectContaining({ costUsd: 0.03, invocations: 1, model: 'us.anthropic.claude-opus-5' }),
           ],
           wallClockMs: 3_000,
@@ -107,7 +120,15 @@ describe('usage', () => {
       const snapshot = tracker.snapshot()
 
       expect(snapshot.tokens).toEqual([
-        { input: 0, inputCacheWrite: 0, inputCached: 0, invocations: 1, model: 'the-thinking-ai:1.0', output: 0 },
+        {
+          input: 0,
+          inputCacheWrite: 0,
+          inputCached: 0,
+          invocations: 1,
+          model: 'the-thinking-ai:1.0',
+          output: 0,
+          outputThinking: 0,
+        },
       ])
       expect(snapshot.costUsd.models).toBe(0)
     })

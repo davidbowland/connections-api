@@ -2,7 +2,7 @@ import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedroc
 import Ajv from 'ajv'
 
 import { Prompt, ToolSchema } from '../types'
-import { log, logDebug } from '../utils/logging'
+import { log, logDebug, logError } from '../utils/logging'
 import { modelCostUsd, RawModelUsage, toTokenCounts, UsageTracker } from '../utils/usage'
 
 // SDK default is 3 attempts (exponential backoff, ~100-500ms base). Bumped to 4 for extra
@@ -101,13 +101,27 @@ const extractJson = (input: string): string => {
 // thinking returns no tool_use block at all. Logged on every invocation rather than only on failure:
 // a failure count says nothing without knowing how much headroom a healthy game leaves, and that
 // headroom is what tells us whether the effort level can come down.
+//
+// outputTokens alone cannot answer that: it is the same number for a long healthy answer and for a
+// run that spent the whole budget reasoning. thinkingTokens is where the budget actually went, and
+// Bedrock returns it as usage.output_tokens_details.thinking_tokens. Optional-chained, because a
+// model that returns no breakdown must cost the line one FIELD, never the line — the runs this
+// instrument exists for are the ones that went wrong.
 const logModelUsage = (
-  modelResponse: { stop_reason?: string; usage?: RawModelUsage },
+  modelResponse: {
+    stop_reason?: string
+    usage?: RawModelUsage
+  },
   tool: ToolSchema,
   model: string,
 ): void => {
   const counts = toTokenCounts(modelResponse.usage)
-  log('Model invocation complete', {
+  // ERROR on max_tokens, `log` on everything else. A truncated generation costs the day's game, and
+  // every subscription filter in the fleet matches level="ERROR" — logged at `log` the failure is
+  // visible in CloudWatch and invisible to alerting. Every other stop reason is a healthy run and
+  // must not reach the subscription, or the alarm becomes noise.
+  const write = modelResponse.stop_reason === 'max_tokens' ? logError : log
+  write('Model invocation complete', {
     cacheReadInputTokens: counts.inputCached,
     cacheWriteInputTokens: counts.inputCacheWrite,
     costUsd: modelCostUsd(model, counts),
@@ -115,6 +129,7 @@ const logModelUsage = (
     model,
     outputTokens: modelResponse.usage?.output_tokens,
     stopReason: modelResponse.stop_reason,
+    thinkingTokens: modelResponse.usage?.output_tokens_details?.thinking_tokens,
     toolName: tool.name,
   })
 }
@@ -134,7 +149,10 @@ const extractModelPayload = (
 
   const textBlock = modelResponse.content.find((b) => b.type === 'text')
   if (!textBlock?.text) {
-    log('Model response missing tool_use block and text block', {
+    // Same conditional and the same reasoning as logModelUsage above: this is the shape a
+    // max_tokens stop actually arrives in, and it was the quietest line in the file.
+    const write = modelResponse.stop_reason === 'max_tokens' ? logError : log
+    write('Model response missing tool_use block and text block', {
       blockTypes: modelResponse.content.map((b) => b.type),
       model,
       stopReason: modelResponse.stop_reason,

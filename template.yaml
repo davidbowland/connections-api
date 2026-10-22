@@ -224,6 +224,10 @@ Resources:
       MemorySize: 1536
       Description: Create daily connections game
       Policies:
+        # Kill switch. Flipping this customer-managed policy's default version to its deny-all
+        # document stops Bedrock spend for this environment without a deploy. It must exist before
+        # this stack deploys; it is owned by kill-switch-infrastructure, never by this template.
+        - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/kill-switch-bedrock-${Environment}'
         - AWSLambdaBasicExecutionRole
         - DynamoDBCrudPolicy:
             TableName: !Ref GamesTable

@@ -20,6 +20,7 @@ export interface RawModelUsage {
   cache_read_input_tokens?: number
   input_tokens?: number
   output_tokens?: number
+  output_tokens_details?: { thinking_tokens?: number }
 }
 
 export interface UsageClock {
@@ -44,9 +45,10 @@ const roundTo = (value: number, places: number): number => Math.round(value * 10
 
 const baseModelId = (model: string): string => (model.split('anthropic.').pop() as string).split(':')[0]
 
-type TokenCounts = Pick<ModelTokenUsage, 'input' | 'inputCacheWrite' | 'inputCached' | 'output'>
+type PricedTokenCounts = Pick<ModelTokenUsage, 'input' | 'inputCacheWrite' | 'inputCached' | 'output'>
+type TokenCounts = PricedTokenCounts & Pick<ModelTokenUsage, 'outputThinking'>
 
-export const modelCostUsd = (model: string, tokens: TokenCounts): number | undefined => {
+export const modelCostUsd = (model: string, tokens: PricedTokenCounts): number | undefined => {
   const pricing = MODEL_PRICING_PER_MTOK[baseModelId(model)]
   if (!pricing) {
     return undefined
@@ -64,6 +66,7 @@ export const toTokenCounts = (usage: RawModelUsage | undefined): TokenCounts => 
   inputCached: usage?.cache_read_input_tokens ?? 0,
   inputCacheWrite: usage?.cache_creation_input_tokens ?? 0,
   output: usage?.output_tokens ?? 0,
+  outputThinking: usage?.output_tokens_details?.thinking_tokens ?? 0,
 })
 
 // One tracker per Lambda invocation. `prior` is the usage accumulated by earlier attempts at the same
@@ -87,6 +90,7 @@ export const createUsageTracker = (
       invocations: 0,
       model,
       output: 0,
+      outputThinking: 0,
     }
     tokens.set(model, {
       ...entry,
@@ -95,6 +99,8 @@ export const createUsageTracker = (
       inputCached: entry.inputCached + counts.inputCached,
       invocations: entry.invocations + 1,
       output: entry.output + counts.output,
+      // ?? 0: a retry payload written before this field existed carries prior entries without it.
+      outputThinking: (entry.outputThinking ?? 0) + counts.outputThinking,
     })
   }
 

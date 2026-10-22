@@ -42,6 +42,21 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      # Bedrock kill-switch coverage, both halves: every function whose template grants a `bedrock:`
+      # action carries the kill-switch policy ARN, AND every function whose handler transitively
+      # imports a module that constructs a Bedrock client or command carries both. The second half is
+      # the one that matters -- food-api's RecipesFunction called Bedrock in code with no `bedrock:`
+      # statement in its template for months, and a template-only check passes that shape clean.
+      # A Bedrock-capable function without the ARN is a hole the kill switch cannot close, and it
+      # fails silently: nothing errors, nothing alerts, the switch just does not stop that function.
+      #
+      # A STEP of the test job rather than a job of its own, so it cannot report green while the
+      # suite is red. scripts/check-bedrock-kill-switch.mjs is vendored byte-identical into
+      # bridge-api, connections-api, food-api, lull-api and sse-api; it needs no AWS credentials and
+      # runs on every branch.
+      - name: Check Bedrock kill-switch coverage
+        run: npm run check-kill-switch
+
   build-and-deploy-testing:
     name: Deploy testing branch
     if: github.ref != 'refs/heads/master'

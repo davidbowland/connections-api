@@ -82,7 +82,7 @@ export const invokeModelResponseData = {
   ],
   stop_reason: 'tool_use',
   stop_sequence: null,
-  usage: { input_tokens: 3_398, output_tokens: 99 },
+  usage: { input_tokens: 3_398, output_tokens: 99, output_tokens_details: { thinking_tokens: 64 } },
 }
 
 export const invokeModelResponse = {
@@ -142,6 +142,7 @@ export const generationUsage: GenerationUsage = {
       invocations: 2,
       model: 'us.anthropic.claude-opus-5-5',
       output: 2_000,
+      outputThinking: 1_200,
     },
   ],
   wallClockMs: 2_000,

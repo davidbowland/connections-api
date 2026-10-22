@@ -70,7 +70,8 @@ export interface VerificationResult {
 // Usage
 
 // Per-model token totals. inputCached is prompt-cache reads, inputCacheWrite is prompt-cache writes;
-// output tokens are never cached. costUsd is absent for a model with no known pricing.
+// output tokens are never cached. outputThinking is the part of output spent on thinking -- already
+// counted in output, so it is never priced separately. costUsd is absent for a model with no known pricing.
 export interface ModelTokenUsage {
   costUsd?: number
   input: number
@@ -79,6 +80,7 @@ export interface ModelTokenUsage {
   invocations: number
   model: string
   output: number
+  outputThinking: number
 }
 
 // Summed across every Lambda attempt that went into one game. wallClockMs and cpuMs cover handler
