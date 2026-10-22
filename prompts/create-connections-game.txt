@@ -42,6 +42,7 @@
   - NEVER include words from the category
   - All words must be uppercase
 - Generate a hint for each category (see <hint_rules> section — that is the authoritative source for all hint requirements)
+- Write a search phrase for each word (see <search_rules>)
 - Identify the decoys: pick 3-5 words that a solver could plausibly place in a DIFFERENT category of this same game, and name that other category
   - The decoys must involve at least 3 of the categories, so the misdirection is spread across the grid rather than concentrated in one pair
   - A decoy must name a real, defensible second reading of that word — not a stretch invented to satisfy the count
@@ -84,6 +85,17 @@ GOOD HINTS (concept-evoking):
 - "Boast" → "What might someone do when they're proud?" (evokes the concept)
 - "Cereal mascots" → "Have you seen some of these during your morning routine?" (evokes breakfast)
 </hint_rules>
+<search_rules>
+A search phrase is what a curious player would type into a web search engine to see the word in the sense this category uses. Players see these only after solving a category, so they are a learning aid, not a hint.
+
+RULES:
+- Include the word itself
+- Add only the words needed to pin down the sense the category uses (BASS in a fish category → "bass fish"; MERCURY in a planets category → "mercury planet")
+- If the bare word already finds the right sense, the phrase is just the word ("rainbow")
+- Use lowercase, except for proper nouns ("Oedipus complex", "Teddy Roosevelt")
+- NEVER use quotation marks or search operators
+- At most 6 words
+</search_rules>
 <category_guidelines>
 KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather than categorical knowledge. ONLY group words that have SURPRISING, CLEVER, or FUNNY connections
 
@@ -103,7 +115,7 @@ KEY INSIGHT: Rely on lateral thinking, wordplay, actions, and attributes rather 
 <format>
 Call the `submit_game` tool with your result:
 - decoys -- a list of objects, each with `word` (a word in the game) and `looksLike` (the name of a DIFFERENT category in this game that the word could plausibly belong to)
-- categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings where every word must contain at least one of the listed substrings (empty array if not a spelling category)
+- categories -- a JSON object where each key is one of the 4 generated categories and the value is an object where key `words` is list of associated words, `hint` is the hint, and `embeddedSubstrings` is an array of substrings where every word must contain at least one of the listed substrings (empty array if not a spelling category), and `searches` is an object mapping each of the category's 4 words, spelled exactly as in `words`, to its search phrase
 </format>
 <context>
 ${context}
@@ -116,21 +128,25 @@ ${context}
     "Associated with Freud": {
       "hint": "When is a cigar just a cigar?",
       "words": ["DREAMS", "ID", "OEDIPUS", "SLIP"],
+      "searches": { "DREAMS": "Freud dreams", "ID": "id psychology", "OEDIPUS": "Oedipus complex", "SLIP": "Freudian slip" },
       "embeddedSubstrings": []
     },
     "Arc-shaped things": {
       "hint": "Do you see a curvy theme?",
       "words": ["BANANA", "EYEBROW", "FLIGHT PATH", "RAINBOW"],
+      "searches": { "BANANA": "banana", "EYEBROW": "eyebrow", "FLIGHT PATH": "flight path", "RAINBOW": "rainbow" },
       "embeddedSubstrings": []
     },
     "Items in a sewing kit": {
       "hint": "Do you have a talent for stitching?",
       "words": ["BUTTON", "NEEDLE", "SCISSORS", "THREAD"],
+      "searches": { "BUTTON": "sewing button", "NEEDLE": "sewing needle", "SCISSORS": "sewing scissors", "THREAD": "sewing thread" },
       "embeddedSubstrings": []
     },
     "Ways to denote a citation": {
       "hint": "Would you use any of these while writing an essay?",
       "words": ["ASTERISK", "DAGGER", "NUMBER", "PARENS"],
+      "searches": { "ASTERISK": "asterisk footnote", "DAGGER": "dagger symbol footnote", "NUMBER": "footnote number", "PARENS": "parens citation" },
       "embeddedSubstrings": []
     }
   },
@@ -147,21 +163,25 @@ ${context}
     "Pro wrestling icons, with \"The\"": {
       "hint": "Have you heard of Hulk Hogan?",
       "words": ["HITMAN", "ROCK", "SNAKE", "UNDERTAKER"],
+      "searches": { "HITMAN": "Bret the Hitman Hart", "ROCK": "The Rock wrestler", "SNAKE": "Jake the Snake Roberts", "UNDERTAKER": "The Undertaker wrestler" },
       "embeddedSubstrings": []
     },
     "Military clothing descriptors": {
       "hint": "How is your fashion sense?",
       "words": ["CAMO", "DRAB", "FATIGUE", "KHAKI"],
+      "searches": { "CAMO": "camo clothing", "DRAB": "olive drab", "FATIGUE": "military fatigues", "KHAKI": "khaki uniform" },
       "embeddedSubstrings": []
     },
     "Presidential nicknames": {
       "hint": "Do any words strike you as informal?",
       "words": ["ABE", "CAL", "DICK", "TEDDY"],
+      "searches": { "ABE": "Honest Abe Lincoln", "CAL": "Silent Cal Coolidge", "DICK": "Tricky Dick Nixon", "TEDDY": "Teddy Roosevelt" },
       "embeddedSubstrings": []
     },
     "Words containing numbers": {
       "hint": "Can you count on any of these?",
       "words": ["HONEST", "NETWORK", "LISTEN", "COMPONENT"],
+      "searches": { "HONEST": "honest", "NETWORK": "network", "LISTEN": "listen", "COMPONENT": "component" },
       "embeddedSubstrings": ["ONE", "TWO", "TEN"]
     }
   },

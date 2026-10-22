@@ -1,7 +1,7 @@
 import { game, prompt } from '../__mocks__'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
-import { verdictTool, verifyAndFixGame } from '@services/verification'
+import { applyVerdict, verdictTool, verifyAndFixGame } from '@services/verification'
 import { Decoy, VerificationResult } from '@types'
 
 jest.mock('@services/bedrock')
@@ -329,6 +329,121 @@ describe('verification', () => {
         const returned = await verifyAndFixGame(game, {}, decoys)
 
         expect(returned).toBe(game)
+      })
+    })
+  })
+
+  // The verifier can change words, so it can also supply phrases for the words it introduces.
+  // applyFixes only merges; pruning phrases for removed words is finalizeVerifiedGame's job.
+  describe('searches', () => {
+    // bedrock is mocked for the rest of this file; schema validation needs the real ajv path.
+    const { validateResponse } = jest.requireActual<typeof bedrock>('@services/bedrock')
+
+    const boastSearches = { BLUSTER: 'bluster meaning', CROW: 'crow brag' }
+    const searchGame = {
+      categories: {
+        ...game.categories,
+        Boast: { ...game.categories.Boast, searches: boastSearches },
+      },
+    }
+
+    describe('verdictTool', () => {
+      it('should accept a word fix carrying searches', () => {
+        const verdict = {
+          fixes: { Boast: { searches: { BRAG: 'brag' }, words: ['BLUSTER', 'CROW', 'BRAG', 'STRUT'] } },
+          reason: 'Obvious words',
+          verdict: 'fix',
+        }
+
+        expect(() => validateResponse(verdictTool, verdict)).not.toThrow()
+      })
+
+      it('should accept a category replacement carrying searches', () => {
+        const verdict = {
+          fixes: {
+            Boast: {
+              category: {
+                hint: 'Could you be getting a big head?',
+                name: 'Show off',
+                searches: { PEACOCK: 'peacock show off' },
+                words: ['PREEN', 'FLAUNT', 'PARADE', 'PEACOCK'],
+              },
+            },
+          },
+          reason: 'Weak concept',
+          verdict: 'fix',
+        }
+
+        expect(() => validateResponse(verdictTool, verdict)).not.toThrow()
+      })
+    })
+
+    describe('applyVerdict', () => {
+      it('should carry the replacement category searches', () => {
+        const result: VerificationResult = {
+          verdict: 'fix',
+          reason: 'Weak concept',
+          fixes: {
+            Boast: {
+              category: {
+                name: 'Show off',
+                words: ['PREEN', 'FLAUNT', 'PARADE', 'PEACOCK'],
+                hint: 'Could you be getting a big head?',
+                searches: { PEACOCK: 'peacock show off' },
+              },
+            },
+          },
+        }
+
+        const returned = applyVerdict(searchGame, result)
+
+        expect(returned.categories['Show off'].searches).toEqual({ PEACOCK: 'peacock show off' })
+      })
+
+      it('should merge word-fix searches over the existing map', () => {
+        const result: VerificationResult = {
+          verdict: 'fix',
+          reason: 'Obvious words',
+          fixes: {
+            Boast: {
+              words: ['BLUSTER', 'CROW', 'BRAG', 'STRUT'],
+              searches: { BRAG: 'brag', CROW: 'crow boast' },
+            },
+          },
+        }
+
+        const returned = applyVerdict(searchGame, result)
+
+        expect(returned.categories.Boast.searches).toEqual({
+          BLUSTER: 'bluster meaning',
+          BRAG: 'brag',
+          CROW: 'crow boast',
+        })
+      })
+
+      it('should merge a fix that carries only searches', () => {
+        const result: VerificationResult = {
+          verdict: 'fix',
+          reason: 'Ambiguous search',
+          fixes: { Boast: { searches: { STRUT: 'strut walk' } } },
+        }
+
+        const returned = applyVerdict(searchGame, result)
+
+        expect(returned.categories.Boast.searches).toEqual({ ...boastSearches, STRUT: 'strut walk' })
+        expect(returned.categories.Boast.words).toEqual(game.categories.Boast.words)
+      })
+
+      it('should leave searches unchanged on a hint fix without searches', () => {
+        const result: VerificationResult = {
+          verdict: 'fix',
+          reason: 'Hint leaks words',
+          fixes: { Boast: { hint: 'Are you feeling proud?' } },
+        }
+
+        const returned = applyVerdict(searchGame, result)
+
+        expect(returned.categories.Boast.searches).toEqual(boastSearches)
       })
     })
   })

@@ -10,6 +10,7 @@ const categoryReplacementSchema = {
     embeddedSubstrings: { items: { type: 'string' }, type: 'array' },
     hint: { type: 'string' },
     name: { type: 'string' },
+    searches: { additionalProperties: { type: 'string' }, type: 'object' },
     words: { items: { type: 'string' }, maxItems: 4, minItems: 4, type: 'array' },
   },
   required: ['name', 'words', 'hint'],
@@ -25,6 +26,8 @@ export const verdictTool: ToolSchema = {
           properties: {
             category: categoryReplacementSchema,
             hint: { type: 'string' },
+            // Optional for the same reason as on gameTool: the verify prompt deploys separately.
+            searches: { additionalProperties: { type: 'string' }, type: 'object' },
             words: { items: { type: 'string' }, maxItems: 4, minItems: 4, type: 'array' },
           },
           type: 'object',
@@ -67,6 +70,7 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
       categories[fix.category.name] = {
         embeddedSubstrings: fix.category.embeddedSubstrings ?? [],
         hint: fix.category.hint,
+        searches: fix.category.searches,
         words: fix.category.words,
       }
     } else {
@@ -91,6 +95,21 @@ const applyFixes = (game: ConnectionsGame, result: VerificationResult): Connecti
           after: fix.hint,
         })
         categories[oldName] = { ...categories[oldName], hint: fix.hint }
+      }
+      // Merged rather than replaced, so a fix that swaps one word only has to supply that word's
+      // phrase. Entries for words the fix removed are left here and pruned by finalizeVerifiedGame,
+      // which normalizes against the final word list. Phrases are not counted toward the fix limits,
+      // which exist to bound how much of the puzzle the verifier can change.
+      if (fix.searches) {
+        log('Verification fix: searches', {
+          category: oldName,
+          before: categories[oldName].searches,
+          after: fix.searches,
+        })
+        categories[oldName] = {
+          ...categories[oldName],
+          searches: { ...categories[oldName].searches, ...fix.searches },
+        }
       }
     }
   }

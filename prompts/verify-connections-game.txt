@@ -62,6 +62,8 @@ When returning a `fix` verdict, always return the **full corrected list** for ea
 The limits are enforced in code and a verdict that exceeds them is discarded along with the whole
 game: at most 2 changed words in any one category, at most 4 changed words overall, at most 1 full
 category replacement. Count your changed words before answering.
+
+Each category may carry `searches`, which maps each word to a web-search phrase for the sense the category uses. When a fix introduces a new word, include a `searches` entry for it, written the same way: the word plus only the words needed to pin down its sense, lowercase except proper nouns, at most 6 words.
 </verdict-rules>
 <format>
 Call the `submit_verdict` tool with input matching one of these shapes:
@@ -72,7 +74,8 @@ For a word-only fix:
   "reason": "brief explanation",
   "fixes": {
     "<old category name>": {
-      "words": ["WORD1", "WORD2", "WORD3", "WORD4"]
+      "words": ["WORD1", "WORD2", "WORD3", "WORD4"],
+      "searches": { "WORD3": "search phrase for WORD3" }
     }
   }
 }
@@ -87,7 +90,8 @@ For a full category replacement:
         "name": "<new or same category name>",
         "words": ["WORD1", "WORD2", "WORD3", "WORD4"],
         "hint": "hint question",
-        "embeddedSubstrings": []
+        "embeddedSubstrings": [],
+        "searches": { "WORD1": "search phrase for WORD1", "WORD2": "...", "WORD3": "...", "WORD4": "..." }
       }
     }
   }
@@ -103,6 +107,8 @@ For a hint-only fix (when the hint is bad but the category/words are fine):
     }
   }
 }
+
+`searches` is optional on both fix shapes. On a word-only fix, include entries only for the words you introduced (here WORD3); existing phrases are kept. On a full category replacement, include an entry for every word.
 
 For pass or fail verdicts:
 {

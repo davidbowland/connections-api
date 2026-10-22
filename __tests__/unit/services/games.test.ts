@@ -13,7 +13,16 @@ import { verbs } from '@assets/verbs'
 import { disallowedCategoryLimit } from '@config'
 import * as bedrock from '@services/bedrock'
 import * as dynamodb from '@services/dynamodb'
-import { createGame, gameTool } from '@services/games'
+import {
+  buildCategoryHistory,
+  checkGeneratedGame,
+  createGame,
+  finalizeVerifiedGame,
+  findChargedTerm,
+  gameTool,
+  normalizeSearches,
+  validateGame,
+} from '@services/games'
 import * as verification from '@services/verification'
 import * as constraints from '@utils/constraints'
 import { log } from '@utils/logging'
@@ -831,6 +840,189 @@ describe('games', () => {
           message: 'Generated too few decoys: 0',
         }),
       )
+    })
+  })
+
+  // Search phrases are model output that rides to the client inside the category, so every one is
+  // treated as untrusted: a bad entry is dropped (the UI falls back to the bare word) rather than
+  // failing a whole generation over a link.
+  describe('searches', () => {
+    // bedrock is mocked for the rest of this file; schema validation needs the real ajv path.
+    const { validateResponse } = jest.requireActual<typeof bedrock>('@services/bedrock')
+
+    const fishCategory = { hint: 'Gone fishing?', words: ['BASS', 'PIKE', 'PERCH', 'CARP'] }
+
+    describe('normalizeSearches', () => {
+      it('should return a category with no searches key when the input has none', () => {
+        expect(Object.keys(normalizeSearches(fishCategory))).not.toContain('searches')
+      })
+
+      it('should return a category with no searches key when searches is not a plain object', () => {
+        const result = normalizeSearches({ ...fishCategory, searches: ['bass fish'] as any })
+
+        expect(Object.keys(result)).not.toContain('searches')
+      })
+
+      it('should return a category with no searches key when every entry is invalid', () => {
+        const result = normalizeSearches({
+          ...fishCategory,
+          searches: { BASS: '   ', GUITAR: 'bass guitar', PIKE: 42 as any },
+        })
+
+        expect(Object.keys(result)).not.toContain('searches')
+      })
+
+      it('should uppercase keys so they match the words', () => {
+        const result = normalizeSearches({ ...fishCategory, searches: { bass: 'bass fish', Pike: 'pike fish' } })
+
+        expect(result.searches).toEqual({ BASS: 'bass fish', PIKE: 'pike fish' })
+      })
+
+      it('should keep the last valid entry when two keys collide after uppercasing', () => {
+        const result = normalizeSearches({
+          ...fishCategory,
+          searches: { bass: 'bass guitar', BASS: 'bass fish', Bass: '' },
+        })
+
+        expect(result.searches).toEqual({ BASS: 'bass fish' })
+      })
+
+      it('should trim phrases', () => {
+        const result = normalizeSearches({ ...fishCategory, searches: { BASS: '  bass fish \n' } })
+
+        expect(result.searches).toEqual({ BASS: 'bass fish' })
+      })
+
+      it('should drop entries whose key is not one of the words', () => {
+        const result = normalizeSearches({ ...fishCategory, searches: { BASS: 'bass fish', TROUT: 'trout fish' } })
+
+        expect(result.searches).toEqual({ BASS: 'bass fish' })
+      })
+
+      it('should drop entries whose value is not a string', () => {
+        const result = normalizeSearches({
+          ...fishCategory,
+          searches: { BASS: 'bass fish', CARP: null as any, PIKE: { q: 'pike' } as any },
+        })
+
+        expect(result.searches).toEqual({ BASS: 'bass fish' })
+      })
+
+      it('should drop entries that are blank after trimming', () => {
+        const result = normalizeSearches({ ...fishCategory, searches: { BASS: 'bass fish', PIKE: ' \t ' } })
+
+        expect(result.searches).toEqual({ BASS: 'bass fish' })
+      })
+
+      it('should keep a phrase of exactly 100 characters after trimming and drop one of 101', () => {
+        const result = normalizeSearches({
+          ...fishCategory,
+          searches: { BASS: ` ${'b'.repeat(100)} `, PIKE: 'p'.repeat(101) },
+        })
+
+        expect(result.searches).toEqual({ BASS: 'b'.repeat(100) })
+      })
+
+      it('should leave the rest of the category untouched', () => {
+        const result = normalizeSearches({ ...fishCategory, embeddedSubstrings: [], searches: { BASS: 'bass fish' } })
+
+        expect(result).toEqual({ ...fishCategory, embeddedSubstrings: [], searches: { BASS: 'bass fish' } })
+      })
+    })
+
+    describe('gameTool', () => {
+      it('should accept a generated payload with no searches at all', () => {
+        expect(() => validateResponse(gameTool, generatedGame)).not.toThrow()
+      })
+
+      it('should accept a generated payload with searches', () => {
+        const payload = {
+          ...generatedGame,
+          categories: {
+            ...generatedGame.categories,
+            Boast: { ...generatedGame.categories.Boast, searches: { CROW: 'crow boast' } },
+          },
+        }
+
+        expect(() => validateResponse(gameTool, payload)).not.toThrow()
+      })
+
+      // Prompts deploy separately from code, so a model still on the old prompt must not fail ajv.
+      it('should not require searches on a category', () => {
+        expect(gameTool.input_schema.properties.categories.additionalProperties.required).not.toContain('searches')
+      })
+    })
+
+    describe('checkGeneratedGame', () => {
+      const history = buildCategoryHistory([])
+
+      it('should key searches by the uppercased words', () => {
+        const generated = {
+          ...generatedGame,
+          categories: {
+            ...generatedGame.categories,
+            Boast: {
+              hint: 'Boast hint',
+              searches: { crow: 'crow brag', 'show off': 'show off meaning' },
+              words: ['bluster', 'crow', 'show off', 'strut'],
+            },
+          },
+        }
+
+        const { connectionsData: checked } = checkGeneratedGame(generated, history)
+
+        expect(checked.categories.Boast.words).toEqual(['BLUSTER', 'CROW', 'SHOW OFF', 'STRUT'])
+        expect(checked.categories.Boast.searches).toEqual({ CROW: 'crow brag', 'SHOW OFF': 'show off meaning' })
+      })
+
+      it('should accept a generated payload with no searches at all', () => {
+        const { connectionsData: checked } = checkGeneratedGame(generatedGame, history)
+
+        expect(Object.values(checked.categories).filter((category) => 'searches' in category)).toEqual([])
+      })
+    })
+
+    describe('findChargedTerm', () => {
+      const chargedCategories = {
+        ...connectionsData.categories,
+        Boast: { ...connectionsData.categories.Boast, searches: { CROW: 'bastard crow' } },
+      }
+
+      it('should find a charged term that appears only in a search phrase', () => {
+        expect(findChargedTerm(chargedCategories)).toEqual('BASTARD')
+      })
+
+      it('should make validateGame reject a charged search phrase', () => {
+        expect(() => validateGame(chargedCategories)).toThrow('Generated a charged term: BASTARD')
+      })
+    })
+
+    describe('finalizeVerifiedGame', () => {
+      const history = buildCategoryHistory([])
+      const verifiedGame = {
+        categories: {
+          ...connectionsData.categories,
+          Boast: {
+            hint: 'Boast hint',
+            searches: { BRAG: 'brag boast', CROW: 'crow brag', 'SHOW OFF': 'show off meaning' },
+            words: ['BLUSTER', 'CROW', 'brag', 'STRUT'],
+          },
+        },
+      }
+
+      it('should drop the phrase for a word the verifier removed', () => {
+        const result = finalizeVerifiedGame(verifiedGame, history)
+
+        expect(Object.keys(result.categories.Boast.searches ?? {})).not.toContain('SHOW OFF')
+      })
+
+      it('should uppercase a lowercase verifier word and keep its phrase', () => {
+        const result = finalizeVerifiedGame(verifiedGame, history)
+
+        expect(result.categories.Boast.words).toEqual(['BLUSTER', 'CROW', 'BRAG', 'STRUT'])
+        expect(result.categories.Boast.searches).toEqual({ BRAG: 'brag boast', CROW: 'crow brag' })
+        expect(result.wordList).toContain('BRAG')
+      })
     })
   })
 })

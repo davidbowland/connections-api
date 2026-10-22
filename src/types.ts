@@ -14,9 +14,14 @@ export interface ConnectionsData {
   wordList: string[]
 }
 
+// `searches` maps each word, exactly as it appears in `words`, to the web-search phrase for the sense
+// this category uses ("BASS" -> "bass fish"). A map rather than a parallel array because the UI
+// reorders words. Optional because every game generated before it existed lacks one, and any word
+// without an entry falls back to searching the bare word.
 export interface Category {
   embeddedSubstrings?: string[]
   hint: string
+  searches?: Record<string, string>
   words: string[]
 }
 
@@ -50,11 +55,13 @@ export interface VerificationResult {
     [categoryName: string]: {
       words?: string[]
       hint?: string
+      searches?: Record<string, string>
       category?: {
         name: string
         words: string[]
         hint: string
         embeddedSubstrings?: string[]
+        searches?: Record<string, string>
       }
     }
   }

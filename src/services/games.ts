@@ -15,7 +15,16 @@ import {
   llmPromptId,
   wordConstraintChance,
 } from '../config'
-import { CategoryHistory, CategoryObject, ConnectionsData, ConnectionsGame, Decoy, GameId, ToolSchema } from '../types'
+import {
+  Category,
+  CategoryHistory,
+  CategoryObject,
+  ConnectionsData,
+  ConnectionsGame,
+  Decoy,
+  GameId,
+  ToolSchema,
+} from '../types'
 import { canonicalize, tokenKey } from '../utils/category-keys'
 import { selectCategoryConstraints } from '../utils/constraint-selection'
 import { getDateConstraint } from '../utils/constraints'
@@ -41,6 +50,10 @@ const MIN_DECOYS = 3
 // let the model satisfy the rule with three decoys that all point at one category.
 const MIN_DECOY_CATEGORY_SPAN = 3
 
+// The prompt caps a search phrase at 6 words; this is far looser on purpose. It only bounds the size
+// of the link URL the UI builds from the phrase, and is not meant to police style.
+export const MAX_SEARCH_LENGTH = 100
+
 // The model returns decoys alongside the game. They are a generation-time forcing device, not game
 // data, so ConnectionsData deliberately has no room for them.
 export type GeneratedGame = ConnectionsData & { decoys?: Decoy[] }
@@ -55,6 +68,12 @@ export const gameTool: ToolSchema = {
           properties: {
             embeddedSubstrings: { items: { type: 'string' }, type: 'array' },
             hint: { type: 'string' },
+            // Deliberately NOT required. Prompts deploy separately from code (scripts/deploy-prompts.ts),
+            // so a model still working from the old prompt will leave this out, and failing ajv over a
+            // missing link would burn a generation attempt. normalizeSearches makes a missing or
+            // partial map harmless. Deploy this code before the prompt that asks for it: the old code
+            // would store a phrase from the new prompt without normalizing or blocklist-checking it.
+            searches: { additionalProperties: { type: 'string' }, type: 'object' },
             words: { items: { type: 'string' }, maxItems: 4, minItems: 4, type: 'array' },
           },
           required: ['words', 'hint'],
@@ -154,16 +173,46 @@ const getModelContext = (date: Date, disallowedCategories: string[], random = Ma
   }
 }
 
-const transformWordsToUpperCase = (connectionsData: ConnectionsData): ConnectionsData => ({
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && [Object.prototype, null].includes(Object.getPrototypeOf(value))
+
+const isValidSearch = (phrase: unknown): phrase is string =>
+  typeof phrase === 'string' && phrase.trim().length > 0 && phrase.trim().length <= MAX_SEARCH_LENGTH
+
+// Search phrases only ever turn into a link, so a bad one costs a worse search, not a broken puzzle.
+// Every problem is therefore handled by dropping that one entry (the UI falls back to the bare word)
+// and never by throwing. The blocklist in findChargedTerm is the one exception, and it runs later.
+//
+// Keys are uppercased to match words that have been through transformWordsToUpperCase. Entries are
+// read in object order and a later valid entry overwrites an earlier one, so on a collision ("bass"
+// and "BASS") the last valid entry wins. An empty result is omitted rather than stored as `{}`, so
+// "has no phrases" has exactly one representation.
+export const normalizeSearches = (category: Category): Category => {
+  const { searches, ...rest } = category
+  if (!isPlainObject(searches)) {
+    return rest
+  }
+  const words = new Set(category.words)
+  const normalized = Object.entries(searches).reduce(
+    (acc, [word, phrase]) =>
+      words.has(word.toUpperCase()) && isValidSearch(phrase) ? { ...acc, [word.toUpperCase()]: phrase.trim() } : acc,
+    {} as Record<string, string>,
+  )
+  return Object.keys(normalized).length > 0 ? { ...rest, searches: normalized } : rest
+}
+
+// Searches are normalized here, after the words are uppercased, because they are keyed by word and
+// the keys must match the final casing.
+const transformWordsToUpperCase = <T extends ConnectionsGame>(connectionsData: T): T => ({
   ...connectionsData,
   categories: Object.entries(connectionsData.categories).reduce(
     (acc, [key, category]) => ({
       ...acc,
-      [key]: {
+      [key]: normalizeSearches({
         ...category,
         embeddedSubstrings: category.embeddedSubstrings?.map((word: string) => word.toUpperCase()),
         words: category.words.map((word: string) => word.toUpperCase()),
-      },
+      }),
     }),
     {} as CategoryObject,
   ),
@@ -180,12 +229,19 @@ const TOKEN_SPLIT = /[^A-Z0-9]+/
 
 const tokenize = (value: string): string[] => value.toUpperCase().split(TOKEN_SPLIT).filter(Boolean)
 
-// Hints are checked alongside names and words because get-game-by-id returns the whole Category
-// object, hints included, so they are player-visible model prose -- and the verifier is allowed to
-// rewrite them wholesale. embeddedSubstrings are deliberately excluded: they are substrings by
-// construction, so whole-token matching against them is meaningless.
+// Hints and search phrases are checked alongside names and words because get-game-by-id returns the
+// whole Category object, so both are player-visible model prose -- phrases appear in link URLs and in
+// the links' accessible names -- and the verifier is allowed to rewrite either. A charged phrase
+// rejects the game rather than just dropping the phrase, the same as a charged hint. embeddedSubstrings
+// are deliberately excluded: they are substrings by construction, so whole-token matching against
+// them is meaningless.
 export const findChargedTerm = (categories: CategoryObject): string | undefined => {
-  const candidates = Object.entries(categories).flatMap(([name, category]) => [name, category.hint, ...category.words])
+  const candidates = Object.entries(categories).flatMap(([name, category]) => [
+    name,
+    category.hint,
+    ...category.words,
+    ...Object.values(category.searches ?? {}),
+  ])
   return candidates.flatMap(tokenize).find((token) => chargedWords.has(token))
 }
 
@@ -367,13 +423,20 @@ export const checkGeneratedGame = (generated: GeneratedGame, categoryHistory: Ca
 
 // Checked again after verification: the verifier is allowed to replace a category outright, and
 // its replacement can itself be a repeat.
+//
+// Normalized again too. applyFixes stores verifier words exactly as returned, so this is where a
+// lowercase verifier word is uppercased (keeping its phrase, whose key is uppercased with it) and
+// where phrases for words the verifier removed are pruned.
 export const finalizeVerifiedGame = (
   verifiedGame: ConnectionsGame,
   categoryHistory: CategoryHistory,
-): ConnectionsData => ({
-  ...verifiedGame,
-  wordList: validateGame(verifiedGame.categories, categoryHistory),
-})
+): ConnectionsData => {
+  const normalizedGame = transformWordsToUpperCase(verifiedGame)
+  return {
+    ...normalizedGame,
+    wordList: validateGame(normalizedGame.categories, categoryHistory),
+  }
+}
 
 export const createGame = async (
   gameId: GameId,
